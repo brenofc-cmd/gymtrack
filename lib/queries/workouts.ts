@@ -17,18 +17,22 @@ export type WorkoutWithExercises = Workout & {
   workout_exercises: WorkoutExerciseWithExercise[]
 }
 
+export type WorkoutWithCount = Workout & {
+  workout_exercises: { id: string }[]
+}
+
 export async function getWorkouts(
   supabase: SupabaseDB,
   userId: string
-): Promise<Workout[]> {
+): Promise<WorkoutWithCount[]> {
   const { data, error } = await supabase
     .from('workouts')
-    .select('*')
+    .select('*, workout_exercises(id)')
     .eq('user_id', userId)
     .order('order_index')
 
   if (error) throw error
-  return (data ?? []) as Workout[]
+  return (data ?? []) as unknown as WorkoutWithCount[]
 }
 
 export async function getWorkoutWithExercises(

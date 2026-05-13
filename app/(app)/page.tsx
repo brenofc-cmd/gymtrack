@@ -64,6 +64,9 @@ export default async function DashboardPage() {
     }
   }
 
+  const suggestedExerciseCount = suggestedWorkout?.workout_exercises.length
+  const suggestedLastDate = suggestedWorkout ? (lastSessionMap.get(suggestedWorkout.id) ?? null) : null
+
   const firstName =
     (user.user_metadata?.full_name as string | undefined)?.split(' ')[0] ?? null
 
@@ -91,6 +94,8 @@ export default async function DashboardPage() {
       <WorkoutSuggestion
         letter={suggestedLetter as WorkoutLetter}
         workout={suggestedWorkout}
+        exerciseCount={suggestedExerciseCount}
+        lastTrainedDate={suggestedLastDate}
       />
 
       {/* Stats da semana */}
