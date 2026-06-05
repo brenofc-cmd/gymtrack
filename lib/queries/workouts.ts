@@ -44,13 +44,14 @@ export async function getWorkoutWithExercises(
     .from('workouts')
     .select(`
       *,
-      workout_exercises (
+      workout_exercises!inner (
         *,
         exercise:exercises (*)
       )
     `)
     .eq('user_id', userId)
     .eq('letter', letter)
+    .eq('workout_exercises.is_hidden', false)
     .order('order_index', { referencedTable: 'workout_exercises' })
     .single()
 
@@ -66,12 +67,13 @@ export async function getWorkoutById(
     .from('workouts')
     .select(`
       *,
-      workout_exercises (
+      workout_exercises!inner (
         *,
         exercise:exercises (*)
       )
     `)
     .eq('id', workoutId)
+    .eq('workout_exercises.is_hidden', false)
     .order('order_index', { referencedTable: 'workout_exercises' })
     .single()
 

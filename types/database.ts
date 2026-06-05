@@ -49,29 +49,32 @@ export interface Database {
         Row: {
           id: string
           user_id: string
-          letter: string
+          letter: string | null
           name: string
           notes: string | null
           order_index: number
           created_at: string
+          is_daily: boolean
         }
         Insert: {
           id?: string
           user_id: string
-          letter: string
+          letter?: string | null
           name: string
           notes?: string | null
           order_index?: number
           created_at?: string
+          is_daily?: boolean
         }
         Update: {
           id?: string
           user_id?: string
-          letter?: string
+          letter?: string | null
           name?: string
           notes?: string | null
           order_index?: number
           created_at?: string
+          is_daily?: boolean
         }
         Relationships: []
       }
@@ -87,6 +90,8 @@ export interface Database {
           rest_seconds: number
           notes: string | null
           created_at: string
+          is_priority: boolean
+          is_hidden: boolean
         }
         Insert: {
           id?: string
@@ -99,6 +104,8 @@ export interface Database {
           rest_seconds: number
           notes?: string | null
           created_at?: string
+          is_priority?: boolean
+          is_hidden?: boolean
         }
         Update: {
           id?: string
@@ -111,6 +118,8 @@ export interface Database {
           rest_seconds?: number
           notes?: string | null
           created_at?: string
+          is_priority?: boolean
+          is_hidden?: boolean
         }
         Relationships: []
       }
