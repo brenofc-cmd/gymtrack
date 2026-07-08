@@ -15,26 +15,130 @@ export async function getExercise(supabase: SupabaseDB, exerciseId: string) {
   return data
 }
 
+export interface LastSetLog {
+  weight_kg: number | null
+  reps: number
+  rir: number | null
+  completed_at: string
+  session_id: string
+}
+
+/**
+ * Último log do exercício, olhando pelo exercício de CATÁLOGO (exercise_id):
+ * assim o histórico sobrevive à troca de rotina (workout_exercise novo,
+ * mesmo movimento). Séries de aquecimento são ignoradas e o histórico de
+ * variações (performed_exercise_id) é mantido separado.
+ */
 export async function getLastSetLogForExercise(
   supabase: SupabaseDB,
   workoutExerciseId: string,
-  excludeSessionId?: string
-) {
-  const { data } = await supabase
+  excludeSessionId?: string,
+  options?: {
+    /** exercise_id do catálogo (para continuidade entre versões da rotina) */
+    catalogExerciseId?: string
+    /** variação escolhida; null/undefined = exercício principal */
+    performedExerciseId?: string | null
+  }
+): Promise<LastSetLog | null> {
+  let wexIds = [workoutExerciseId]
+
+  if (options?.catalogExerciseId) {
+    const { data: wexes } = await supabase
+      .from('workout_exercises')
+      .select('id')
+      .eq('exercise_id', options.catalogExerciseId)
+    if (wexes && wexes.length > 0) {
+      wexIds = wexes.map((w) => w.id)
+    }
+  }
+
+  let query = supabase
     .from('set_logs')
-    .select('weight_kg, reps, completed_at, session_id')
-    .eq('workout_exercise_id', workoutExerciseId)
+    .select('weight_kg, reps, rir, completed_at, session_id, performed_exercise_id, is_warmup')
+    .in('workout_exercise_id', wexIds)
+    .eq('is_warmup', false)
     .order('completed_at', { ascending: false })
     .limit(50)
 
+  if (options?.performedExerciseId) {
+    query = query.eq('performed_exercise_id', options.performedExerciseId)
+  } else {
+    query = query.is('performed_exercise_id', null)
+  }
+
+  const { data } = await query
+
   if (!data || data.length === 0) return null
 
-  // Find a set from a different session (previous session)
   const result = data.find(
     (log) => excludeSessionId == null || log.session_id !== excludeSessionId
   )
 
-  return result ?? null
+  return (result as LastSetLog | undefined) ?? null
+}
+
+/**
+ * Séries válidas da última sessão concluída do exercício (para a sugestão
+ * de progressão dupla).
+ */
+export async function getLastSessionSets(
+  supabase: SupabaseDB,
+  catalogExerciseId: string,
+  userId: string,
+  excludeSessionId?: string
+): Promise<Array<{
+  weight_kg: number | null
+  reps: number
+  rir: number | null
+  is_warmup: boolean
+  pain_level: string | null
+  execution_quality: string | null
+}>> {
+  const { data: wexes } = await supabase
+    .from('workout_exercises')
+    .select('id')
+    .eq('exercise_id', catalogExerciseId)
+
+  if (!wexes || wexes.length === 0) return []
+
+  const wexIds = wexes.map((w) => w.id)
+
+  const { data: logs } = await supabase
+    .from('set_logs')
+    .select('weight_kg, reps, rir, is_warmup, pain_level, execution_quality, session_id, completed_at')
+    .in('workout_exercise_id', wexIds)
+    .order('completed_at', { ascending: false })
+    .limit(60)
+
+  if (!logs || logs.length === 0) return []
+
+  const sessionIds = [...new Set(logs.map((l) => l.session_id))].filter(
+    (id) => id !== excludeSessionId
+  )
+  if (sessionIds.length === 0) return []
+
+  const { data: sessions } = await supabase
+    .from('workout_sessions')
+    .select('id, finished_at')
+    .eq('user_id', userId)
+    .not('finished_at', 'is', null)
+    .in('id', sessionIds)
+    .order('finished_at', { ascending: false })
+    .limit(1)
+
+  const lastSessionId = sessions?.[0]?.id
+  if (!lastSessionId) return []
+
+  return logs
+    .filter((l) => l.session_id === lastSessionId)
+    .map((l) => ({
+      weight_kg: l.weight_kg,
+      reps: l.reps,
+      rir: l.rir,
+      is_warmup: l.is_warmup,
+      pain_level: l.pain_level,
+      execution_quality: l.execution_quality,
+    }))
 }
 
 export async function getExercisePR(
@@ -51,10 +155,12 @@ export async function getExercisePR(
 
   const wexIds = wexes.map((w) => w.id)
 
+  // Aquecimento não entra nos recordes
   const { data: logs } = await supabase
     .from('set_logs')
     .select('weight_kg, reps, completed_at, session_id')
     .in('workout_exercise_id', wexIds)
+    .eq('is_warmup', false)
 
   if (!logs || logs.length === 0) return null
 

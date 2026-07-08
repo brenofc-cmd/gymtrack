@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { Trophy, Loader2, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
@@ -16,7 +16,7 @@ import { Button } from '@/components/ui/button'
 import { createClient } from '@/lib/supabase/client'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { calcVolume, formatVolume } from '@/lib/utils/volume'
-import { formatDurationLong } from '@/lib/utils/time'
+import { formatDurationLong, secondsSince } from '@/lib/utils/time'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface FinishSessionModalProps {
@@ -40,15 +40,26 @@ export function FinishSessionModal({
   const [cancelling, setCancelling] = useState(false)
   const [notes, setNotes] = useState('')
 
-  const allSets = Object.values(sets).flat()
+  // Séries de aquecimento não contam no volume válido
+  const allSets = Object.values(sets).flat().filter((s) => !s.is_warmup)
   const totalSets = allSets.length
   const totalVolume = calcVolume(allSets)
-  const durationSeconds = Math.floor(
-    (Date.now() - new Date(startedAt).getTime()) / 1000
-  )
   const completedExercises = workoutExercises.filter(
-    (we) => (sets[we.id]?.length ?? 0) > 0
+    (we) => (sets[we.id]?.filter((s) => !s.is_warmup).length ?? 0) > 0
   ).length
+
+  // Duração calculada fora do render (regra de pureza do React)
+  const [durationSeconds, setDurationSeconds] = useState(0)
+  useEffect(() => {
+    if (!open) return
+    const update = () => setDurationSeconds(secondsSince(startedAt))
+    const timeout = setTimeout(update, 0)
+    const interval = setInterval(update, 1000)
+    return () => {
+      clearTimeout(timeout)
+      clearInterval(interval)
+    }
+  }, [open, startedAt])
 
   async function handleCancel() {
     setCancelling(true)
@@ -69,7 +80,7 @@ export function FinishSessionModal({
       .from('workout_sessions')
       .update({
         finished_at: new Date().toISOString(),
-        duration_seconds: durationSeconds,
+        duration_seconds: secondsSince(startedAt),
         notes: notes.trim() || null,
       })
       .eq('id', sessionId)

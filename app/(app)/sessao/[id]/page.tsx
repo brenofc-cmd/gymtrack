@@ -3,7 +3,13 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getSessionWithLogs } from '@/lib/queries/sessions'
 import { getWorkoutById } from '@/lib/queries/workouts'
-import { getLastSetLogForExercise, getExercisePR } from '@/lib/queries/exercises'
+import {
+  getLastSetLogForExercise,
+  getLastSessionSets,
+  getExercisePR,
+} from '@/lib/queries/exercises'
+import { suggestForExercise } from '@/lib/progression/progression'
+import type { ExecutionQuality, PainLevel } from '@/types/database'
 import { SessionClient } from './SessionClient'
 
 export default async function SessaoPage(props: {
@@ -32,16 +38,43 @@ export default async function SessaoPage(props: {
   )
   if (!workoutData) notFound()
 
-  const [lastLogs, prWeights] = await Promise.all([
+  const [lastLogs, prWeights, progressions] = await Promise.all([
     Promise.all(
       workoutData.workout_exercises.map((we) =>
-        getLastSetLogForExercise(admin, we.id, id)
+        getLastSetLogForExercise(admin, we.id, id, {
+          catalogExerciseId: we.exercise_id,
+        })
       )
     ),
     Promise.all(
       workoutData.workout_exercises.map((we) =>
         getExercisePR(admin, we.exercise_id, user.id).then((pr) => pr?.maxWeight ?? null)
       )
+    ),
+    Promise.all(
+      workoutData.workout_exercises.map(async (we) => {
+        const lastSets = await getLastSessionSets(admin, we.exercise_id, user.id, id)
+        if (lastSets.length === 0) return null
+        return suggestForExercise(
+          {
+            sets: we.target_sets,
+            repsMin: we.target_reps_min,
+            repsMax: we.target_reps_max,
+            rirMin: we.rir_min,
+            rirMax: we.rir_max,
+            kind: we.exercise.exercise_type,
+            movementPattern: we.exercise.movement_pattern,
+          },
+          lastSets.map((s) => ({
+            weightKg: s.weight_kg,
+            reps: s.reps,
+            rir: s.rir,
+            isWarmup: s.is_warmup,
+            painLevel: (s.pain_level as PainLevel | null) ?? null,
+            executionQuality: (s.execution_quality as ExecutionQuality | null) ?? null,
+          }))
+        )
+      })
     ),
   ])
 
@@ -51,6 +84,7 @@ export default async function SessaoPage(props: {
       workout={workoutData}
       lastLogs={lastLogs}
       prWeights={prWeights}
+      progressions={progressions}
     />
   )
 }

@@ -8,14 +8,16 @@ import { ExerciseCard } from '@/components/session/ExerciseCard'
 import { RestTimerBar } from '@/components/session/RestTimerBar'
 import { FinishSessionModal } from '@/components/session/FinishSessionModal'
 import { useSessionStore } from '@/lib/store/sessionStore'
+import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { SessionWithLogs } from '@/lib/queries/sessions'
-import type { WorkoutWithExercises, WorkoutExerciseWithExercise } from '@/lib/queries/workouts'
+import type { WorkoutWithExercises, WorkoutExerciseWithExercise } from '@/types/database'
 
 interface SessionClientProps {
   session: SessionWithLogs
   workout: WorkoutWithExercises
-  lastLogs: Array<{ weight_kg: number | null; reps: number } | null>
+  lastLogs: Array<{ weight_kg: number | null; reps: number; rir: number | null } | null>
   prWeights: Array<number | null>
+  progressions: Array<ProgressionSuggestion | null>
 }
 
 function shortName(name: string): string {
@@ -24,11 +26,22 @@ function shortName(name: string): string {
   return words.slice(0, 2).join(' ')
 }
 
-export function SessionClient({ session, workout, lastLogs, prWeights }: SessionClientProps) {
+export function SessionClient({
+  session,
+  workout,
+  lastLogs,
+  prWeights,
+  progressions,
+}: SessionClientProps) {
   const { sessionId, startSession, sets, setCurrentExerciseIndex } = useSessionStore()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [finishModalOpen, setFinishModalOpen] = useState(false)
   const exercises = workout.workout_exercises
+
+  // Índice do primeiro exercício composto (recebe o plano de aquecimento)
+  const firstCompoundIndex = exercises.findIndex(
+    (we) => we.exercise.exercise_type === 'composto'
+  )
 
   useEffect(() => {
     if (sessionId !== session.id) {
@@ -59,15 +72,23 @@ export function SessionClient({ session, workout, lastLogs, prWeights }: Session
       <SessionHeader
         startedAt={session.started_at}
         workoutName={workout.name}
-        workoutLetter={workout.letter}
+        workoutLetter={workout.letter ?? ''}
         onFinish={() => setFinishModalOpen(true)}
       />
+
+      {/* Objetivo do treino */}
+      {workout.objective && (
+        <p className="px-4 pt-2 text-xs text-muted-foreground max-w-lg mx-auto w-full">
+          {workout.objective}
+        </p>
+      )}
 
       {/* Queue — pill scroll horizontal */}
       <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
         <div className="flex gap-2 px-4 py-3 w-max">
           {exercises.map((ex: WorkoutExerciseWithExercise, i: number) => {
-            const done = (sets[ex.id] ?? []).length >= ex.target_sets
+            const validSets = (sets[ex.id] ?? []).filter((s) => !s.is_warmup)
+            const done = validSets.length >= ex.target_sets
             const isCurrent = i === currentIndex
             return (
               <button
@@ -103,7 +124,10 @@ export function SessionClient({ session, workout, lastLogs, prWeights }: Session
           onToggle={() => {}}
           lastWeight={lastLogs[currentIndex]?.weight_kg ?? null}
           lastReps={lastLogs[currentIndex]?.reps ?? null}
+          lastRir={lastLogs[currentIndex]?.rir ?? null}
           prWeight={prWeights[currentIndex] ?? null}
+          progression={progressions[currentIndex] ?? null}
+          showWarmupPlan={currentIndex === firstCompoundIndex}
           onAllSetsComplete={() => handleAllSetsComplete(currentIndex)}
         />
 

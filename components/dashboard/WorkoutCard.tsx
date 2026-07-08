@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronRight } from 'lucide-react'
+import { DIA_LABEL } from '@/lib/routine/rotina-v2'
 import type { Workout, WorkoutLetter } from '@/types/database'
 
 interface WorkoutCardProps {
@@ -15,10 +16,13 @@ const LETTER_COLORS: Record<WorkoutLetter, string> = {
   C: 'text-violet-400 bg-violet-400/10 border-violet-400/20',
   D: 'text-orange-400 bg-orange-400/10 border-orange-400/20',
   E: 'text-pink-400 bg-pink-400/10 border-pink-400/20',
+  F: 'text-teal-400 bg-teal-400/10 border-teal-400/20',
 }
 
 export function WorkoutCard({ workout, lastSessionDate }: WorkoutCardProps) {
   const colorClass = LETTER_COLORS[workout.letter as WorkoutLetter] ?? LETTER_COLORS.A
+  const dayLabel =
+    workout.day_of_week != null ? DIA_LABEL[workout.day_of_week] : null
 
   return (
     <Link
@@ -31,7 +35,12 @@ export function WorkoutCard({ workout, lastSessionDate }: WorkoutCardProps) {
         {workout.letter}
       </div>
       <div className="flex-1 min-w-0">
-        <p className="font-semibold text-sm truncate">{workout.name}</p>
+        <p className="font-semibold text-sm truncate">
+          {workout.name}
+          {dayLabel && (
+            <span className="text-muted-foreground font-normal"> · {dayLabel}</span>
+          )}
+        </p>
         <p className="text-xs text-muted-foreground mt-0.5">
           {lastSessionDate
             ? `Última: ${formatDistanceToNow(new Date(lastSessionDate), {

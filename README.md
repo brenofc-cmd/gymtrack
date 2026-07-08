@@ -1,3 +1,26 @@
+# GymTrack
+
+App de acompanhamento de treino (Next.js 16 + Supabase) com a rotina
+**PPL 6 dias** (Push/Pull/Legs A-B, domingo descanso), progressão dupla com
+RIR, cronômetro de descanso por timestamp real, registro de execução/dor e
+histórico preservado entre versões de rotina.
+
+📋 **Documentação da rotina, progressão, migrations e rollback:**
+[docs/ROTINA.md](docs/ROTINA.md)
+
+Comandos úteis:
+
+```bash
+npm run dev        # desenvolvimento
+npm run test       # testes (Vitest)
+npm run typecheck  # tsc --noEmit
+npm run lint       # eslint
+npm run build      # build de produção
+npm run gen:rotina # regenera a migration de dados da rotina
+```
+
+---
+
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
 ## Getting Started

@@ -1,17 +1,34 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
+import type { ExecutionQuality, PainLevel } from '@/types/database'
 
 export interface LocalSetLog {
   set_number: number
   weight_kg: number | null
   reps: number
+  rir: number | null
+  is_warmup: boolean
   completed_at: string
 }
 
-interface RestTimer {
-  active: boolean
-  remaining: number
-  total: number
+export interface ExerciseFeedback {
+  executionQuality: ExecutionQuality | null
+  painLevel: PainLevel | null
+  notes: string
+}
+
+/**
+ * Cronômetro baseado em timestamp real (endsAt):
+ * - continua correto com a aba minimizada;
+ * - sobrevive à atualização da página (persistido);
+ * - pausável (pausedRemaining guarda o restante).
+ */
+export interface RestTimer {
+  /** epoch ms em que o descanso termina; null se inativo ou pausado */
+  endsAt: number | null
+  /** segundos restantes quando pausado; null se não pausado */
+  pausedRemaining: number | null
+  totalSeconds: number
   workoutExerciseId: string | null
 }
 
@@ -19,25 +36,49 @@ interface SessionStore {
   sessionId: string | null
   workoutId: string | null
   startedAt: string | null
-  sets: Record<string, LocalSetLog[]> // workoutExerciseId → completed sets
+  sets: Record<string, LocalSetLog[]> // workoutExerciseId → séries concluídas
+  feedback: Record<string, ExerciseFeedback> // workoutExerciseId → execução/dor/observações
+  variation: Record<string, string | null> // workoutExerciseId → exercise_id da variação escolhida
   currentExerciseIndex: number
   restTimer: RestTimer
 
   startSession: (sessionId: string, workoutId: string) => void
   logSet: (workoutExerciseId: string, log: LocalSetLog) => void
+  setFeedback: (workoutExerciseId: string, fb: Partial<ExerciseFeedback>) => void
+  setVariation: (workoutExerciseId: string, exerciseId: string | null) => void
   setCurrentExerciseIndex: (index: number) => void
+
   startRestTimer: (seconds: number, workoutExerciseId: string) => void
-  tickTimer: () => void
-  adjustTimer: (delta: number) => void
-  skipTimer: () => void
+  addRestSeconds: (seconds: number) => void
+  pauseRestTimer: () => void
+  resumeRestTimer: () => void
+  restartRestTimer: () => void
+  skipRestTimer: () => void
+
   resetSession: () => void
 }
 
 const INITIAL_TIMER: RestTimer = {
-  active: false,
-  remaining: 0,
-  total: 0,
+  endsAt: null,
+  pausedRemaining: null,
+  totalSeconds: 0,
   workoutExerciseId: null,
+}
+
+export function timerIsActive(t: RestTimer): boolean {
+  return t.endsAt != null || t.pausedRemaining != null
+}
+
+export function timerRemaining(t: RestTimer, now: number = Date.now()): number {
+  if (t.pausedRemaining != null) return Math.max(0, Math.ceil(t.pausedRemaining))
+  if (t.endsAt == null) return 0
+  return Math.max(0, Math.ceil((t.endsAt - now) / 1000))
+}
+
+const EMPTY_FEEDBACK: ExerciseFeedback = {
+  executionQuality: null,
+  painLevel: null,
+  notes: '',
 }
 
 export const useSessionStore = create<SessionStore>()(
@@ -47,6 +88,8 @@ export const useSessionStore = create<SessionStore>()(
       workoutId: null,
       startedAt: null,
       sets: {},
+      feedback: {},
+      variation: {},
       currentExerciseIndex: 0,
       restTimer: INITIAL_TIMER,
 
@@ -56,6 +99,8 @@ export const useSessionStore = create<SessionStore>()(
           workoutId,
           startedAt: new Date().toISOString(),
           sets: {},
+          feedback: {},
+          variation: {},
           currentExerciseIndex: 0,
           restTimer: INITIAL_TIMER,
         }),
@@ -64,46 +109,101 @@ export const useSessionStore = create<SessionStore>()(
         set((state) => ({
           sets: {
             ...state.sets,
-            [workoutExerciseId]: [
-              ...(state.sets[workoutExerciseId] ?? []),
-              log,
-            ],
+            [workoutExerciseId]: [...(state.sets[workoutExerciseId] ?? []), log],
           },
         })),
 
-      setCurrentExerciseIndex: (index) =>
-        set({ currentExerciseIndex: index }),
+      setFeedback: (workoutExerciseId, fb) =>
+        set((state) => ({
+          feedback: {
+            ...state.feedback,
+            [workoutExerciseId]: {
+              ...(state.feedback[workoutExerciseId] ?? EMPTY_FEEDBACK),
+              ...fb,
+            },
+          },
+        })),
+
+      setVariation: (workoutExerciseId, exerciseId) =>
+        set((state) => ({
+          variation: { ...state.variation, [workoutExerciseId]: exerciseId },
+        })),
+
+      setCurrentExerciseIndex: (index) => set({ currentExerciseIndex: index }),
 
       startRestTimer: (seconds, workoutExerciseId) =>
         set({
           restTimer: {
-            active: true,
-            remaining: seconds,
-            total: seconds,
+            endsAt: Date.now() + seconds * 1000,
+            pausedRemaining: null,
+            totalSeconds: seconds,
             workoutExerciseId,
           },
         }),
 
-      tickTimer: () =>
+      addRestSeconds: (seconds) =>
         set((state) => {
-          if (!state.restTimer.active) return state
-          const remaining = state.restTimer.remaining - 1
-          if (remaining <= 0) {
-            return { restTimer: { ...state.restTimer, active: false, remaining: 0 } }
+          const t = state.restTimer
+          if (t.pausedRemaining != null) {
+            return {
+              restTimer: { ...t, pausedRemaining: Math.max(0, t.pausedRemaining + seconds) },
+            }
           }
-          return { restTimer: { ...state.restTimer, remaining } }
+          if (t.endsAt == null) return state
+          return {
+            restTimer: {
+              ...t,
+              endsAt: Math.max(Date.now(), t.endsAt + seconds * 1000),
+            },
+          }
         }),
 
-      adjustTimer: (delta) =>
+      pauseRestTimer: () =>
         set((state) => {
-          if (!state.restTimer.active) return state
-          const remaining = Math.max(5, state.restTimer.remaining + delta)
-          return { restTimer: { ...state.restTimer, remaining } }
+          const t = state.restTimer
+          if (t.endsAt == null) return state
+          return {
+            restTimer: {
+              ...t,
+              pausedRemaining: timerRemaining(t),
+              endsAt: null,
+            },
+          }
         }),
 
-      skipTimer: () =>
+      resumeRestTimer: () =>
+        set((state) => {
+          const t = state.restTimer
+          if (t.pausedRemaining == null) return state
+          return {
+            restTimer: {
+              ...t,
+              endsAt: Date.now() + t.pausedRemaining * 1000,
+              pausedRemaining: null,
+            },
+          }
+        }),
+
+      restartRestTimer: () =>
+        set((state) => {
+          const t = state.restTimer
+          if (t.totalSeconds <= 0) return state
+          return {
+            restTimer: {
+              ...t,
+              endsAt: Date.now() + t.totalSeconds * 1000,
+              pausedRemaining: null,
+            },
+          }
+        }),
+
+      skipRestTimer: () =>
         set((state) => ({
-          restTimer: { ...state.restTimer, active: false, remaining: 0 },
+          restTimer: {
+            ...state.restTimer,
+            endsAt: null,
+            pausedRemaining: null,
+          },
         })),
 
       resetSession: () =>
@@ -112,6 +212,8 @@ export const useSessionStore = create<SessionStore>()(
           workoutId: null,
           startedAt: null,
           sets: {},
+          feedback: {},
+          variation: {},
           currentExerciseIndex: 0,
           restTimer: INITIAL_TIMER,
         }),

@@ -1,7 +1,8 @@
 import Image from 'next/image'
 import Link from 'next/link'
-import { Clock, Repeat, Star } from 'lucide-react'
+import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/rotina-v2'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface ExerciseListItemProps {
@@ -54,17 +55,31 @@ export function ExerciseListItem({
             <Star className="w-3.5 h-3.5 text-amber-500 shrink-0 fill-amber-500" aria-label="Exercício prioritário" />
           )}
         </div>
-        <div className="flex items-center gap-3 mt-1.5">
+        <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Repeat className="w-3 h-3" />
             {workoutExercise.target_sets}×{workoutExercise.target_reps_min}
             {workoutExercise.target_reps_min !== workoutExercise.target_reps_max &&
               `-${workoutExercise.target_reps_max}`}
           </span>
+          {workoutExercise.rir_min != null && (
+            <span className="flex items-center gap-1 text-xs text-muted-foreground">
+              <Gauge className="w-3 h-3" />
+              RIR{' '}
+              {workoutExercise.rir_min === workoutExercise.rir_max
+                ? workoutExercise.rir_min
+                : `${workoutExercise.rir_min}–${workoutExercise.rir_max}`}
+            </span>
+          )}
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
             {workoutExercise.rest_seconds}s
           </span>
+          {exercise.exercise_type === 'abdominal' && exercise.movement_pattern && (
+            <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+              {MOVEMENT_PATTERN_LABEL[exercise.movement_pattern]}
+            </span>
+          )}
         </div>
         {lastWeight != null && (
           <p className="text-xs text-primary mt-1">

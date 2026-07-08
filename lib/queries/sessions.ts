@@ -14,7 +14,15 @@ export async function saveSetLog(
   supabase: SupabaseDB,
   sessionId: string,
   workoutExerciseId: string,
-  log: { set_number: number; weight_kg: number | null; reps: number; rpe?: number | null; completed_at: string }
+  log: {
+    set_number: number
+    weight_kg: number | null
+    reps: number
+    rir?: number | null
+    is_warmup?: boolean
+    performed_exercise_id?: string | null
+    completed_at: string
+  }
 ): Promise<void> {
   const { error } = await supabase.from('set_logs').insert({
     session_id: sessionId,
@@ -22,9 +30,37 @@ export async function saveSetLog(
     set_number: log.set_number,
     weight_kg: log.weight_kg,
     reps: log.reps,
-    rpe: log.rpe ?? null,
+    rir: log.rir ?? null,
+    is_warmup: log.is_warmup ?? false,
+    performed_exercise_id: log.performed_exercise_id ?? null,
     completed_at: log.completed_at,
   })
+  if (error) throw error
+}
+
+/**
+ * Aplica execução/dor/observações do exercício a todas as séries da sessão
+ * (registro por exercício, conforme a rotina v2).
+ */
+export async function saveExerciseFeedback(
+  supabase: SupabaseDB,
+  sessionId: string,
+  workoutExerciseId: string,
+  feedback: {
+    execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
+    pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+    notes?: string | null
+  }
+): Promise<void> {
+  const { error } = await supabase
+    .from('set_logs')
+    .update({
+      execution_quality: feedback.execution_quality ?? null,
+      pain_level: feedback.pain_level ?? null,
+      notes: feedback.notes || null,
+    })
+    .eq('session_id', sessionId)
+    .eq('workout_exercise_id', workoutExerciseId)
   if (error) throw error
 }
 
@@ -150,11 +186,12 @@ export async function getMuscleGroupDistribution(
 
   const sessionIds = sessions.map((s) => s.id)
 
-  // Set logs com grupo muscular do exercício
+  // Set logs com grupo muscular do exercício (séries válidas apenas)
   const { data: logs } = await supabase
     .from('set_logs')
     .select('workout_exercise:workout_exercises(exercise:exercises(muscle_group))')
     .in('session_id', sessionIds)
+    .eq('is_warmup', false)
 
   if (!logs || logs.length === 0) return []
 
@@ -230,6 +267,7 @@ export async function getPreviousSessionVolume(
     .from('set_logs')
     .select('weight_kg, reps')
     .eq('session_id', (prevSession as { id: string }).id)
+    .eq('is_warmup', false)
 
   if (!logs || logs.length === 0) return null
 
@@ -237,6 +275,53 @@ export async function getPreviousSessionVolume(
     (sum, s) => sum + (s.weight_kg ?? 0) * s.reps,
     0
   )
+}
+
+/**
+ * Volume (kg × reps, séries válidas) das últimas sessões concluídas de um
+ * treino, da mais antiga para a mais recente — para o alerta de recuperação.
+ */
+export async function getWorkoutVolumeHistory(
+  supabase: SupabaseDB,
+  userId: string,
+  workoutId: string,
+  limit = 3
+): Promise<Array<{ volume: number; finishedAt: string }>> {
+  const { data: sessions } = await supabase
+    .from('workout_sessions')
+    .select('id, finished_at')
+    .eq('user_id', userId)
+    .eq('workout_id', workoutId)
+    .not('finished_at', 'is', null)
+    .order('finished_at', { ascending: false })
+    .limit(limit)
+
+  if (!sessions || sessions.length === 0) return []
+
+  const { data: logs } = await supabase
+    .from('set_logs')
+    .select('session_id, weight_kg, reps')
+    .in('session_id', sessions.map((s) => s.id))
+    .eq('is_warmup', false)
+
+  const volumeBySession = new Map<string, number>()
+  for (const log of (logs ?? []) as Array<{
+    session_id: string
+    weight_kg: number | null
+    reps: number
+  }>) {
+    volumeBySession.set(
+      log.session_id,
+      (volumeBySession.get(log.session_id) ?? 0) + (log.weight_kg ?? 0) * log.reps
+    )
+  }
+
+  return sessions
+    .map((s) => ({
+      volume: volumeBySession.get(s.id) ?? 0,
+      finishedAt: s.finished_at as string,
+    }))
+    .reverse()
 }
 
 export async function getActiveSession(
@@ -309,6 +394,7 @@ export async function getWeekStats(
     .from('set_logs')
     .select('weight_kg, reps')
     .in('session_id', sessionIds)
+    .eq('is_warmup', false)
 
   const totalVolumeKg = (
     (setLogs ?? []) as Array<{ weight_kg: number | null; reps: number }>

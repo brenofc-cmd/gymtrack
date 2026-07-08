@@ -8,9 +8,10 @@ import {
   getActiveSession,
   getTrainingDays,
   getMuscleGroupDistribution,
+  getWorkoutVolumeHistory,
 } from '@/lib/queries/sessions'
+import { analyzeRecovery } from '@/lib/progression/recovery'
 import { getStreakStats } from '@/lib/utils/streak'
-import { LogoutButton } from '@/components/auth/LogoutButton'
 import { StreakCard } from '@/components/dashboard/StreakCard'
 import { WorkoutSuggestion } from '@/components/dashboard/WorkoutSuggestion'
 import { WorkoutCard } from '@/components/dashboard/WorkoutCard'
@@ -18,6 +19,10 @@ import { WeekStats } from '@/components/dashboard/WeekStats'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { TrainingHeatmap } from '@/components/dashboard/TrainingHeatmap'
 import { MuscleDistribution } from '@/components/dashboard/MuscleDistribution'
+import { RestDayCard } from '@/components/dashboard/RestDayCard'
+import { PlannedVolumeCard } from '@/components/dashboard/PlannedVolumeCard'
+import { RecoveryAlertCard } from '@/components/dashboard/RecoveryAlertCard'
+import { AVISO_GERAL } from '@/lib/routine/rotina-v2'
 import type { WorkoutLetter } from '@/types/database'
 
 export default async function DashboardPage() {
@@ -31,7 +36,7 @@ export default async function DashboardPage() {
   const admin = createAdminClient()
 
   let workouts = [] as Awaited<ReturnType<typeof getWorkouts>>
-  let suggestedLetter: WorkoutLetter = 'A'
+  let suggestedLetter: WorkoutLetter | null = 'A'
   let lastSessions = [] as Awaited<ReturnType<typeof getLastSessionsPerWorkout>>
   let weekStats = { count: 0, totalSeconds: 0, totalVolumeKg: 0 }
   let streakStats = { current: 0, longest: 0 }
@@ -56,6 +61,17 @@ export default async function DashboardPage() {
   }
 
   const suggestedWorkout = workouts.find((w) => w.letter === suggestedLetter) ?? null
+
+  // Alerta de recuperação: volume do treino sugerido caindo em 2+ sessões
+  let recoveryAlert = null as ReturnType<typeof analyzeRecovery>
+  if (suggestedWorkout) {
+    try {
+      const volumeHistory = await getWorkoutVolumeHistory(admin, user.id, suggestedWorkout.id)
+      recoveryAlert = analyzeRecovery(volumeHistory)
+    } catch {
+      // sem histórico suficiente — sem alerta
+    }
+  }
 
   const lastSessionMap = new Map<string, string>()
   for (const s of lastSessions) {
@@ -90,13 +106,20 @@ export default async function DashboardPage() {
       {/* Streak */}
       <StreakCard streak={streakStats.current} longestStreak={streakStats.longest} />
 
-      {/* Sugestão do dia */}
-      <WorkoutSuggestion
-        letter={suggestedLetter as WorkoutLetter}
-        workout={suggestedWorkout}
-        exerciseCount={suggestedExerciseCount}
-        lastTrainedDate={suggestedLastDate}
-      />
+      {/* Sugestão do dia (domingo = descanso) */}
+      {suggestedLetter === null ? (
+        <RestDayCard />
+      ) : (
+        <WorkoutSuggestion
+          letter={suggestedLetter}
+          workout={suggestedWorkout}
+          exerciseCount={suggestedExerciseCount}
+          lastTrainedDate={suggestedLastDate}
+        />
+      )}
+
+      {/* Alerta discreto de recuperação */}
+      {recoveryAlert && <RecoveryAlertCard alert={recoveryAlert} />}
 
       {/* Stats da semana */}
       <WeekStats
@@ -104,6 +127,9 @@ export default async function DashboardPage() {
         totalSeconds={weekStats.totalSeconds}
         totalVolumeKg={weekStats.totalVolumeKg}
       />
+
+      {/* Volume semanal planejado pela rotina */}
+      <PlannedVolumeCard />
 
       {/* Heatmap de treinos */}
       <TrainingHeatmap trainingDays={trainingDays} />
@@ -126,6 +152,11 @@ export default async function DashboardPage() {
           ))}
         </div>
       </div>
+
+      {/* Aviso */}
+      <p className="text-[10px] leading-relaxed text-muted-foreground/60 text-center px-2 pb-2">
+        {AVISO_GERAL}
+      </p>
     </div>
   )
 }

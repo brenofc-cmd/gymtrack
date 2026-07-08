@@ -6,6 +6,7 @@ import { getLifetimeStats } from '@/lib/queries/profile'
 import { getTrainingDays, getMuscleGroupDistribution } from '@/lib/queries/sessions'
 import { getWeeklyVolume } from '@/lib/queries/analytics'
 import { formatVolume } from '@/lib/utils/volume'
+import { weeksSince } from '@/lib/utils/time'
 import { WeeklyVolumeChart } from '@/components/analytics/WeeklyVolumeChart'
 import { WeekdayFrequencyChart } from '@/components/analytics/WeekdayFrequencyChart'
 
@@ -31,13 +32,7 @@ export default async function AnalisesPage() {
 
   // Semanas ativas e média
   const weeksActive = lifetimeStats.memberSince
-    ? Math.max(
-        1,
-        Math.round(
-          (Date.now() - new Date(lifetimeStats.memberSince).getTime()) /
-            (7 * 24 * 60 * 60 * 1000)
-        )
-      )
+    ? weeksSince(lifetimeStats.memberSince)
     : 1
   const avgPerWeek = (lifetimeStats.totalSessions / weeksActive).toFixed(1)
 

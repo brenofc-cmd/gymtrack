@@ -1,15 +1,31 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Image from 'next/image'
 import { AnimatePresence, motion } from 'framer-motion'
-import { ChevronDown, CheckCircle2, Trophy } from 'lucide-react'
+import {
+  ChevronDown,
+  CheckCircle2,
+  Trophy,
+  Flame,
+  TrendingUp,
+  MinusCircle,
+  AlertTriangle,
+  OctagonAlert,
+  Repeat2,
+  BookOpen,
+  Plus,
+} from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { SetRow } from './SetRow'
+import { ExerciseFeedbackPanel } from './ExerciseFeedbackPanel'
+import { WarmupPanel } from './WarmupPanel'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
 import { saveSetLog } from '@/lib/queries/sessions'
+import { MOVEMENT_PATTERN_LABEL, AVISO_ABDOMEN } from '@/lib/routine/rotina-v2'
+import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface ExerciseCardProps {
@@ -19,8 +35,38 @@ interface ExerciseCardProps {
   onToggle: () => void
   lastWeight: number | null
   lastReps: number | null
+  lastRir: number | null
   prWeight: number | null
+  progression: ProgressionSuggestion | null
+  /** Mostra plano de aquecimento (primeiro composto do treino) */
+  showWarmupPlan: boolean
   onAllSetsComplete: () => void
+}
+
+const PROGRESSION_STYLE: Record<
+  ProgressionSuggestion['action'],
+  { icon: typeof TrendingUp; className: string; title: string }
+> = {
+  aumentar: {
+    icon: TrendingUp,
+    className: 'border-primary/30 bg-primary/10 text-primary',
+    title: 'Sugestão: aumentar carga',
+  },
+  manter: {
+    icon: MinusCircle,
+    className: 'border-border bg-card text-muted-foreground',
+    title: 'Sugestão: manter carga',
+  },
+  revisar: {
+    icon: AlertTriangle,
+    className: 'border-amber-500/30 bg-amber-500/10 text-amber-500',
+    title: 'Sugestão: revisar carga',
+  },
+  bloquear_por_dor: {
+    icon: OctagonAlert,
+    className: 'border-destructive/40 bg-destructive/10 text-destructive',
+    title: 'Progressão bloqueada por dor',
+  },
 }
 
 export function ExerciseCard({
@@ -30,35 +76,66 @@ export function ExerciseCard({
   onToggle,
   lastWeight,
   lastReps,
+  lastRir,
   prWeight,
+  progression,
+  showWarmupPlan,
   onAllSetsComplete,
 }: ExerciseCardProps) {
   const { exercise } = workoutExercise
-  const { sets: storeSets, logSet, startRestTimer } = useSessionStore()
-  const completedSets = storeSets[workoutExercise.id] ?? []
+  const substitutions = workoutExercise.substitutions ?? []
+  const {
+    sets: storeSets,
+    logSet,
+    startRestTimer,
+    variation,
+    setVariation,
+  } = useSessionStore()
+
+  const allLogged = storeSets[workoutExercise.id] ?? []
+  const completedSets = allLogged.filter((s) => !s.is_warmup)
+  const warmupSets = allLogged.filter((s) => s.is_warmup)
   const totalSets = workoutExercise.target_sets
   const allDone = completedSets.length >= totalSets
-  const [notifiedDone, setNotifiedDone] = useState(false)
+  const notifiedDoneRef = useRef(false)
   const [newPR, setNewPR] = useState(false)
+  const [showInstructions, setShowInstructions] = useState(false)
+  const [extraWarmupRows, setExtraWarmupRows] = useState(0)
+
+  const selectedVariation = variation[workoutExercise.id] ?? null
+  const isAbdominal = exercise.exercise_type === 'abdominal'
+  const movementPattern = exercise.movement_pattern
 
   useEffect(() => {
-    if (allDone && !notifiedDone) {
-      setNotifiedDone(true)
+    if (allDone && !notifiedDoneRef.current) {
+      notifiedDoneRef.current = true
       onAllSetsComplete()
     }
-  }, [allDone, notifiedDone, onAllSetsComplete])
+  }, [allDone, onAllSetsComplete])
 
   async function handleSetComplete(
     setNumber: number,
     weight: number | null,
-    reps: number
+    reps: number,
+    rir: number | null,
+    isWarmup: boolean
   ) {
     const completed_at = new Date().toISOString()
-    logSet(workoutExercise.id, { set_number: setNumber, weight_kg: weight, reps, completed_at })
-    startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
+    logSet(workoutExercise.id, {
+      set_number: setNumber,
+      weight_kg: weight,
+      reps,
+      rir,
+      is_warmup: isWarmup,
+      completed_at,
+    })
 
-    if (weight !== null && prWeight !== null && weight > prWeight) {
-      setNewPR(true)
+    // Aquecimento não dispara o cronômetro de descanso completo
+    if (!isWarmup) {
+      startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
+      if (weight !== null && prWeight !== null && weight > prWeight) {
+        setNewPR(true)
+      }
     }
 
     try {
@@ -67,6 +144,9 @@ export function ExerciseCard({
         set_number: setNumber,
         weight_kg: weight,
         reps,
+        rir,
+        is_warmup: isWarmup,
+        performed_exercise_id: selectedVariation,
         completed_at,
       })
     } catch {
@@ -74,7 +154,7 @@ export function ExerciseCard({
     }
   }
 
-  // Pre-fill logic: last completed set in this session, else last session
+  // Pré-preenchimento: última série desta sessão, senão última sessão
   function getDefaultForSet(setIndex: number) {
     const prev = completedSets[setIndex - 1]
     if (prev) return { weight: prev.weight_kg, reps: prev.reps }
@@ -83,6 +163,10 @@ export function ExerciseCard({
       reps: lastReps ?? workoutExercise.target_reps_min,
     }
   }
+
+  const progressionStyle = progression ? PROGRESSION_STYLE[progression.action] : null
+  const guidance = workoutExercise.technique_notes ?? exercise.instructions ?? []
+  const warmupRowCount = Math.max(warmupSets.length, 0) + extraWarmupRows
 
   return (
     <div
@@ -96,7 +180,6 @@ export function ExerciseCard({
         onClick={onToggle}
         className="w-full flex items-center gap-3 p-3 text-left"
       >
-        {/* GIF thumbnail */}
         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
           {exercise.gif_url ? (
             <Image
@@ -117,7 +200,12 @@ export function ExerciseCard({
           <p className="font-semibold text-sm leading-tight truncate">
             {exercise.name_pt}
           </p>
-          <div className="flex items-center gap-1.5 mt-1.5">
+          <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
+            {isAbdominal && movementPattern && (
+              <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
+                {MOVEMENT_PATTERN_LABEL[movementPattern]}
+              </span>
+            )}
             {newPR && (
               <span className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
                 <Trophy className="w-3 h-3" />
@@ -135,9 +223,7 @@ export function ExerciseCard({
                   key={i}
                   className={cn(
                     'w-3 h-3 rounded-full transition-all duration-300',
-                    i < completedSets.length
-                      ? 'bg-primary scale-110'
-                      : 'bg-zinc-700'
+                    i < completedSets.length ? 'bg-primary scale-110' : 'bg-zinc-700'
                   )}
                 />
               ))
@@ -153,7 +239,6 @@ export function ExerciseCard({
         />
       </button>
 
-      {/* Expandable sets */}
       <AnimatePresence initial={false}>
         {isOpen && (
           <motion.div
@@ -164,37 +249,227 @@ export function ExerciseCard({
             transition={{ duration: 0.2, ease: 'easeInOut' }}
             className="overflow-hidden"
           >
-            <div className="px-3 pb-3 space-y-1">
-              {/* Table header */}
-              <div className="grid grid-cols-[40px_1fr_1fr_48px] gap-2 px-1">
-                <span className="text-xs text-muted-foreground text-center">Série</span>
-                <span className="text-xs text-muted-foreground text-center">Peso</span>
-                <span className="text-xs text-muted-foreground text-center">Reps</span>
-                <span />
+            <div className="px-3 pb-3 space-y-2">
+              {/* Contexto: anterior, recorde, meta */}
+              <div className="flex items-center gap-3 flex-wrap text-xs text-muted-foreground border-b border-border pb-2">
+                <span>
+                  Meta:{' '}
+                  <span className="text-foreground font-semibold">
+                    {totalSets}×{workoutExercise.target_reps_min}–{workoutExercise.target_reps_max}
+                  </span>
+                </span>
+                {workoutExercise.rir_min != null && (
+                  <span>
+                    RIR:{' '}
+                    <span className="text-foreground font-semibold">
+                      {workoutExercise.rir_min === workoutExercise.rir_max
+                        ? workoutExercise.rir_min
+                        : `${workoutExercise.rir_min}–${workoutExercise.rir_max}`}
+                    </span>
+                  </span>
+                )}
+                <span>
+                  Descanso:{' '}
+                  <span className="text-foreground font-semibold">
+                    {workoutExercise.rest_seconds}s
+                  </span>
+                </span>
+                {lastWeight != null && (
+                  <span>
+                    Anterior:{' '}
+                    <span className="text-foreground font-semibold">
+                      {lastWeight}kg × {lastReps}
+                      {lastRir != null ? ` @RIR ${lastRir}` : ''}
+                    </span>
+                  </span>
+                )}
+                {prWeight != null && (
+                  <span>
+                    Recorde:{' '}
+                    <span className="text-foreground font-semibold">{prWeight}kg</span>
+                  </span>
+                )}
               </div>
 
-              {/* Rows */}
-              {Array.from({ length: totalSets }, (_, i) => {
-                const completed = completedSets[i] ?? null
-                const defaults = getDefaultForSet(i)
-                return (
-                  <SetRow
-                    key={i}
-                    setNumber={i + 1}
-                    defaultWeight={defaults.weight}
-                    defaultReps={defaults.reps}
-                    completed={completed}
-                    onComplete={(w, r) => handleSetComplete(i + 1, w, r)}
-                  />
-                )
-              })}
+              {/* Sugestão de progressão */}
+              {progression && progressionStyle && (
+                <div
+                  className={cn(
+                    'flex gap-2 items-start rounded-xl border px-3 py-2',
+                    progressionStyle.className
+                  )}
+                >
+                  <progressionStyle.icon className="w-4 h-4 shrink-0 mt-0.5" />
+                  <div className="min-w-0">
+                    <p className="text-xs font-semibold">
+                      {progressionStyle.title}
+                      {progression.incrementKg ? ` (+${progression.incrementKg}kg)` : ''}
+                    </p>
+                    <p className="text-xs opacity-90 mt-0.5">{progression.reason}</p>
+                  </div>
+                </div>
+              )}
 
-              {/* Notes */}
+              {/* Variação / substituição */}
+              {substitutions.length > 0 && (
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
+                    <Repeat2 className="w-3 h-3" />
+                    Variação
+                  </span>
+                  <div className="flex gap-1 flex-wrap">
+                    <button
+                      onClick={() => setVariation(workoutExercise.id, null)}
+                      className={cn(
+                        'px-2 h-7 rounded-md text-xs font-medium border transition-colors',
+                        selectedVariation === null
+                          ? 'bg-primary text-primary-foreground border-primary'
+                          : 'border-border text-muted-foreground hover:border-primary/40'
+                      )}
+                    >
+                      {exercise.name_pt.length > 24
+                        ? exercise.name_pt.slice(0, 24) + '…'
+                        : exercise.name_pt}
+                    </button>
+                    {substitutions.map((sub) => (
+                      <button
+                        key={sub.id}
+                        onClick={() => setVariation(workoutExercise.id, sub.exercise.id)}
+                        className={cn(
+                          'px-2 h-7 rounded-md text-xs font-medium border transition-colors',
+                          selectedVariation === sub.exercise.id
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'border-border text-muted-foreground hover:border-primary/40'
+                        )}
+                      >
+                        {sub.exercise.name_pt.length > 24
+                          ? sub.exercise.name_pt.slice(0, 24) + '…'
+                          : sub.exercise.name_pt}
+                      </button>
+                    ))}
+                  </div>
+                  {selectedVariation !== null && (
+                    <p className="w-full text-[10px] text-muted-foreground">
+                      O histórico desta variação é registrado separadamente para não comparar
+                      cargas incompatíveis.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {/* Plano de aquecimento (primeiro composto) */}
+              {showWarmupPlan && <WarmupPanel workingWeightKg={lastWeight} />}
+
+              {/* Aquecimento — séries não contam no volume */}
+              {(warmupRowCount > 0 || !allDone) && (
+                <div className="space-y-1">
+                  {warmupRowCount > 0 && (
+                    <p className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-amber-500/90 px-1">
+                      <Flame className="w-3 h-3" />
+                      Aquecimento (não conta no volume)
+                    </p>
+                  )}
+                  {Array.from({ length: warmupRowCount }, (_, i) => {
+                    const completed = warmupSets[i] ?? null
+                    return (
+                      <SetRow
+                        key={`w-${i}`}
+                        setNumber={i + 1}
+                        isWarmup
+                        defaultWeight={null}
+                        defaultReps={null}
+                        completed={completed}
+                        onComplete={(w, r) => handleSetComplete(i + 1, w, r, null, true)}
+                      />
+                    )
+                  })}
+                  {!allDone && (
+                    <button
+                      onClick={() => setExtraWarmupRows((n) => n + 1)}
+                      className="flex items-center gap-1 text-xs text-muted-foreground hover:text-amber-500 transition-colors px-1 py-1"
+                    >
+                      <Plus className="w-3 h-3" />
+                      Série de aquecimento
+                    </button>
+                  )}
+                </div>
+              )}
+
+              {/* Séries válidas */}
+              <div className="space-y-1">
+                <div className="grid grid-cols-[32px_1fr_1fr_44px] gap-2 px-1">
+                  <span className="text-xs text-muted-foreground text-center">Série</span>
+                  <span className="text-xs text-muted-foreground text-center">Peso</span>
+                  <span className="text-xs text-muted-foreground text-center">Reps</span>
+                  <span />
+                </div>
+
+                {Array.from({ length: totalSets }, (_, i) => {
+                  const completed = completedSets[i] ?? null
+                  const defaults = getDefaultForSet(i)
+                  return (
+                    <SetRow
+                      key={i}
+                      setNumber={i + 1}
+                      defaultWeight={defaults.weight}
+                      defaultReps={defaults.reps}
+                      targetRirMin={workoutExercise.rir_min}
+                      targetRirMax={workoutExercise.rir_max}
+                      completed={completed}
+                      onComplete={(w, r, rir) => handleSetComplete(i + 1, w, r, rir, false)}
+                    />
+                  )
+                })}
+              </div>
+
+              {/* Orientação curta + instruções completas */}
+              {guidance.length > 0 && (
+                <div className="pt-1 border-t border-border">
+                  <p className="text-xs text-muted-foreground italic">{guidance[0]}</p>
+                  {guidance.length > 1 && (
+                    <>
+                      <button
+                        onClick={() => setShowInstructions((v) => !v)}
+                        className="flex items-center gap-1 text-xs text-primary mt-1"
+                      >
+                        <BookOpen className="w-3 h-3" />
+                        {showInstructions ? 'Ocultar instruções' : 'Instruções completas'}
+                      </button>
+                      {showInstructions && (
+                        <ul className="mt-1.5 space-y-1">
+                          {guidance.slice(1).map((g, i) => (
+                            <li key={i} className="text-xs text-muted-foreground flex gap-1.5">
+                              <span className="text-primary shrink-0">·</span>
+                              {g}
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                    </>
+                  )}
+                </div>
+              )}
+
+              {/* Nota do exercício (ex: repetições por lado) */}
               {workoutExercise.notes && (
-                <p className="text-xs text-muted-foreground italic pt-1 border-t border-border mt-2">
+                <p className="text-xs text-muted-foreground italic">
                   {workoutExercise.notes}
                 </p>
               )}
+
+              {/* Aviso discreto de abdômen */}
+              {isAbdominal && (
+                <p className="text-[10px] leading-relaxed text-muted-foreground/80 border-t border-border pt-2">
+                  {AVISO_ABDOMEN}
+                </p>
+              )}
+
+              {/* Execução / dor / observações */}
+              <ExerciseFeedbackPanel
+                sessionId={sessionId}
+                workoutExerciseId={workoutExercise.id}
+                hasSubstitutions={substitutions.length > 0}
+              />
             </div>
           </motion.div>
         )}

@@ -37,7 +37,7 @@ export function WorkoutSuggestion({
         <div className="flex items-center gap-2 mb-4">
           <span className="w-1.5 h-1.5 rounded-full bg-primary" />
           <span className="text-[10px] font-semibold uppercase tracking-[0.12em] text-primary">
-            Sugerido para hoje
+            Treino de hoje
           </span>
         </div>
 
