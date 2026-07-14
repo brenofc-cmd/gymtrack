@@ -335,6 +335,12 @@ export function ExerciseCard({
                 </div>
               )}
 
+              <p className="rounded-lg border border-border bg-secondary/40 px-3 py-2 text-[10.5px] leading-relaxed text-muted-foreground">
+                {workoutExercise.failure_allowed
+                  ? 'Falha não é obrigatória. Somente a última série pode chegar a RIR 0–1 após adaptação, com prontidão boa, técnica controlada e sem dor.'
+                  : 'Falha bloqueada neste exercício: mantenha o RIR planejado e encerre a série antes de perder técnica.'}
+              </p>
+
               <div className="grid grid-cols-2 gap-2">
                 <button
                   type="button"

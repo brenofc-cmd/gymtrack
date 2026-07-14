@@ -6,7 +6,7 @@ import {
   secondaryVolumeByMuscle,
 } from '@/lib/routine/powerbuilding-v4'
 import { backoffWeight, estimated1RM, isValidPRSet } from '@/lib/training/strength'
-import { assessReadiness, readinessAdjustment } from '@/lib/training/readiness'
+import { adjustProgressionForReadiness, assessReadiness, readinessAdjustment } from '@/lib/training/readiness'
 import { canApproachFailure } from '@/lib/training/failure-policy'
 import { nextRotatingWorkout, rotatingCycle } from '@/lib/training/schedule'
 
@@ -74,6 +74,13 @@ describe('Prontidão, falha e agenda flexível', () => {
     const pain = assessReadiness({ sleepQuality: 5, energy: 5, muscleSoreness: 1, jointPain: 'moderate', stress: 1, motivation: 5, recoveryFeeling: 5 })
     expect(pain.status).toBe('stop_for_pain')
     expect(readinessAdjustment('low_recovery').loadMultiplier).toBeCloseTo(0.925)
+  })
+
+  it('prontidão realmente impede sugestão de aumento no treino atual', () => {
+    const increase = { action: 'aumentar' as const, reason: 'meta atingida', incrementKg: 2.5 }
+    expect(adjustProgressionForReadiness(increase, 'attention')?.action).toBe('manter')
+    expect(adjustProgressionForReadiness(increase, 'low_recovery')?.action).toBe('revisar')
+    expect(adjustProgressionForReadiness(increase, 'stop_for_pain')?.action).toBe('bloquear_por_dor')
   })
 
   it('só permite aproximação opcional da falha em cenário seguro', () => {
