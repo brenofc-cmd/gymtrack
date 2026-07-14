@@ -10,7 +10,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "seed": "tsx scripts/seed.ts",
-    "gen:rotina": "tsx scripts/generate-rotina-v2-sql.ts"
+    "gen:rotina": "tsx scripts/generate-rotina-v2-sql.ts",
+    "sync:exercise-images": "node scripts/download-exercise-images.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

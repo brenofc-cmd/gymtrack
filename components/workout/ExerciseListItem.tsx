@@ -2,6 +2,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import { getExerciseImage } from '@/lib/exercise-media'
 import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/rotina-v2'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
@@ -28,21 +29,14 @@ export function ExerciseListItem({
         is_priority ? 'border-amber-500/60' : 'border-border'
       )}
     >
-      {/* GIF thumbnail */}
+      {/* Exercise thumbnail */}
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-        {exercise.gif_url ? (
-          <Image
-            src={exercise.gif_url}
-            alt={exercise.name_pt}
-            fill
-            className="object-cover"
-            unoptimized
-          />
-        ) : (
-          <div className="w-full h-full flex items-center justify-center text-2xl">
-            💪
-          </div>
-        )}
+        <Image
+          src={getExerciseImage(exercise.gif_url)}
+          alt={`Demonstração de ${exercise.name_pt}`}
+          fill
+          className="object-cover"
+        />
       </div>
 
       {/* Info */}

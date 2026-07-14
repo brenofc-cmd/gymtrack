@@ -8,6 +8,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getExercise, getExerciseProgressHistory, getExercisePR } from '@/lib/queries/exercises'
 import { ProgressChart } from '@/components/exercise/ProgressChart'
+import { getExerciseImage } from '@/lib/exercise-media'
 
 export default async function ExercicioPage(props: {
   params: Promise<{ id: string }>
@@ -58,19 +59,16 @@ export default async function ExercicioPage(props: {
       </div>
 
       <div className="space-y-4">
-        {/* GIF */}
-        {exercise.gif_url && (
-          <div className="relative w-full aspect-square bg-zinc-900">
-            <Image
-              src={exercise.gif_url}
-              alt={exercise.name_pt}
-              fill
-              className="object-contain"
-              unoptimized
-              priority
-            />
-          </div>
-        )}
+        {/* Exercise photo */}
+        <div className="relative w-full aspect-square bg-zinc-900">
+          <Image
+            src={getExerciseImage(exercise.gif_url)}
+            alt={`Demonstração de ${exercise.name_pt}`}
+            fill
+            className="object-contain"
+            priority
+          />
+        </div>
 
         <div className="px-4 space-y-4">
           {/* Metadata */}

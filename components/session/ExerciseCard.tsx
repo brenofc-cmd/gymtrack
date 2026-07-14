@@ -19,6 +19,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { getExerciseImage } from '@/lib/exercise-media'
 import { SetRow } from './SetRow'
 import { ExerciseFeedbackPanel } from './ExerciseFeedbackPanel'
 import { ExerciseDetailSheet } from './ExerciseDetailSheet'
@@ -204,19 +205,12 @@ export function ExerciseCard({
         className="w-full flex items-center gap-3 p-3 text-left"
       >
         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-          {selectedExercise.gif_url ? (
-            <Image
-              src={selectedExercise.gif_url}
-              alt={selectedExercise.name_pt}
-              fill
-              className="object-cover"
-              unoptimized
-            />
-          ) : (
-            <div className="w-full h-full flex items-center justify-center text-xl">
-              💪
-            </div>
-          )}
+          <Image
+            src={getExerciseImage(selectedExercise.gif_url)}
+            alt={`Demonstração de ${selectedExercise.name_pt}`}
+            fill
+            className="object-cover"
+          />
         </div>
 
         <div className="flex-1 min-w-0">

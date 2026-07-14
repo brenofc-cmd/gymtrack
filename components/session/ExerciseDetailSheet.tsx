@@ -5,6 +5,7 @@ import { useState } from 'react'
 import { AlertTriangle, BookOpen, History, Play, Video } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { ProgressChart } from '@/components/exercise/ProgressChart'
+import { getExerciseImage } from '@/lib/exercise-media'
 import { cn } from '@/lib/utils'
 import type { Exercise } from '@/types/database'
 
@@ -55,11 +56,9 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
 
       {tab === 'execution' && (
         <div className="mt-4 space-y-4">
-          {exercise.gif_url && (
-            <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-background">
-              <Image src={exercise.gif_url} alt={`Execução de ${exercise.name_pt}`} fill unoptimized className="object-contain" />
-            </div>
-          )}
+          <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-background">
+            <Image src={getExerciseImage(exercise.gif_url)} alt={`Execução de ${exercise.name_pt}`} fill className="object-contain" />
+          </div>
           <ol className="space-y-2.5">
             {(guidance.length > 0 ? guidance : exercise.instructions ?? []).map((step, index) => (
               <li key={`${step}-${index}`} className="flex gap-3 text-sm leading-relaxed text-[#c7d0db]">
