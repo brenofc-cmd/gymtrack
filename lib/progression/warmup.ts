@@ -16,12 +16,36 @@ export interface WarmupSet {
   reps: string
 }
 
+export type WarmupMode = 'standard' | 'assistance' | 'bodyweight'
+
 /** Arredonda para o incremento de 2.5kg mais próximo (anilhas comuns). */
 function roundToPlate(kg: number): number {
   return Math.max(0, Math.round(kg / 2.5) * 2.5)
 }
 
-export function buildWarmupPlan(workingWeightKg: number | null): WarmupSet[] {
+export function buildWarmupPlan(
+  workingWeightKg: number | null,
+  mode: WarmupMode = 'standard'
+): WarmupSet[] {
+  if (mode === 'assistance') {
+    const lightAssistance = workingWeightKg == null ? null : roundToPlate(workingWeightKg + 10)
+    const mediumAssistance = workingWeightKg == null ? null : roundToPlate(workingWeightKg + 5)
+    return [
+      { label: 'Geral', weightKg: null, reps: '~5 min leves (mobilidade e ativação)' },
+      { label: 'Leve', weightKg: lightAssistance, reps: '8–10 reps com mais assistência' },
+      { label: 'Média', weightKg: mediumAssistance, reps: '5–6 reps com assistência confortável' },
+      { label: 'Aproximação', weightKg: workingWeightKg, reps: '2–4 reps, longe da falha' },
+    ]
+  }
+
+  if (mode === 'bodyweight') {
+    return [
+      { label: 'Geral', weightKg: null, reps: '~5 min leves (mobilidade e ativação)' },
+      { label: 'Técnica', weightKg: null, reps: '6–8 repetições controladas' },
+      { label: 'Aproximação', weightKg: null, reps: '3–5 repetições, longe da falha' },
+    ]
+  }
+
   if (workingWeightKg == null || workingWeightKg <= 0) {
     return [
       { label: 'Geral', weightKg: null, reps: '~5 min leves (esteira, bike ou mobilidade)' },

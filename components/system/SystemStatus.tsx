@@ -1,9 +1,10 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { AlertCircle, Check, CloudOff, RefreshCw } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
-import { flushSyncQueue, SYNC_STATE_EVENT, type SyncState } from '@/lib/offline/syncQueue'
+import { flushSyncQueue, getPendingSyncCount, SYNC_STATE_EVENT, type SyncState } from '@/lib/offline/syncQueue'
 
 interface StatusDetail {
   state: SyncState
@@ -18,6 +19,7 @@ const STATUS = {
 } satisfies Record<SyncState, { icon: typeof Check; label: string; className: string }>
 
 export function SystemStatus() {
+  const pathname = usePathname()
   const [detail, setDetail] = useState<StatusDetail | null>(null)
 
   useEffect(() => {
@@ -32,7 +34,7 @@ export function SystemStatus() {
       }
     }
     const onState = (event: Event) => setStatus((event as CustomEvent<StatusDetail>).detail)
-    const onOffline = () => setStatus({ state: 'offline', pending: 0 })
+    const onOffline = () => setStatus({ state: 'offline', pending: getPendingSyncCount() })
     const onOnline = () => void flushSyncQueue(supabase)
 
     window.addEventListener(SYNC_STATE_EVENT, onState)
@@ -49,7 +51,7 @@ export function SystemStatus() {
     }
   }, [])
 
-  if (!detail) return null
+  if (!detail || pathname.startsWith('/sessao/')) return null
   const status = STATUS[detail.state]
   const Icon = status.icon
 

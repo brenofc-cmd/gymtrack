@@ -4,12 +4,12 @@ import { createAdminClient } from '@/lib/supabase/admin'
 import { getSessionWithLogs } from '@/lib/queries/sessions'
 import { getWorkoutById } from '@/lib/queries/workouts'
 import {
-  getLastSetLogForExercise,
   getLastSessionSets,
   getExercisePR,
   getExerciseProgressHistory,
 } from '@/lib/queries/exercises'
 import { suggestForExercise } from '@/lib/progression/progression'
+import { getLoadInputConfig } from '@/lib/training/load-input'
 import type { ExerciseType, MovementPattern } from '@/types/database'
 import type { ExecutionQuality, PainLevel } from '@/types/database'
 import { adjustProgressionForReadiness, type ReadinessStatus } from '@/lib/training/readiness'
@@ -41,42 +41,44 @@ export default async function SessaoPage(props: {
   )
   if (!workoutData) notFound()
 
-  const [lastLogs, prWeights, progressions, exerciseHistories, readiness] = await Promise.all([
-    Promise.all(
-      workoutData.workout_exercises.map((we) =>
-        getLastSetLogForExercise(admin, we.id, id, {
-          catalogExerciseId: we.exercise_id,
-        })
-      )
-    ),
-    Promise.all(
-      workoutData.workout_exercises.map((we) =>
-        getExercisePR(admin, we.exercise_id, user.id).then((pr) => pr?.maxWeight ?? null)
-      )
-    ),
+  const [previousResults, prWeights, exerciseHistories, readiness] = await Promise.all([
     Promise.all(
       workoutData.workout_exercises.map(async (we) => {
         const lastSets = await getLastSessionSets(admin, we.exercise_id, user.id, id)
-        if (lastSets.length === 0) return null
-        return suggestForExercise(
-          {
-            sets: we.target_sets,
-            repsMin: we.target_reps_min,
-            repsMax: we.target_reps_max,
-            rirMin: we.rir_min,
-            rirMax: we.rir_max,
-            kind: (we.exercise.exercise_type as ExerciseType | null),
-            movementPattern: (we.exercise.movement_pattern as MovementPattern | null),
-          },
-          lastSets.map((s) => ({
-            weightKg: s.weight_kg,
-            reps: s.reps,
-            rir: s.rir,
-            isWarmup: s.is_warmup,
-            painLevel: (s.pain_level as PainLevel | null) ?? null,
-            executionQuality: (s.execution_quality as ExecutionQuality | null) ?? null,
-          }))
-        )
+        const loadConfig = getLoadInputConfig(we.exercise, we.notes)
+        const suggestion = lastSets.length === 0
+          ? null
+          : suggestForExercise(
+              {
+                sets: we.target_sets,
+                repsMin: we.target_reps_min,
+                repsMax: we.target_reps_max,
+                rirMin: we.rir_min,
+                rirMax: we.rir_max,
+                kind: (we.exercise.exercise_type as ExerciseType | null),
+                movementPattern: (we.exercise.movement_pattern as MovementPattern | null),
+                loadDirection: loadConfig.lowerIsHarder
+                  ? 'lower_is_harder'
+                  : 'higher_is_harder',
+              },
+              lastSets.map((s) => ({
+                weightKg: s.weight_kg,
+                reps: s.reps,
+                rir: s.rir,
+                isWarmup: s.is_warmup,
+                painLevel: (s.pain_level as PainLevel | null) ?? null,
+                executionQuality: (s.execution_quality as ExecutionQuality | null) ?? null,
+              }))
+            )
+        return { sets: lastSets, suggestion }
+      })
+    ),
+    Promise.all(
+      workoutData.workout_exercises.map((we) => {
+        const loadConfig = getLoadInputConfig(we.exercise, we.notes)
+        return getExercisePR(admin, we.exercise_id, user.id, {
+          lowerIsHarder: loadConfig.lowerIsHarder,
+        }).then((pr) => pr?.maxWeight ?? null)
       })
     ),
     Promise.all(
@@ -93,7 +95,7 @@ export default async function SessaoPage(props: {
   ])
 
   const readinessStatus = (readiness.data?.recommendation as ReadinessStatus | undefined) ?? 'ready'
-  const adjustedProgressions = progressions.map((suggestion) =>
+  const adjustedProgressions = previousResults.map(({ suggestion }) =>
     adjustProgressionForReadiness(suggestion, readinessStatus)
   )
 
@@ -101,7 +103,7 @@ export default async function SessaoPage(props: {
     <SessionClient
       session={sessionData}
       workout={workoutData}
-      lastLogs={lastLogs}
+      previousSets={previousResults.map(({ sets }) => sets)}
       prWeights={prWeights}
       progressions={adjustedProgressions}
       exerciseHistories={exerciseHistories}

@@ -87,12 +87,14 @@ export async function getLastSessionSets(
   userId: string,
   excludeSessionId?: string
 ): Promise<Array<{
+  set_number: number
   weight_kg: number | null
   reps: number
   rir: number | null
   is_warmup: boolean
   pain_level: string | null
   execution_quality: string | null
+  completed_at: string | null
 }>> {
   const { data: wexes } = await supabase
     .from('workout_exercises')
@@ -105,8 +107,9 @@ export async function getLastSessionSets(
 
   const { data: logs } = await supabase
     .from('set_logs')
-    .select('weight_kg, reps, rir, is_warmup, pain_level, execution_quality, session_id, completed_at')
+    .select('set_number, weight_kg, reps, rir, is_warmup, pain_level, execution_quality, session_id, completed_at, performed_exercise_id')
     .in('workout_exercise_id', wexIds)
+    .is('performed_exercise_id', null)
     .order('completed_at', { ascending: false })
     .limit(60)
 
@@ -132,19 +135,23 @@ export async function getLastSessionSets(
   return logs
     .filter((l) => l.session_id === lastSessionId)
     .map((l) => ({
+      set_number: l.set_number,
       weight_kg: l.weight_kg,
       reps: l.reps,
       rir: l.rir,
       is_warmup: l.is_warmup,
       pain_level: l.pain_level,
       execution_quality: l.execution_quality,
+      completed_at: l.completed_at,
     }))
+    .sort((a, b) => a.set_number - b.set_number)
 }
 
 export async function getExercisePR(
   supabase: SupabaseDB,
   exerciseId: string,
-  userId: string
+  userId: string,
+  options?: { lowerIsHarder?: boolean }
 ): Promise<{ maxWeight: number | null; maxReps: number; estimated1RM: number | null; achievedAt: string | null } | null> {
   const { data: wexes } = await supabase
     .from('workout_exercises')
@@ -192,14 +199,19 @@ export async function getExercisePR(
       romQuality: log.rom_quality as RomQuality | null,
     }
     if (isValidPRSet(set) && log.weight_kg !== null) {
-      if (maxWeight === null || log.weight_kg > maxWeight) {
+      const isBetter = maxWeight === null || (options?.lowerIsHarder
+        ? log.weight_kg < maxWeight
+        : log.weight_kg > maxWeight)
+      if (isBetter) {
         maxWeight = log.weight_kg
         achievedAt = log.completed_at
       }
       if (log.reps > maxReps) maxReps = log.reps
     }
-    const estimate = estimated1RM(set)
-    if (estimate !== null) bestEstimated1RM = Math.max(bestEstimated1RM ?? 0, estimate)
+    if (!options?.lowerIsHarder) {
+      const estimate = estimated1RM(set)
+      if (estimate !== null) bestEstimated1RM = Math.max(bestEstimated1RM ?? 0, estimate)
+    }
   }
 
   return { maxWeight, maxReps, estimated1RM: bestEstimated1RM, achievedAt }

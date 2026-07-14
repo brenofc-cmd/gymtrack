@@ -28,6 +28,7 @@ export interface ProgressionTarget {
   rirMax: number | null
   kind: ExerciseType | null
   movementPattern?: MovementPattern | null
+  loadDirection?: 'higher_is_harder' | 'lower_is_harder'
 }
 
 export type ProgressionAction = 'aumentar' | 'manter' | 'revisar' | 'bloquear_por_dor'
@@ -37,6 +38,7 @@ export interface ProgressionSuggestion {
   reason: string
   /** Incremento sugerido em kg (menor incremento típico do equipamento) */
   incrementKg?: number
+  loadAdjustment?: 'increase_load' | 'decrease_assistance'
 }
 
 const WORST_PAIN: PainLevel[] = ['moderada', 'forte']
@@ -126,10 +128,19 @@ export function suggestProgression(
   const completedTarget = sets.length >= target.sets
   const allAtTop = sets.every((s) => s.reps >= target.repsMax)
   if (completedTarget && allAtTop && allExecutionGood(sets) && rirWithinTarget(sets, target)) {
+    if (target.loadDirection === 'lower_is_harder') {
+      return {
+        action: 'aumentar',
+        reason: `Todas as séries atingiram ${target.repsMax} repetições com boa execução. Reduza a assistência no menor incremento disponível e volte para ~${target.repsMin} repetições.`,
+        incrementKg: smallestIncrement(target.kind),
+        loadAdjustment: 'decrease_assistance',
+      }
+    }
     return {
       action: 'aumentar',
       reason: `Todas as séries atingiram ${target.repsMax} repetições com boa execução. Aumente a carga no menor incremento disponível e aceite voltar para ~${target.repsMin} repetições.`,
       incrementKg: smallestIncrement(target.kind),
+      loadAdjustment: 'increase_load',
     }
   }
 
