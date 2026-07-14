@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { ReadinessCheckin } from '@/components/wellness/ReadinessCheckin'
 
 const DISCLAIMER = 'Este aplicativo apresenta orientações gerais de organização e acompanhamento. Ele não substitui avaliação de médico, nutricionista ou profissional de educação física. Interrompa exercícios que causem dor forte ou progressiva.'
 
@@ -49,6 +50,7 @@ export function WellnessForms({ userId }: { userId: string }) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground border border-border rounded-lg p-3">{DISCLAIMER}</p>
+      <ReadinessCheckin userId={userId} />
       <section className="rounded-2xl border border-border bg-card p-4 space-y-3">
         <h2 className="font-semibold">Peso e tendência</h2>
         <p className="text-xs text-muted-foreground">Pese-se pela manhã, após o banheiro e antes de comer. Não ajuste por um único dia.</p>

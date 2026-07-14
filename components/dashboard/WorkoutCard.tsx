@@ -2,7 +2,7 @@ import Link from 'next/link'
 import { formatDistanceToNow } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { ChevronRight } from 'lucide-react'
-import { DIA_LABEL } from '@/lib/routine/rotina-v2'
+import { DIA_LABEL } from '@/lib/routine/powerbuilding-v4'
 import type { Workout, WorkoutLetter } from '@/types/database'
 
 interface WorkoutCardProps {

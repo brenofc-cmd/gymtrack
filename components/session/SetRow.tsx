@@ -8,6 +8,7 @@ import type { LocalSetLog } from '@/lib/store/sessionStore'
 interface SetRowProps {
   setNumber: number
   isWarmup?: boolean
+  setRole?: 'warmup' | 'top' | 'backoff' | 'standard'
   defaultWeight: number | null
   defaultReps: number | null
   targetRirMin?: number | null
@@ -21,6 +22,7 @@ const RIR_OPTIONS = [0, 1, 2, 3, 4]
 export function SetRow({
   setNumber,
   isWarmup = false,
+  setRole = 'standard',
   defaultWeight,
   defaultReps,
   targetRirMin,
@@ -82,7 +84,7 @@ export function SetRow({
               isDone ? 'text-primary' : 'text-muted-foreground'
             )}
           >
-            {setNumber}
+            {setRole === 'top' ? 'T' : setRole === 'backoff' ? 'B' : setNumber}
           </span>
         )}
 
@@ -175,6 +177,11 @@ export function SetRow({
             ))}
           </div>
         </div>
+      )}
+      {!isWarmup && setRole !== 'standard' && (
+        <p className="mt-1 pl-[40px] text-[10px] font-semibold uppercase tracking-wide text-primary">
+          {setRole === 'top' ? 'Top set submáximo' : 'Back-off set'}
+        </p>
       )}
       {!isWarmup && isDone && completed?.rir != null && (
         <p className="text-[10px] text-muted-foreground mt-1 pl-[40px]">

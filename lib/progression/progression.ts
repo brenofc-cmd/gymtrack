@@ -172,13 +172,13 @@ export function suggestAbProgression(
 
   const pattern = target.movementPattern
 
-  if (pattern === 'anti_extensao') {
+  if (pattern === 'anti_extensao' || pattern === 'anti_extension' || pattern === 'anti_rotation') {
     const anyPain = sets.some((s) => s.painLevel != null && s.painLevel !== 'nenhuma')
     if (anyPain) {
       return {
         action: 'bloquear_por_dor',
         reason:
-          'Houve desconforto lombar no ab wheel. Não aumente a amplitude até revisar a execução (retroversão pélvica, glúteos contraídos). Se a dor persistir, procure avaliação profissional.',
+          'Houve desconforto no exercício de estabilidade. Não aumente a amplitude ou a dificuldade até revisar a execução. Se a dor persistir, procure avaliação profissional.',
       }
     }
     const allAtTop = sets.length >= target.sets && sets.every((s) => s.reps >= target.repsMax)
@@ -195,7 +195,7 @@ export function suggestAbProgression(
     }
   }
 
-  if (pattern === 'retroversao_pelvica') {
+  if (pattern === 'retroversao_pelvica' || pattern === 'pelvic_curl') {
     if (hasBlockingPain(sets)) {
       return {
         action: 'bloquear_por_dor',

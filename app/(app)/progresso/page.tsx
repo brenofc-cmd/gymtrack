@@ -9,6 +9,7 @@ import { formatVolume } from '@/lib/utils/volume'
 import { WeeklyVolumeChart } from '@/components/analytics/WeeklyVolumeChart'
 import { ExerciseProgressExplorer } from '@/components/progress/ExerciseProgressExplorer'
 import { MeasurementsPanel } from '@/components/progress/MeasurementsPanel'
+import { PlannedVolumeCard } from '@/components/dashboard/PlannedVolumeCard'
 
 export default async function ProgressoPage() {
   const supabase = await createClient()
@@ -66,6 +67,7 @@ export default async function ProgressoPage() {
       </section>
 
       <ExerciseProgressExplorer exercises={exercises} />
+      <PlannedVolumeCard />
       <MeasurementsPanel userId={user.id} initialMeasurements={measurements} />
     </div>
   )

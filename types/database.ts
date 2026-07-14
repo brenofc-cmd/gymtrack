@@ -95,9 +95,22 @@ export type Database = {
         }
         Relationships: []
       }
+      content_sources: {
+        Row: { id: string; slug: string; title: string; category: string; provenance: string; url: string | null; summary: string; accessed_on: string; created_at: string }
+        Insert: { id?: string; slug: string; title: string; category: string; provenance: string; url?: string | null; summary: string; accessed_on: string; created_at?: string }
+        Update: { id?: string; slug?: string; title?: string; category?: string; provenance?: string; url?: string | null; summary?: string; accessed_on?: string; created_at?: string }
+        Relationships: []
+      }
+      daily_readiness: {
+        Row: { id: string; user_id: string; readiness_date: string; sleep_quality: number; energy: number; muscle_soreness: number; joint_pain: string; stress: number; motivation: number; recovery_feeling: number; recommendation: string; recommendation_reason: string; created_at: string; updated_at: string }
+        Insert: { id?: string; user_id: string; readiness_date?: string; sleep_quality: number; energy: number; muscle_soreness: number; joint_pain: string; stress: number; motivation: number; recovery_feeling: number; recommendation: string; recommendation_reason: string; created_at?: string; updated_at?: string }
+        Update: { id?: string; user_id?: string; readiness_date?: string; sleep_quality?: number; energy?: number; muscle_soreness?: number; joint_pain?: string; stress?: number; motivation?: number; recovery_feeling?: number; recommendation?: string; recommendation_reason?: string; created_at?: string; updated_at?: string }
+        Relationships: []
+      }
       exercises: {
         Row: {
           created_at: string | null
+          difficulty_level: string
           equipment: string | null
           exercise_type: string | null
           exercisedb_id: string | null
@@ -110,9 +123,12 @@ export type Database = {
           name_en: string | null
           name_pt: string
           secondary_muscles: string[] | null
+          risk_level: string
+          training_objective: string | null
         }
         Insert: {
           created_at?: string | null
+          difficulty_level?: string
           equipment?: string | null
           exercise_type?: string | null
           exercisedb_id?: string | null
@@ -125,9 +141,12 @@ export type Database = {
           name_en?: string | null
           name_pt: string
           secondary_muscles?: string[] | null
+          risk_level?: string
+          training_objective?: string | null
         }
         Update: {
           created_at?: string | null
+          difficulty_level?: string
           equipment?: string | null
           exercise_type?: string | null
           exercisedb_id?: string | null
@@ -140,6 +159,8 @@ export type Database = {
           name_en?: string | null
           name_pt?: string
           secondary_muscles?: string[] | null
+          risk_level?: string
+          training_objective?: string | null
         }
         Relationships: []
       }
@@ -544,6 +565,7 @@ export type Database = {
       set_logs: {
         Row: {
           completed_at: string | null
+          estimated_1rm: number | null
           execution_quality: string | null
           id: string
           is_warmup: boolean
@@ -552,14 +574,17 @@ export type Database = {
           performed_exercise_id: string | null
           reps: number
           rir: number | null
+          rom_quality: string | null
           rpe: number | null
           session_id: string
           set_number: number
+          set_role: string
           weight_kg: number | null
           workout_exercise_id: string
         }
         Insert: {
           completed_at?: string | null
+          estimated_1rm?: number | null
           execution_quality?: string | null
           id?: string
           is_warmup?: boolean
@@ -568,14 +593,17 @@ export type Database = {
           performed_exercise_id?: string | null
           reps: number
           rir?: number | null
+          rom_quality?: string | null
           rpe?: number | null
           session_id: string
           set_number: number
+          set_role?: string
           weight_kg?: number | null
           workout_exercise_id: string
         }
         Update: {
           completed_at?: string | null
+          estimated_1rm?: number | null
           execution_quality?: string | null
           id?: string
           is_warmup?: boolean
@@ -584,9 +612,11 @@ export type Database = {
           performed_exercise_id?: string | null
           reps?: number
           rir?: number | null
+          rom_quality?: string | null
           rpe?: number | null
           session_id?: string
           set_number?: number
+          set_role?: string
           weight_kg?: number | null
           workout_exercise_id?: string
         }
@@ -774,6 +804,7 @@ export type Database = {
           id: string
           program_start_date: string | null
           sex: string | null
+          training_phase: string
           updated_at: string | null
           weekly_goal: number | null
           weight_kg: number | null
@@ -785,6 +816,7 @@ export type Database = {
           id: string
           program_start_date?: string | null
           sex?: string | null
+          training_phase?: string
           updated_at?: string | null
           weekly_goal?: number | null
           weight_kg?: number | null
@@ -796,6 +828,7 @@ export type Database = {
           id?: string
           program_start_date?: string | null
           sex?: string | null
+          training_phase?: string
           updated_at?: string | null
           weekly_goal?: number | null
           weight_kg?: number | null
@@ -843,14 +876,19 @@ export type Database = {
       }
       workout_exercises: {
         Row: {
+          aesthetic_function: string | null
+          backoff_percentage: number | null
           created_at: string | null
           exercise_id: string
+          failure_allowed: boolean
+          failure_risk_level: string
           id: string
           is_hidden: boolean
           is_priority: boolean
           load_guidance: string | null
           notes: string | null
           order_index: number
+          progression_type: string
           rest_seconds: number
           rir_max: number | null
           rir_min: number | null
@@ -859,18 +897,24 @@ export type Database = {
           target_reps_min: number
           target_sets: number
           technique_notes: string[] | null
+          top_set_enabled: boolean
           user_note: string | null
           workout_id: string
         }
         Insert: {
+          aesthetic_function?: string | null
+          backoff_percentage?: number | null
           created_at?: string | null
           exercise_id: string
+          failure_allowed?: boolean
+          failure_risk_level?: string
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
           load_guidance?: string | null
           notes?: string | null
           order_index: number
+          progression_type?: string
           rest_seconds: number
           rir_max?: number | null
           rir_min?: number | null
@@ -879,18 +923,24 @@ export type Database = {
           target_reps_min: number
           target_sets: number
           technique_notes?: string[] | null
+          top_set_enabled?: boolean
           user_note?: string | null
           workout_id: string
         }
         Update: {
+          aesthetic_function?: string | null
+          backoff_percentage?: number | null
           created_at?: string | null
           exercise_id?: string
+          failure_allowed?: boolean
+          failure_risk_level?: string
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
           load_guidance?: string | null
           notes?: string | null
           order_index?: number
+          progression_type?: string
           rest_seconds?: number
           rir_max?: number | null
           rir_min?: number | null
@@ -899,6 +949,7 @@ export type Database = {
           target_reps_min?: number
           target_sets?: number
           technique_notes?: string[] | null
+          top_set_enabled?: boolean
           user_note?: string | null
           workout_id?: string
         }
@@ -973,6 +1024,7 @@ export type Database = {
           objective: string | null
           order_index: number
           routine_version: number
+          session_focus: string
           user_id: string
           warmup_note: string | null
         }
@@ -988,6 +1040,7 @@ export type Database = {
           objective?: string | null
           order_index?: number
           routine_version?: number
+          session_focus?: string
           user_id: string
           warmup_note?: string | null
         }
@@ -1003,6 +1056,7 @@ export type Database = {
           objective?: string | null
           order_index?: number
           routine_version?: number
+          session_focus?: string
           user_id?: string
           warmup_note?: string | null
         }
@@ -1155,9 +1209,16 @@ export const Constants = {
 
 
 export type ExerciseType = 'composto' | 'isolador' | 'abdominal'
-export type MovementPattern = 'flexao_tronco' | 'retroversao_pelvica' | 'anti_extensao'
+export type MovementPattern =
+  | 'horizontal_push' | 'incline_push' | 'vertical_push'
+  | 'vertical_pull' | 'horizontal_pull' | 'squat' | 'hip_hinge'
+  | 'unilateral_leg' | 'knee_flexion' | 'calf_raise'
+  | 'lateral_delt' | 'rear_delt' | 'elbow_flexion' | 'elbow_extension'
+  | 'trunk_flexion' | 'pelvic_curl' | 'anti_extension' | 'anti_rotation'
+  | 'flexao_tronco' | 'retroversao_pelvica' | 'anti_extensao'
 export type PainLevel = 'nenhuma' | 'leve' | 'moderada' | 'forte'
 export type ExecutionQuality = 'boa' | 'aceitavel' | 'ruim'
+export type RomQuality = 'completa' | 'adequada' | 'reduzida'
 export type Exercise = Tables<'exercises'>
 export type Workout = Tables<'workouts'>
 export type WorkoutExercise = Tables<'workout_exercises'>

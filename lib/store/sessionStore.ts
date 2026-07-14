@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { ExecutionQuality, PainLevel } from '@/types/database'
+import type { ExecutionQuality, PainLevel, RomQuality } from '@/types/database'
 
 export interface LocalSetLog {
   set_number: number
@@ -8,12 +8,14 @@ export interface LocalSetLog {
   reps: number
   rir: number | null
   is_warmup: boolean
+  set_role?: 'warmup' | 'top' | 'backoff' | 'standard'
   completed_at: string
 }
 
 export interface ExerciseFeedback {
   executionQuality: ExecutionQuality | null
   painLevel: PainLevel | null
+  romQuality: RomQuality | null
   notes: string
 }
 
@@ -78,6 +80,7 @@ export function timerRemaining(t: RestTimer, now: number = Date.now()): number {
 const EMPTY_FEEDBACK: ExerciseFeedback = {
   executionQuality: null,
   painLevel: null,
+  romQuality: null,
   notes: '',
 }
 

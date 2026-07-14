@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getExerciseImage } from '@/lib/exercise-media'
-import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/rotina-v2'
+import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/powerbuilding-v4'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface ExerciseListItemProps {

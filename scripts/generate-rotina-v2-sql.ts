@@ -1,6 +1,6 @@
 /**
  * Gera um rascunho de próxima migration a partir de
- * lib/routine/rotina-v2.ts (fonte única da verdade).
+ * lib/routine/powerbuilding-v4.ts (fonte única da verdade ativa).
  *
  * Uso: npx tsx scripts/generate-rotina-v2-sql.ts
  *
@@ -17,8 +17,8 @@
 
 import { writeFileSync } from 'fs'
 import path from 'path'
-import { ROTINA_V2, ROUTINE_VERSION } from '../lib/routine/rotina-v2'
-import type { RoutineExerciseDef } from '../lib/routine/rotina-v2'
+import { POWERBUILDING_V4, ROUTINE_VERSION } from '../lib/routine/powerbuilding-v4'
+import type { RoutineExerciseDef } from '../lib/routine/powerbuilding-v4'
 
 function q(s: string): string {
   return `'${s.replace(/'/g, "''")}'`
@@ -116,6 +116,19 @@ const SUB_CATALOG: Record<
   },
 }
 
+const ROUTINE_CATALOG = Object.fromEntries(
+  POWERBUILDING_V4.flatMap((day) => day.exercises).map((exercise) => [
+    exercise.name,
+    {
+      muscle: exercise.primaryMuscle,
+      equipment: exercise.equipment,
+      kind: exercise.kind,
+      pattern: exercise.movementPattern,
+      instructions: exercise.guidance,
+    },
+  ])
+)
+
 function findOrCreateExercise(ex: {
   name: string
   muscle: string
@@ -124,21 +137,27 @@ function findOrCreateExercise(ex: {
   pattern?: string
   secondaryMuscles?: string[]
   instructions?: string[]
+  objective?: string
+  riskLevel?: string
 }): string {
   const pattern = ex.pattern ? q(ex.pattern) : 'null'
   const secondary = textArray(ex.secondaryMuscles ?? [])
   const instructions = textArray(ex.instructions ?? [])
+  const objective = ex.objective ? q(ex.objective) : 'null'
+  const riskLevel = q(ex.riskLevel ?? (ex.kind === 'composto' ? 'moderate' : 'low'))
   return `
   select id into v_ex from exercises where name_pt = ${q(ex.name)} limit 1;
   if v_ex is null then
-    insert into exercises (name_pt, muscle_group, equipment, exercise_type, movement_pattern, secondary_muscles, instructions)
-    values (${q(ex.name)}, ${q(ex.muscle)}, ${q(ex.equipment)}, ${q(ex.kind)}, ${pattern}, ${secondary}, ${instructions})
+    insert into exercises (name_pt, muscle_group, equipment, exercise_type, movement_pattern, secondary_muscles, instructions, training_objective, risk_level)
+    values (${q(ex.name)}, ${q(ex.muscle)}, ${q(ex.equipment)}, ${q(ex.kind)}, ${pattern}, ${secondary}, ${instructions}, ${objective}, ${riskLevel})
     returning id into v_ex;
   else
     update exercises set
       exercise_type = coalesce(${q(ex.kind)}, exercise_type),
       movement_pattern = coalesce(${pattern}, movement_pattern),
-      secondary_muscles = coalesce(secondary_muscles, ${secondary})
+      secondary_muscles = coalesce(secondary_muscles, ${secondary}),
+      training_objective = coalesce(${objective}, training_objective),
+      risk_level = ${riskLevel}
     where id = v_ex;
   end if;`
 }
@@ -152,11 +171,13 @@ function insertWorkoutExercise(ex: RoutineExerciseDef, orderIndex: number): stri
     pattern: ex.movementPattern,
     secondaryMuscles: ex.secondaryMuscles,
     instructions: ex.guidance,
+    objective: ex.aestheticFunction,
+    riskLevel: ex.riskLevel,
   })
 
   const subs = ex.substitutions
     .map((subName, i) => {
-      const meta = SUB_CATALOG[subName]
+      const meta = SUB_CATALOG[subName] ?? ROUTINE_CATALOG[subName]
       if (!meta) {
         throw new Error(`Substituição sem metadados de catálogo: ${subName}`)
       }
@@ -173,17 +194,21 @@ function insertWorkoutExercise(ex: RoutineExerciseDef, orderIndex: number): stri
   insert into workout_exercises (
     workout_id, exercise_id, order_index, target_sets,
     target_reps_min, target_reps_max, rest_seconds,
-    rir_min, rir_max, technique_notes, notes
+    rir_min, rir_max, technique_notes, notes,
+    progression_type, failure_allowed, failure_risk_level,
+    top_set_enabled, backoff_percentage, aesthetic_function
   ) values (
     v_workout, v_ex, ${orderIndex}, ${ex.sets},
     ${ex.repsMin}, ${ex.repsMax}, ${ex.restSeconds},
-    ${ex.rirMin}, ${ex.rirMax}, ${textArray(ex.guidance)}, ${perSideNote}
+    ${ex.rirMin}, ${ex.rirMax}, ${textArray(ex.guidance)}, ${perSideNote},
+    ${q(ex.progressionType)}, ${ex.failureAllowed}, ${q(ex.riskLevel)},
+    ${ex.topSetEnabled ?? false}, ${ex.backoffPercentage ?? 'null'}, ${q(ex.aestheticFunction)}
   ) returning id into v_we;
 ${subs}`
 }
 
 function generate(): string {
-  const days = ROTINA_V2.map((day) => {
+  const days = POWERBUILDING_V4.map((day) => {
     const exercises = day.exercises
       .map((ex, i) => insertWorkoutExercise(ex, i))
       .join('\n')
@@ -191,19 +216,19 @@ function generate(): string {
   -- ------------------------------------------------------------
   -- ${day.name} (${day.letter}) — dia ${day.dayOfWeek}
   -- ------------------------------------------------------------
-  insert into workouts (user_id, letter, name, order_index, day_of_week, objective, warmup_note, routine_version)
-  values (v_user, ${q(day.letter)}, ${q(day.name)}, ${day.dayOfWeek - 1}, ${day.dayOfWeek}, ${q(day.objective)}, ${q(day.warmupNote)}, ${ROUTINE_VERSION})
+  insert into workouts (user_id, letter, name, order_index, day_of_week, objective, warmup_note, routine_version, session_focus)
+  values (v_user, ${q(day.letter)}, ${q(day.name)}, ${day.dayOfWeek - 1}, ${day.dayOfWeek}, ${q(day.objective)}, ${q(day.warmupNote)}, ${ROUTINE_VERSION}, ${q(day.focus)})
   returning id into v_workout;
 ${exercises}`
   }).join('\n')
 
-  return `-- RASCUNHO: próxima migration da rotina (PPL 6 dias) — GERADO por scripts/generate-rotina-v2-sql.ts
--- NÃO EDITE MANUALMENTE: altere lib/routine/rotina-v2.ts e regenere.
+  return `-- Migration Powerbuilding v${ROUTINE_VERSION} (PPL 6 dias) — GERADA por scripts/generate-rotina-v2-sql.ts
+-- NÃO EDITE MANUALMENTE: altere lib/routine/powerbuilding-v4.ts e regenere.
 --
--- Para cada usuário com a rotina v1 ativa (Push A..Legs B não arquivados):
+-- Para cada usuário com rotina anterior ativa (Push A..Legs B não arquivados):
 --   1. backup jsonb em routine_backups
 --   2. arquiva os treinos ativos (preserva sessões e set_logs)
---   3. cria a rotina v2 com dias, exercícios, RIR, descanso e substituições
+--   3. cria a rotina v${ROUTINE_VERSION} com foco, progressão, RIR, descanso e substituições
 --
 -- Rollback (down): ver bloco comentado no fim do arquivo.
 
@@ -268,6 +293,8 @@ end $$;
 `
 }
 
-const out = path.resolve(__dirname, '../supabase/migrations/0007_next_routine_data.sql')
+const out = process.argv[2]
+  ? path.resolve(process.argv[2])
+  : path.resolve(__dirname, '../supabase/migrations/next_routine_data.sql')
 writeFileSync(out, generate())
 console.log(`✅ Migration gerada: ${out}`)

@@ -8,7 +8,7 @@ import { getLastSetLogForExercise } from '@/lib/queries/exercises'
 import { ExerciseListItem } from '@/components/workout/ExerciseListItem'
 import { StartWorkoutButton } from '@/components/workout/StartWorkoutButton'
 import { WorkoutNotes } from '@/components/workout/WorkoutNotes'
-import { DIA_LABEL } from '@/lib/routine/rotina-v2'
+import { DIA_LABEL, TRAINING_FOCUS_LABEL } from '@/lib/routine/powerbuilding-v4'
 import type { WorkoutLetter } from '@/types/database'
 
 const VALID_LETTERS: WorkoutLetter[] = ['A', 'B', 'C', 'D', 'E', 'F']
@@ -71,14 +71,17 @@ export default async function TreinoPage(props: {
 
       <div className="px-4 pt-4 space-y-3">
         {/* Objetivo */}
-        {workout.objective && (
+      {workout.objective && (
           <div className="rounded-xl bg-card border border-border p-3">
             <p className="text-[10px] font-semibold uppercase tracking-wider text-primary mb-1">
               Objetivo
             </p>
             <p className="text-sm text-muted-foreground">{workout.objective}</p>
           </div>
-        )}
+      )}
+      <p className="text-xs font-semibold text-primary">
+        {TRAINING_FOCUS_LABEL[workout.session_focus as keyof typeof TRAINING_FOCUS_LABEL] ?? 'Hipertrofia'}
+      </p>
 
         {/* Notas */}
         {workout.notes && <WorkoutNotes notes={workout.notes} />}

@@ -19,7 +19,7 @@ export function ExerciseProgressExplorer({ exercises }: ExerciseProgressExplorer
       <div className="surface-card px-5 py-10 text-center">
         <Trophy className="mx-auto size-7 text-muted-foreground" />
         <p className="mt-3 text-sm font-semibold">O progresso aparecerá após o primeiro treino concluído.</p>
-        <p className="mt-1 text-xs text-muted-foreground">Peso, volume, repetições e 1RM estimado serão calculados automaticamente.</p>
+        <p className="mt-1 text-xs text-muted-foreground">Carga, volume, repetições e e1RM seguro aparecerão após séries válidas.</p>
       </div>
     )
   }
@@ -56,7 +56,7 @@ export function ExerciseProgressExplorer({ exercises }: ExerciseProgressExplorer
           <p className="mt-1 font-mono text-lg font-bold">{selected.maxWeight ?? '—'}<span className="text-[10px] font-normal text-muted-foreground"> kg</span></p>
         </div>
         <div className="rounded-xl bg-secondary/60 p-3">
-          <p className="metric-label">1RM estimado</p>
+          <p className="metric-label">e1RM seguro</p>
           <p className="mt-1 font-mono text-lg font-bold">{selected.estimated1RM ?? '—'}<span className="text-[10px] font-normal text-muted-foreground"> kg</span></p>
         </div>
         <div className="rounded-xl bg-secondary/60 p-3">
@@ -64,6 +64,9 @@ export function ExerciseProgressExplorer({ exercises }: ExerciseProgressExplorer
           <p className="mt-1 font-mono text-lg font-bold">{selected.maxReps || '—'}</p>
         </div>
       </div>
+      <p className="-mt-2 mb-4 text-[10px] leading-relaxed text-muted-foreground">
+        Estimativa de Epley somente entre 3–10 reps, com execução boa, sem dor e sem amplitude reduzida. Não é teste de 1RM.
+      </p>
       <ProgressChart data={selected.history} />
     </section>
   )

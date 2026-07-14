@@ -108,7 +108,7 @@ export default async function ExercicioPage(props: {
                 {pr.estimated1RM !== null && (
                   <div>
                     <p className="text-2xl font-black">~{pr.estimated1RM} kg</p>
-                    <p className="text-xs text-muted-foreground">1RM estimado</p>
+                    <p className="text-xs text-muted-foreground">e1RM seguro (não é teste máximo)</p>
                   </div>
                 )}
               </div>
