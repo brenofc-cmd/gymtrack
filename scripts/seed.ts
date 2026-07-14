@@ -10,6 +10,18 @@ import { createClient } from '@supabase/supabase-js'
 import * as dotenv from 'dotenv'
 import path from 'path'
 
+/**
+ * This seed predates routine v3 and rewrites workout_exercises. It is kept
+ * only as a recoverable legacy artifact; running it against a real account
+ * would conflict with the versioned, history-preserving migration flow.
+ */
+if (process.env.ALLOW_LEGACY_SEED !== 'true') {
+  console.error(
+    'Seed legado bloqueado. Aplique as migrations do Supabase; não use este script para criar a rotina v3.'
+  )
+  process.exit(1)
+}
+
 dotenv.config({ path: path.resolve(process.cwd(), '.env.local') })
 
 const supabase = createClient(

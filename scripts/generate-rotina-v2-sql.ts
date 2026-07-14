@@ -1,5 +1,5 @@
 /**
- * Gera supabase/migrations/0005_rotina_v2_data.sql a partir de
+ * Gera um rascunho de próxima migration a partir de
  * lib/routine/rotina-v2.ts (fonte única da verdade).
  *
  * Uso: npx tsx scripts/generate-rotina-v2-sql.ts
@@ -57,6 +57,10 @@ const SUB_CATALOG: Record<
   'Barra fixa assistida (ou puxada neutra)': {
     muscle: 'costas', equipment: 'máquina', kind: 'composto',
     instructions: ['Amplitude completa com controle'],
+  },
+  'Puxada neutra': {
+    muscle: 'costas', equipment: 'cabo', kind: 'composto',
+    instructions: ['Puxe com amplitude controlada e cotovelos em direção ao tronco'],
   },
   'Remada em máquina com apoio': {
     muscle: 'costas', equipment: 'máquina', kind: 'composto',
@@ -193,7 +197,7 @@ function generate(): string {
 ${exercises}`
   }).join('\n')
 
-  return `-- 0005 — Dados da Rotina v2 (PPL 6 dias) — GERADO por scripts/generate-rotina-v2-sql.ts
+  return `-- RASCUNHO: próxima migration da rotina (PPL 6 dias) — GERADO por scripts/generate-rotina-v2-sql.ts
 -- NÃO EDITE MANUALMENTE: altere lib/routine/rotina-v2.ts e regenere.
 --
 -- Para cada usuário com a rotina v1 ativa (Push A..Legs B não arquivados):
@@ -264,6 +268,6 @@ end $$;
 `
 }
 
-const out = path.resolve(__dirname, '../supabase/migrations/0005_rotina_v2_data.sql')
+const out = path.resolve(__dirname, '../supabase/migrations/0007_next_routine_data.sql')
 writeFileSync(out, generate())
 console.log(`✅ Migration gerada: ${out}`)

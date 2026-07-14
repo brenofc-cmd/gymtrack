@@ -7,6 +7,7 @@ import type {
   WorkoutExerciseWithExercise,
 } from '@/types/database'
 import { todayLetter } from '@/lib/utils/weekday'
+import { ROUTINE_VERSION } from '@/lib/routine/rotina-v2'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -37,6 +38,7 @@ export async function getWorkouts(
     .select('*, workout_exercises(id)')
     .eq('user_id', userId)
     .eq('is_archived', false)
+    .eq('routine_version', ROUTINE_VERSION)
     .order('order_index')
 
   if (error) throw error
@@ -54,6 +56,7 @@ export async function getWorkoutWithExercises(
     .eq('user_id', userId)
     .eq('letter', letter)
     .eq('is_archived', false)
+    .eq('routine_version', ROUTINE_VERSION)
     .eq('workout_exercises.is_hidden', false)
     .order('order_index', { referencedTable: 'workout_exercises' })
     .single()
@@ -97,6 +100,7 @@ export async function getSuggestedWorkout(
     .select('letter, day_of_week')
     .eq('user_id', userId)
     .eq('is_archived', false)
+    .eq('routine_version', ROUTINE_VERSION)
     .order('order_index')
 
   const workouts = (userWorkouts ?? []) as Array<{

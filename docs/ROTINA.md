@@ -1,7 +1,11 @@
-# Rotina v2 — PPL 6 dias (divisão definitiva)
+# Rotina v3 — PPL 6 dias (divisão definitiva)
 
 Fonte da verdade no código: [`lib/routine/rotina-v2.ts`](../lib/routine/rotina-v2.ts).
 Qualquer alteração na rotina deve ser feita lá e regenerada com `npm run gen:rotina`.
+
+O `scripts/seed.ts` é legado e fica bloqueado por padrão porque reescreve
+fichas antigas. A rotina v3 é criada exclusivamente pelas migrations, que
+fazem backup e preservam o histórico.
 
 ## Divisão semanal
 
@@ -11,8 +15,8 @@ Qualquer alteração na rotina deve ser feita lá e regenerada com `npm run gen:
 | Terça | Pull A | B | Largura das costas, parte média, deltoide posterior, bíceps |
 | Quarta | Legs A | C | Quadríceps, posteriores, panturrilhas, **abdômen (reverse crunch)** |
 | Quinta | Push B | D | Peitoral completo, peitoral superior, deltoide lateral, tríceps |
-| Sexta | Pull B | E | Dorsal, espessura, deltoide posterior/lateral, bíceps |
-| Sábado | Legs B | F | Posteriores, glúteos, quadríceps, panturrilhas, **abdômen (ab wheel)** |
+| Sexta | Pull B | E | Dorsal, espessura, deltoide posterior, bíceps |
+| Sábado | Legs B | F | Posteriores, glúteos, quadríceps, panturrilhas, deltoide lateral, **abdômen (ab wheel)** |
 | Domingo | — | — | Descanso |
 
 O app mostra o treino do dia conforme o fuso `America/Sao_Paulo`
@@ -21,8 +25,8 @@ O app mostra o treino do dia conforme o fuso `America/Sao_Paulo`
 ## Volume semanal direto (séries válidas)
 
 Peitoral 12 · Costas/dorsais 14 · Deltoide lateral 10 · Deltoide posterior 6 ·
-Bíceps 8 · Tríceps 8 · Quadríceps ~11 · Posteriores ~9 · Panturrilhas 6 ·
-**Abdômen 9**.
+Bíceps 8 · Tríceps 8 · Quadríceps 11 · Posteriores 9 · Panturrilhas 8 ·
+**Abdômen 12**.
 
 Participação secundária (ex.: tríceps no supino) não é somada como série direta.
 A tabela é exibida no dashboard (`PlannedVolumeCard`) e validada por teste.
@@ -138,8 +142,8 @@ Sessões realizadas na v2 nunca são apagadas.
 
 ## Testes
 
-`npm run test` (Vitest) cobre: estrutura da divisão (7/6/6/6/6/6), stiff no
-Legs B, extensora no Legs A, sem 3ª remada no Pull B, 9 séries diretas de
+`npm run test` (Vitest) cobre: estrutura da divisão (7/6/6/6/5/6), stiff no
+Legs B, extensora no Legs A, sem 3ª remada no Pull B, 12 séries diretas de
 abdômen (e ausência nos outros dias), volume semanal por grupo, progressão
 dupla, progressões específicas do abdômen, bloqueio por dor, cronômetro por
 timestamp (inclusive após reload), aquecimento, usuário sem histórico e as

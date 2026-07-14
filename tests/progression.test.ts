@@ -52,6 +52,18 @@ describe('Progressão dupla — regras gerais', () => {
     expect(result?.action).toBe('manter')
   })
 
+  it('não aumenta sem RIR registrado ou execução marcada como boa', () => {
+    const semRir = [set({ reps: 10, rir: null }), set({ reps: 10 }), set({ reps: 10 })]
+    expect(suggestProgression(COMPOSTO, semRir)?.action).toBe('manter')
+
+    const tecnicaAceitavel = [
+      set({ reps: 10, executionQuality: 'aceitavel' }),
+      set({ reps: 10 }),
+      set({ reps: 10 }),
+    ]
+    expect(suggestProgression(COMPOSTO, tecnicaAceitavel)?.action).toBe('manter')
+  })
+
   it('2+ séries abaixo do mínimo → revisar/reduzir carga', () => {
     const sets = [set({ reps: 5 }), set({ reps: 4 }), set({ reps: 6 })]
     const result = suggestProgression(COMPOSTO, sets)
@@ -123,8 +135,8 @@ describe('Progressão — bloqueio por dor', () => {
 
 describe('Progressão específica do abdômen — cable crunch (flexão do tronco)', () => {
   const CABLE_CRUNCH: ProgressionTarget = {
-    sets: 3,
-    repsMin: 10,
+    sets: 4,
+    repsMin: 8,
     repsMax: 15,
     rirMin: 1,
     rirMax: 2,
@@ -133,14 +145,14 @@ describe('Progressão específica do abdômen — cable crunch (flexão do tronc
   }
 
   it('15 reps em todas as séries com RIR adequado → sugerir o menor aumento', () => {
-    const sets = [set({ reps: 15, rir: 1 }), set({ reps: 15, rir: 2 }), set({ reps: 15, rir: 1 })]
+    const sets = [set({ reps: 15, rir: 1 }), set({ reps: 15, rir: 2 }), set({ reps: 15, rir: 1 }), set({ reps: 15, rir: 2 })]
     const result = suggestForExercise(CABLE_CRUNCH, sets)
     expect(result?.action).toBe('aumentar')
     expect(result?.incrementKg).toBe(2)
   })
 
   it('reps abaixo do topo → manter e progredir por repetições', () => {
-    const sets = [set({ reps: 12 }), set({ reps: 11 }), set({ reps: 10 })]
+    const sets = [set({ reps: 12 }), set({ reps: 11 }), set({ reps: 10 }), set({ reps: 9 })]
     const result = suggestForExercise(CABLE_CRUNCH, sets)
     expect(result?.action).toBe('manter')
   })
@@ -148,9 +160,9 @@ describe('Progressão específica do abdômen — cable crunch (flexão do tronc
 
 describe('Progressão específica do abdômen — reverse crunch (retroversão pélvica)', () => {
   const REVERSE_CRUNCH: ProgressionTarget = {
-    sets: 3,
+    sets: 4,
     repsMin: 10,
-    repsMax: 15,
+    repsMax: 20,
     rirMin: 1,
     rirMax: 2,
     kind: 'abdominal',
@@ -159,9 +171,10 @@ describe('Progressão específica do abdômen — reverse crunch (retroversão p
 
   it('topo da faixa mas execução ainda não dominada → NÃO sugerir carga', () => {
     const sets = [
-      set({ reps: 15, executionQuality: 'aceitavel' }),
-      set({ reps: 15, executionQuality: 'boa' }),
-      set({ reps: 15, executionQuality: 'aceitavel' }),
+      set({ reps: 20, executionQuality: 'aceitavel' }),
+      set({ reps: 20, executionQuality: 'boa' }),
+      set({ reps: 20, executionQuality: 'aceitavel' }),
+      set({ reps: 20, executionQuality: 'boa' }),
     ]
     const result = suggestAbProgression(REVERSE_CRUNCH, sets)
     expect(result?.action).toBe('manter')
@@ -170,9 +183,10 @@ describe('Progressão específica do abdômen — reverse crunch (retroversão p
 
   it('topo da faixa com execução boa em todas → progredir', () => {
     const sets = [
-      set({ reps: 15, executionQuality: 'boa' }),
-      set({ reps: 15, executionQuality: 'boa' }),
-      set({ reps: 15, executionQuality: 'boa' }),
+      set({ reps: 20, executionQuality: 'boa' }),
+      set({ reps: 20, executionQuality: 'boa' }),
+      set({ reps: 20, executionQuality: 'boa' }),
+      set({ reps: 20, executionQuality: 'boa' }),
     ]
     const result = suggestAbProgression(REVERSE_CRUNCH, sets)
     expect(result?.action).toBe('aumentar')
@@ -187,7 +201,7 @@ describe('Progressão específica do abdômen — reverse crunch (retroversão p
 
 describe('Progressão específica do abdômen — ab wheel (anti-extensão)', () => {
   const AB_WHEEL: ProgressionTarget = {
-    sets: 3,
+    sets: 4,
     repsMin: 6,
     repsMax: 12,
     rirMin: 1,
@@ -204,14 +218,14 @@ describe('Progressão específica do abdômen — ab wheel (anti-extensão)', ()
   })
 
   it('sem dor e topo da faixa → progredir amplitude/variação (sem hiperextensão)', () => {
-    const sets = [set({ reps: 12 }), set({ reps: 12 }), set({ reps: 12 })]
+    const sets = [set({ reps: 12 }), set({ reps: 12 }), set({ reps: 12 }), set({ reps: 12 })]
     const result = suggestAbProgression(AB_WHEEL, sets)
     expect(result?.action).toBe('aumentar')
     expect(result?.reason).toMatch(/hiperextensão|amplitude|variação/i)
   })
 
   it('sem dor, dentro da faixa → manter e progredir por controle', () => {
-    const sets = [set({ reps: 8 }), set({ reps: 8 }), set({ reps: 7 })]
+    const sets = [set({ reps: 8 }), set({ reps: 8 }), set({ reps: 7 }), set({ reps: 7 })]
     const result = suggestAbProgression(AB_WHEEL, sets)
     expect(result?.action).toBe('manter')
   })

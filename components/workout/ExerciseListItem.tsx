@@ -77,7 +77,7 @@ export function ExerciseListItem({
           </span>
           {exercise.exercise_type === 'abdominal' && exercise.movement_pattern && (
             <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-              {MOVEMENT_PATTERN_LABEL[exercise.movement_pattern]}
+              {MOVEMENT_PATTERN_LABEL[exercise.movement_pattern as keyof typeof MOVEMENT_PATTERN_LABEL] ?? exercise.movement_pattern}
             </span>
           )}
         </div>

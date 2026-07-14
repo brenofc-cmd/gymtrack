@@ -9,6 +9,7 @@ import {
   getExercisePR,
 } from '@/lib/queries/exercises'
 import { suggestForExercise } from '@/lib/progression/progression'
+import type { ExerciseType, MovementPattern } from '@/types/database'
 import type { ExecutionQuality, PainLevel } from '@/types/database'
 import { SessionClient } from './SessionClient'
 
@@ -62,8 +63,8 @@ export default async function SessaoPage(props: {
             repsMax: we.target_reps_max,
             rirMin: we.rir_min,
             rirMax: we.rir_max,
-            kind: we.exercise.exercise_type,
-            movementPattern: we.exercise.movement_pattern,
+            kind: (we.exercise.exercise_type as ExerciseType | null),
+            movementPattern: (we.exercise.movement_pattern as MovementPattern | null),
           },
           lastSets.map((s) => ({
             weightKg: s.weight_kg,

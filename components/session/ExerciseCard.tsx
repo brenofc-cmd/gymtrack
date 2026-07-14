@@ -203,7 +203,7 @@ export function ExerciseCard({
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {isAbdominal && movementPattern && (
               <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
-                {MOVEMENT_PATTERN_LABEL[movementPattern]}
+                {MOVEMENT_PATTERN_LABEL[movementPattern as keyof typeof MOVEMENT_PATTERN_LABEL] ?? movementPattern}
               </span>
             )}
             {newPR && (

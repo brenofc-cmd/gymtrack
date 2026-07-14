@@ -35,16 +35,16 @@ describe('Rotina v2 — estrutura da divisão semanal', () => {
     expect(ROTINA_V2[3].exercises).toHaveLength(6)
   })
 
-  it('Pull B possui 6 exercícios', () => {
-    expect(ROTINA_V2[4].exercises).toHaveLength(6)
+  it('Pull B possui 5 exercícios', () => {
+    expect(ROTINA_V2[4].exercises).toHaveLength(5)
   })
 
   it('Legs B possui 6 exercícios', () => {
     expect(ROTINA_V2[5].exercises).toHaveLength(6)
   })
 
-  it('versão da rotina é 2', () => {
-    expect(ROUTINE_VERSION).toBe(2)
+  it('versão da rotina é 3', () => {
+    expect(ROUTINE_VERSION).toBe(3)
   })
 })
 
@@ -109,11 +109,11 @@ describe('Rotina v2 — abdômen (3 sessões diretas por semana)', () => {
     }
   })
 
-  it('o abdômen possui exatamente 9 séries diretas semanais', () => {
+  it('o abdômen possui exatamente 12 séries diretas semanais', () => {
     const abSets = ROTINA_V2.flatMap((d) => d.exercises)
       .filter((e) => e.kind === 'abdominal')
       .reduce((sum, e) => sum + e.sets, 0)
-    expect(abSets).toBe(9)
+    expect(abSets).toBe(12)
   })
 
   it('cada sessão abdominal usa um padrão de movimento diferente', () => {
@@ -127,7 +127,7 @@ describe('Rotina v2 — abdômen (3 sessões diretas por semana)', () => {
     const abs = ROTINA_V2.flatMap((d) => d.exercises).filter((e) => e.kind === 'abdominal')
     for (const ex of abs) {
       expect(ex.repsMax).toBeGreaterThan(ex.repsMin)
-      expect(ex.sets).toBe(3)
+      expect(ex.sets).toBe(4)
     }
     // ab wheel não substitui por prancha comum cronometrada como 1ª opção
     const abWheel = abs.find((e) => e.movementPattern === 'anti_extensao')!
@@ -203,12 +203,12 @@ describe('Rotina v2 — volume semanal', () => {
     expect(volume['isquiotibiais']).toBe(9)
   })
 
-  it('panturrilhas: 6 séries diretas', () => {
-    expect(volume['panturrilha']).toBe(6)
+  it('panturrilhas: 8 séries diretas', () => {
+    expect(volume['panturrilha']).toBe(8)
   })
 
-  it('abdômen: 9 séries diretas', () => {
-    expect(volume['abdômen']).toBe(9)
+  it('abdômen: 12 séries diretas', () => {
+    expect(volume['abdômen']).toBe(12)
   })
 
   it('a tabela exibida no app (VOLUME_SEMANAL_ALVO) bate com a rotina', () => {
@@ -231,12 +231,12 @@ describe('Rotina v2 — substituições', () => {
       (e) => e.substitutions.length > 0
     )
     const names = withSubs.map((e) => e.name)
-    expect(names).toContain('Supino inclinado com halteres (banco a 30°)')
+    expect(names).toContain('Supino inclinado com halteres')
     expect(names).toContain('Chest press convergente')
     expect(names).toContain('Hack squat')
     expect(names).toContain('Cable crunch')
-    expect(names).toContain('Reverse crunch (banco)')
-    expect(names).toContain('Ab wheel')
+    expect(names).toContain('Reverse crunch no banco')
+    expect(names).toContain('Ab wheel ajoelhado')
   })
 
   it('hack squat permite agachamento livre e smith como variações', () => {

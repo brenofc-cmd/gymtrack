@@ -50,7 +50,8 @@ export interface RoutineDayDef {
   exercises: RoutineExerciseDef[]
 }
 
-export const ROUTINE_VERSION = 2
+/** Incremented only when a migration creates a new immutable active template. */
+export const ROUTINE_VERSION = 3
 
 const WARMUP_COMPOSTO =
   'Aquecimento geral leve (~5 min) e séries de aproximação no primeiro composto: ~40% × 8–12, ~60% × 5–6, ~75–80% × 2–4. Séries de aquecimento não contam no volume e não devem cansar.'
@@ -65,7 +66,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
     warmupNote: WARMUP_COMPOSTO,
     exercises: [
       {
-        name: 'Supino inclinado com halteres (banco a 30°)',
+        name: 'Supino inclinado com halteres',
         kind: 'composto',
         primaryMuscle: 'peito',
         secondaryMuscles: ['deltoide anterior', 'tríceps'],
@@ -100,9 +101,9 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: ['Supino reto com halteres (chest press)', 'Supino em máquina'],
       },
       {
-        name: 'Desenvolvimento sentado (máquina ou halteres)',
+        name: 'Desenvolvimento sentado na máquina',
         kind: 'composto',
-        primaryMuscle: 'ombro',
+        primaryMuscle: 'ombros',
         secondaryMuscles: ['tríceps'],
         equipment: 'máquina',
         sets: 2,
@@ -121,7 +122,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
       {
         name: 'Elevação lateral unilateral no cabo',
         kind: 'isolador',
-        primaryMuscle: 'ombro',
+        primaryMuscle: 'deltoide lateral',
         secondaryMuscles: [],
         equipment: 'cabo',
         sets: 4,
@@ -139,7 +140,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         perSide: true,
       },
       {
-        name: 'Tríceps francês / overhead no cabo',
+        name: 'Tríceps overhead no cabo',
         kind: 'isolador',
         primaryMuscle: 'tríceps',
         secondaryMuscles: [],
@@ -154,7 +155,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Tríceps na corda (pushdown)',
+        name: 'Tríceps na corda',
         kind: 'isolador',
         primaryMuscle: 'tríceps',
         secondaryMuscles: [],
@@ -175,8 +176,8 @@ export const ROTINA_V2: RoutineDayDef[] = [
         secondaryMuscles: [],
         movementPattern: 'flexao_tronco',
         equipment: 'cabo',
-        sets: 3,
-        repsMin: 10,
+        sets: 4,
+        repsMin: 8,
         repsMax: 15,
         rirMin: 1,
         rirMax: 2,
@@ -199,7 +200,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
     warmupNote: WARMUP_COMPOSTO,
     exercises: [
       {
-        name: 'Puxada alta pegada pronada média-aberta (com straps)',
+        name: 'Puxada alta pronada média',
         kind: 'composto',
         primaryMuscle: 'costas',
         secondaryMuscles: ['bíceps', 'parte superior das costas'],
@@ -233,7 +234,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: ['Remada em máquina com apoio', 'Remada T (ou máquina com apoio)'],
       },
       {
-        name: 'Straight-arm pulldown (ativação)',
+        name: 'Straight-arm pulldown',
         kind: 'isolador',
         primaryMuscle: 'costas',
         secondaryMuscles: [],
@@ -248,7 +249,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Crucifixo inverso (reverse fly)',
+        name: 'Crucifixo inverso na máquina',
         kind: 'isolador',
         primaryMuscle: 'deltoide posterior',
         secondaryMuscles: [],
@@ -263,7 +264,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Rosca direta (barra W)',
+        name: 'Rosca direta com barra W',
         kind: 'isolador',
         primaryMuscle: 'bíceps',
         secondaryMuscles: [],
@@ -353,7 +354,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Cadeira flexora (leg curl)',
+        name: 'Flexora sentada',
         kind: 'isolador',
         primaryMuscle: 'isquiotibiais',
         secondaryMuscles: [],
@@ -373,7 +374,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         primaryMuscle: 'panturrilha',
         secondaryMuscles: [],
         equipment: 'máquina',
-        sets: 3,
+        sets: 4,
         repsMin: 8,
         repsMax: 15,
         rirMin: 1,
@@ -386,15 +387,15 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Reverse crunch (banco)',
+        name: 'Reverse crunch no banco',
         kind: 'abdominal',
         primaryMuscle: 'abdômen',
         secondaryMuscles: [],
         movementPattern: 'retroversao_pelvica',
         equipment: 'corpo',
-        sets: 3,
+        sets: 4,
         repsMin: 10,
-        repsMax: 15,
+        repsMax: 20,
         rirMin: 1,
         rirMax: 2,
         restSeconds: 90,
@@ -446,7 +447,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Crossover de baixo para cima (low-to-high)',
+        name: 'Crossover baixo para cima',
         kind: 'isolador',
         primaryMuscle: 'peito',
         secondaryMuscles: [],
@@ -461,7 +462,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Elevação lateral (halteres ou cabo)',
+        name: 'Elevação lateral com halteres',
         kind: 'isolador',
         primaryMuscle: 'ombro',
         secondaryMuscles: [],
@@ -512,12 +513,11 @@ export const ROTINA_V2: RoutineDayDef[] = [
     letter: 'E',
     dayOfWeek: 5,
     name: 'Pull B',
-    objective:
-      'Dorsal, espessura das costas, deltoide posterior, deltoide lateral e bíceps.',
+    objective: 'Dorsal, espessura das costas, deltoide posterior e bíceps.',
     warmupNote: WARMUP_COMPOSTO,
     exercises: [
       {
-        name: 'Barra fixa assistida (ou puxada neutra)',
+        name: 'Barra fixa assistida com pegada neutra',
         kind: 'composto',
         primaryMuscle: 'costas',
         secondaryMuscles: ['bíceps'],
@@ -529,10 +529,10 @@ export const ROTINA_V2: RoutineDayDef[] = [
         rirMax: 2,
         restSeconds: 150,
         guidance: ['Amplitude completa com controle'],
-        substitutions: [],
+        substitutions: ['Puxada neutra'],
       },
       {
-        name: 'Remada unilateral no cabo (ou máquina)',
+        name: 'Remada unilateral no cabo',
         kind: 'composto',
         primaryMuscle: 'costas',
         secondaryMuscles: ['bíceps'],
@@ -566,21 +566,6 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Elevação lateral (cabo)',
-        kind: 'isolador',
-        primaryMuscle: 'ombro',
-        secondaryMuscles: [],
-        equipment: 'cabo',
-        sets: 2,
-        repsMin: 15,
-        repsMax: 25,
-        rirMin: 1,
-        rirMax: 2,
-        restSeconds: 75,
-        guidance: ['Tensão contínua no deltoide lateral'],
-        substitutions: [],
-      },
-      {
         name: 'Rosca alternada no banco inclinado',
         kind: 'isolador',
         primaryMuscle: 'bíceps',
@@ -596,7 +581,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Rosca direta no cabo (barra reta)',
+        name: 'Rosca direta no cabo',
         kind: 'isolador',
         primaryMuscle: 'bíceps',
         secondaryMuscles: [],
@@ -617,7 +602,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
     dayOfWeek: 6,
     name: 'Legs B',
     objective:
-      'Posteriores de coxa, glúteos, quadríceps, estabilidade unilateral, panturrilhas e terceiro estímulo direto de abdômen.',
+      'Posteriores de coxa, glúteos, quadríceps, panturrilhas, deltoide lateral e anti-extensão abdominal.',
     warmupNote: WARMUP_COMPOSTO,
     exercises: [
       {
@@ -657,7 +642,7 @@ export const ROTINA_V2: RoutineDayDef[] = [
         perSide: true,
       },
       {
-        name: 'Cadeira flexora (leg curl)',
+        name: 'Flexora deitada',
         kind: 'isolador',
         primaryMuscle: 'isquiotibiais',
         secondaryMuscles: [],
@@ -672,30 +657,12 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: ['Mesa flexora', 'Flexora unilateral'],
       },
       {
-        name: 'Hip thrust',
-        kind: 'composto',
-        primaryMuscle: 'glúteos',
-        secondaryMuscles: ['isquiotibiais'],
-        equipment: 'barra',
-        sets: 2,
-        repsMin: 8,
-        repsMax: 12,
-        rirMin: 1,
-        rirMax: 2,
-        restSeconds: 120,
-        guidance: [
-          'Não hiperestender a lombar; finalizar com contração dos glúteos',
-          'Queixo levemente recolhido; controlar a descida',
-        ],
-        substitutions: [],
-      },
-      {
         name: 'Panturrilha sentada',
         kind: 'isolador',
         primaryMuscle: 'panturrilha',
         secondaryMuscles: [],
         equipment: 'máquina',
-        sets: 3,
+        sets: 4,
         repsMin: 12,
         repsMax: 20,
         rirMin: 1,
@@ -705,13 +672,29 @@ export const ROTINA_V2: RoutineDayDef[] = [
         substitutions: [],
       },
       {
-        name: 'Ab wheel',
+        name: 'Elevação lateral unilateral no cabo',
+        kind: 'isolador',
+        primaryMuscle: 'deltoide lateral',
+        secondaryMuscles: [],
+        equipment: 'cabo',
+        sets: 2,
+        repsMin: 15,
+        repsMax: 25,
+        rirMin: 2,
+        rirMax: 2,
+        restSeconds: 75,
+        guidance: ['Séries técnicas e controladas; conduza pelo cotovelo sem buscar a falha.'],
+        substitutions: [],
+        perSide: true,
+      },
+      {
+        name: 'Ab wheel ajoelhado',
         kind: 'abdominal',
         primaryMuscle: 'abdômen',
         secondaryMuscles: ['oblíquos', 'estabilizadores'],
         movementPattern: 'anti_extensao',
         equipment: 'corpo',
-        sets: 3,
+        sets: 4,
         repsMin: 6,
         repsMax: 12,
         rirMin: 1,
@@ -739,8 +722,8 @@ export const VOLUME_SEMANAL_ALVO: Record<string, number> = {
   tríceps: 8,
   quadríceps: 11,
   isquiotibiais: 9,
-  panturrilha: 6,
-  abdômen: 9,
+  panturrilha: 8,
+  abdômen: 12,
 }
 
 /**

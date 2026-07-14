@@ -61,11 +61,17 @@ function hasBadExecution(sets: SetPerformance[]): boolean {
 function rirWithinTarget(sets: SetPerformance[], target: ProgressionTarget): boolean {
   if (target.rirMin == null && target.rirMax == null) return true
   return sets.every((s) => {
-    if (s.rir == null) return true // sem registro de RIR não bloqueia
+    // Sem RIR registrado não há evidência suficiente para sugerir aumento.
+    if (s.rir == null) return false
     if (target.rirMin != null && s.rir < target.rirMin) return false
     if (target.rirMax != null && s.rir > target.rirMax + 1) return false
     return true
   })
+}
+
+function allExecutionGood(sets: SetPerformance[]): boolean {
+  // "Aceitável" é suficiente para manter, mas não para aumentar carga.
+  return sets.every((s) => s.executionQuality === 'boa')
 }
 
 /**
@@ -119,11 +125,25 @@ export function suggestProgression(
   // Todas as séries no topo da faixa, execução ok e RIR na meta → aumentar
   const completedTarget = sets.length >= target.sets
   const allAtTop = sets.every((s) => s.reps >= target.repsMax)
-  if (completedTarget && allAtTop && rirWithinTarget(sets, target)) {
+  if (completedTarget && allAtTop && allExecutionGood(sets) && rirWithinTarget(sets, target)) {
     return {
       action: 'aumentar',
       reason: `Todas as séries atingiram ${target.repsMax} repetições com boa execução. Aumente a carga no menor incremento disponível e aceite voltar para ~${target.repsMin} repetições.`,
       incrementKg: smallestIncrement(target.kind),
+    }
+  }
+
+  if (completedTarget && allAtTop && !allExecutionGood(sets)) {
+    return {
+      action: 'manter',
+      reason: 'As repetições atingiram o topo, mas a execução precisa estar marcada como boa antes de aumentar a carga.',
+    }
+  }
+
+  if (completedTarget && allAtTop && !rirWithinTarget(sets, target)) {
+    return {
+      action: 'manter',
+      reason: 'As repetições atingiram o topo, mas confirme RIR dentro da meta em todas as séries antes de aumentar a carga.',
     }
   }
 
