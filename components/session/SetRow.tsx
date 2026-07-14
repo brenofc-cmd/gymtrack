@@ -1,193 +1,368 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, Flame } from 'lucide-react'
+import { useId, useRef, useState } from 'react'
+import { Check, Flame, Loader2, Pencil, RotateCcw, Trash2 } from 'lucide-react'
 import { cn } from '@/lib/utils'
+import {
+  formatPreviousSet,
+  parseDecimalInput,
+  type LoadInputConfig,
+} from '@/lib/training/load-input'
 import type { LocalSetLog } from '@/lib/store/sessionStore'
+import { RIRPickerSheet } from './RIRPickerSheet'
+
+export type SetSaveState = 'saved' | 'queued'
+
+export interface SetDraft {
+  weight: number | null
+  reps: number
+  rir: number | null
+}
+
+interface PreviousSet {
+  weight_kg: number | null
+  reps: number
+  rir: number | null
+}
 
 interface SetRowProps {
   setNumber: number
   isWarmup?: boolean
   setRole?: 'warmup' | 'top' | 'backoff' | 'standard'
+  loadConfig: LoadInputConfig
   defaultWeight: number | null
   defaultReps: number | null
+  previousSet?: PreviousSet | null
+  hint?: string
   targetRirMin?: number | null
   targetRirMax?: number | null
   completed: LocalSetLog | null
-  onComplete: (weight: number | null, reps: number, rir: number | null) => void
+  isCurrent?: boolean
+  onSave: (draft: SetDraft) => Promise<SetSaveState>
+  onRemove?: () => Promise<void> | void
 }
 
-const RIR_OPTIONS = [0, 1, 2, 3, 4]
+function inputValue(value: number | null | undefined): string {
+  return value == null ? '' : value.toString().replace('.', ',')
+}
 
 export function SetRow({
   setNumber,
   isWarmup = false,
   setRole = 'standard',
+  loadConfig,
   defaultWeight,
   defaultReps,
-  targetRirMin,
-  targetRirMax,
+  previousSet = null,
+  hint,
+  targetRirMin = null,
+  targetRirMax = null,
   completed,
-  onComplete,
+  isCurrent = false,
+  onSave,
+  onRemove,
 }: SetRowProps) {
-  const [weight, setWeight] = useState<string>(
-    completed?.weight_kg?.toString() ?? defaultWeight?.toString() ?? ''
-  )
-  const [reps, setReps] = useState<string>(
-    completed?.reps?.toString() ?? defaultReps?.toString() ?? ''
-  )
+  const id = useId()
+  const repsRef = useRef<HTMLInputElement>(null)
+  const [weightInput, setWeightInput] = useState<string | null>(null)
+  const [repsInput, setRepsInput] = useState<string | null>(null)
   const [rir, setRir] = useState<number | null>(completed?.rir ?? null)
+  const [editing, setEditing] = useState(completed == null)
+  const [saving, setSaving] = useState(false)
+  const [rirOpen, setRirOpen] = useState(false)
+  const [draft, setDraft] = useState<SetDraft | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [saveState, setSaveState] = useState<SetSaveState | null>(null)
 
-  const isDone = completed != null
-  const [repsError, setRepsError] = useState(false)
-  const [weightError, setWeightError] = useState(false)
+  const isDone = completed != null && !editing
+  const canEdit = completed != null
+  const weight = weightInput ?? inputValue(completed?.weight_kg ?? defaultWeight)
+  const reps = repsInput ?? inputValue(completed?.reps ?? defaultReps)
 
-  const rirTargetLabel =
-    targetRirMin != null && targetRirMax != null
-      ? targetRirMin === targetRirMax
-        ? `${targetRirMin}`
-        : `${targetRirMin}–${targetRirMax}`
-      : null
-
-  function handleCheck() {
-    if (isDone) return
-    const r = parseInt(reps, 10)
-    const w = weight ? parseFloat(weight) : null
-
-    const repsInvalid = isNaN(r) || r <= 0 || r > 999
-    const weightInvalid = w !== null && (w < 0 || w > 999)
-
-    setRepsError(repsInvalid)
-    setWeightError(weightInvalid)
-
-    if (repsInvalid || weightInvalid) return
-    onComplete(w, r, isWarmup ? null : rir)
+  function buildDraft(): SetDraft | null {
+    const parsedReps = Number.parseInt(reps, 10)
+    const parsedWeight = loadConfig.acceptsLoad ? parseDecimalInput(weight) : null
+    if (!Number.isInteger(parsedReps) || parsedReps <= 0 || parsedReps > 9999) {
+      setError(`Informe ${loadConfig.repsLabel.toLowerCase()} entre 1 e 9999.`)
+      return null
+    }
+    if (
+      loadConfig.acceptsLoad &&
+      (parsedWeight == null || Number.isNaN(parsedWeight) || parsedWeight < 0 || parsedWeight > 9999)
+    ) {
+      setError(`Informe ${loadConfig.loadLabel.toLowerCase()} entre 0 e 9999.`)
+      return null
+    }
+    setError(null)
+    return { weight: parsedWeight, reps: parsedReps, rir: isWarmup ? null : rir }
   }
+
+  async function save(next: SetDraft) {
+    setSaving(true)
+    setError(null)
+    try {
+      const state = await onSave(next)
+      setSaveState(state)
+      setRir(next.rir)
+      setEditing(false)
+      setWeightInput(inputValue(next.weight))
+      setRepsInput(inputValue(next.reps))
+      setRirOpen(false)
+    } catch {
+      setError('Não foi possível guardar a série. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  function prepareSave() {
+    if (saving) return
+    const next = buildDraft()
+    if (!next) return
+    if (!isWarmup && next.rir == null) {
+      setDraft(next)
+      setRirOpen(true)
+      return
+    }
+    void save(next)
+  }
+
+  function copyPrevious() {
+    if (!previousSet) return
+    setWeightInput(inputValue(previousSet.weight_kg))
+    setRepsInput(inputValue(previousSet.reps))
+    // RIR descreve o esforço atual e nunca é copiado automaticamente.
+    setError(null)
+  }
+
+  const previousLabel = previousSet
+    ? formatPreviousSet(previousSet.weight_kg, previousSet.reps, loadConfig)
+    : hint ?? '—'
+  const targetLabel = targetRirMin == null
+    ? null
+    : targetRirMax != null && targetRirMax !== targetRirMin
+      ? `${targetRirMin}–${targetRirMax}`
+      : `${targetRirMin}`
 
   return (
     <div
+      data-current-set={isCurrent ? 'true' : undefined}
       className={cn(
-        'rounded-lg py-2 px-1 transition-colors',
-        isDone ? 'bg-primary/5' : 'bg-transparent'
+        'relative rounded-xl px-1.5 py-2 transition-colors motion-reduce:transition-none',
+        isCurrent && !isDone && 'bg-primary/[0.07] ring-1 ring-inset ring-primary/35',
+        isDone && 'bg-primary/[0.04]'
       )}
     >
-      <div className="grid grid-cols-[32px_1fr_1fr_44px] gap-2 items-center">
-        {/* Série número / aquecimento */}
-        {isWarmup ? (
-          <span className="flex items-center justify-center" title="Série de aquecimento">
-            <Flame className={cn('w-4 h-4', isDone ? 'text-amber-500' : 'text-amber-500/60')} />
-          </span>
-        ) : (
-          <span
-            className={cn(
-              'text-sm font-semibold text-center',
-              isDone ? 'text-primary' : 'text-muted-foreground'
-            )}
-          >
-            {setRole === 'top' ? 'T' : setRole === 'backoff' ? 'B' : setNumber}
-          </span>
-        )}
+      {isCurrent && !isDone && (
+        <span className="absolute inset-y-3 left-0 w-0.5 rounded-full bg-primary" aria-hidden="true" />
+      )}
 
-        {/* Peso */}
-        <div className="relative">
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder="—"
-            value={weight}
-            onChange={(e) => { if (!isDone) { setWeight(e.target.value); setWeightError(false) } }}
-            disabled={isDone}
-            aria-label={`Peso da série ${setNumber} em kg`}
-            className={cn(
-              'w-full h-10 rounded-lg border bg-transparent text-center text-sm font-semibold',
-              'focus:outline-none focus:ring-2 focus:ring-primary/50',
-              'disabled:opacity-60',
-              isDone
-                ? 'border-primary/30 text-primary'
-                : weightError
-                ? 'border-destructive text-foreground'
-                : 'border-border text-foreground'
-            )}
-          />
-          <span className="absolute right-2 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-            kg
-          </span>
+      <div className="grid grid-cols-[30px_minmax(58px,.82fr)_minmax(72px,1.08fr)_minmax(54px,.75fr)_48px] items-center gap-1.5 sm:grid-cols-[38px_minmax(72px,.9fr)_minmax(96px,1.15fr)_minmax(72px,.8fr)_52px] sm:gap-2">
+        <div className="text-center">
+          {isWarmup ? (
+            <span className="inline-flex min-h-10 items-center justify-center text-amber-400" title={`Aquecimento ${setNumber}`}>
+              <Flame className="size-4" />
+              <span className="sr-only">Aquecimento {setNumber}</span>
+            </span>
+          ) : (
+            <span className={cn('font-mono text-sm font-black', isDone ? 'text-primary' : 'text-foreground')}>
+              {setRole === 'top' ? 'T' : setRole === 'backoff' ? `B${setNumber - 1}` : setNumber}
+            </span>
+          )}
         </div>
 
-        {/* Reps */}
-        <input
-          type="number"
-          inputMode="numeric"
-          placeholder="—"
-          value={reps}
-          onChange={(e) => { if (!isDone) { setReps(e.target.value); setRepsError(false) } }}
-          disabled={isDone}
-          aria-label={`Repetições da série ${setNumber}`}
-          className={cn(
-            'w-full h-10 rounded-lg border bg-transparent text-center text-sm font-semibold',
-            'focus:outline-none focus:ring-2 focus:ring-primary/50',
-            'disabled:opacity-60',
-            isDone
-              ? 'border-primary/30 text-primary'
-              : repsError
-              ? 'border-destructive text-foreground'
-              : 'border-border text-foreground'
-          )}
-        />
-
-        {/* Checkbox */}
         <button
-          onClick={handleCheck}
-          disabled={isDone}
-          aria-label={isDone ? `Série ${setNumber} concluída` : `Concluir série ${setNumber}`}
+          type="button"
+          onClick={copyPrevious}
+          disabled={!previousSet || isDone || saving}
+          aria-label={previousSet ? `Copiar anterior: ${previousLabel}` : hint ?? 'Sem série anterior para copiar'}
+          className="min-h-12 min-w-0 rounded-lg px-1 text-center text-[10px] font-semibold leading-tight text-muted-foreground enabled:hover:bg-secondary enabled:hover:text-foreground disabled:opacity-60"
+        >
+          <span className="block truncate">{previousLabel}</span>
+          {previousSet && !isDone && <span className="mt-0.5 block text-[8px] uppercase text-primary/80">Copiar</span>}
+        </button>
+
+        {loadConfig.acceptsLoad ? (
+          <div className="relative min-w-0">
+            <label htmlFor={`${id}-weight`} className="sr-only">
+              {loadConfig.loadLabel} da série {setNumber}
+            </label>
+            <input
+              id={`${id}-weight`}
+              type="text"
+              inputMode="decimal"
+              enterKeyHint="next"
+              value={weight}
+              disabled={isDone || saving}
+              aria-describedby={error ? `${id}-error` : undefined}
+              aria-invalid={Boolean(error)}
+              onFocus={(event) => {
+                event.currentTarget.select()
+                event.currentTarget.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+              }}
+              onChange={(event) => {
+                setWeightInput(event.target.value)
+                setError(null)
+              }}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter') {
+                  event.preventDefault()
+                  repsRef.current?.focus()
+                }
+              }}
+              className={cn(
+                'h-12 w-full rounded-lg border bg-background/70 px-2 pr-7 text-center text-base font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 disabled:bg-transparent',
+                isDone ? 'border-primary/25 text-primary' : error ? 'border-destructive' : 'border-input'
+              )}
+            />
+            <span className="pointer-events-none absolute right-2 top-1/2 -translate-y-1/2 text-[10px] text-muted-foreground">
+              {loadConfig.unit}
+            </span>
+          </div>
+        ) : (
+          <div className="flex h-12 min-w-0 items-center justify-center rounded-lg border border-dashed border-input px-1 text-center text-[10px] font-semibold leading-tight text-muted-foreground">
+            {loadConfig.loadShortLabel}
+          </div>
+        )}
+
+        <div className="min-w-0">
+          <label htmlFor={`${id}-reps`} className="sr-only">
+            {loadConfig.repsLabel} da série {setNumber}
+          </label>
+          <input
+            ref={repsRef}
+            id={`${id}-reps`}
+            type="text"
+            inputMode="numeric"
+            enterKeyHint="done"
+            value={reps}
+            disabled={isDone || saving}
+            aria-describedby={error ? `${id}-error` : undefined}
+            aria-invalid={Boolean(error)}
+            onFocus={(event) => {
+              event.currentTarget.select()
+              event.currentTarget.scrollIntoView?.({ block: 'center', behavior: 'smooth' })
+            }}
+            onChange={(event) => {
+              setRepsInput(event.target.value.replace(/[^0-9]/g, ''))
+              setError(null)
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                event.preventDefault()
+                prepareSave()
+              }
+            }}
+            className={cn(
+              'h-12 w-full rounded-lg border bg-background/70 px-1 text-center text-base font-bold tabular-nums outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 disabled:bg-transparent',
+              isDone ? 'border-primary/25 text-primary' : error ? 'border-destructive' : 'border-input'
+            )}
+          />
+        </div>
+
+        <button
+          type="button"
+          onClick={() => {
+            if (canEdit && !editing) {
+              setEditing(true)
+              setSaveState(null)
+              return
+            }
+            prepareSave()
+          }}
+          disabled={saving}
+          aria-label={isDone ? `Editar série ${setNumber}` : editing && canEdit ? `Salvar edição da série ${setNumber}` : `Concluir série ${setNumber}`}
           className={cn(
-            'flex items-center justify-center w-10 h-10 rounded-lg border-2 transition-all justify-self-end',
-            'disabled:cursor-default',
+            'grid size-12 place-items-center justify-self-end rounded-xl border-2 transition-colors focus-visible:ring-2 focus-visible:ring-primary disabled:opacity-70',
             isDone
-              ? 'bg-primary border-primary text-primary-foreground'
-              : 'border-border hover:border-primary/50 text-transparent hover:text-primary/30'
+              ? 'border-primary bg-primary text-primary-foreground'
+              : 'border-primary/45 bg-primary/10 text-primary hover:bg-primary hover:text-primary-foreground'
           )}
         >
-          <Check className="w-5 h-5" strokeWidth={3} />
+          {saving ? (
+            <Loader2 className="size-5 animate-spin" />
+          ) : isDone ? (
+            <span className="relative">
+              <Check className="size-5" strokeWidth={3} />
+              <Pencil className="absolute -bottom-1.5 -right-2 size-3 rounded-full bg-primary-foreground p-0.5 text-primary" />
+            </span>
+          ) : (
+            <Check className="size-5" strokeWidth={3} />
+          )}
         </button>
       </div>
 
-      {/* RIR — apenas para séries válidas */}
-      {!isWarmup && !isDone && (
-        <div className="flex items-center gap-1.5 mt-1.5 pl-[40px]">
-          <span className="text-[10px] uppercase tracking-wide text-muted-foreground shrink-0">
-            RIR{rirTargetLabel ? ` (meta ${rirTargetLabel})` : ''}
+      <div className="mt-1 flex min-h-4 items-center gap-2 pl-9 text-[9px] sm:pl-12">
+        {isCurrent && !isDone && <span className="font-bold uppercase tracking-wide text-primary">Série atual</span>}
+        {!isWarmup && setRole !== 'standard' && (
+          <span className="font-semibold uppercase tracking-wide text-muted-foreground">
+            {setRole === 'top' ? 'Top set' : 'Back-off'}
           </span>
-          <div className="flex gap-1">
-            {RIR_OPTIONS.map((v) => (
-              <button
-                key={v}
-                onClick={() => setRir(rir === v ? null : v)}
-                aria-label={`RIR ${v}`}
-                aria-pressed={rir === v}
-                className={cn(
-                  'w-7 h-7 rounded-md text-xs font-semibold border transition-colors',
-                  rir === v
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : 'border-border text-muted-foreground hover:border-primary/40'
-                )}
-              >
-                {v}
-              </button>
-            ))}
-          </div>
-        </div>
-      )}
-      {!isWarmup && setRole !== 'standard' && (
-        <p className="mt-1 pl-[40px] text-[10px] font-semibold uppercase tracking-wide text-primary">
-          {setRole === 'top' ? 'Top set submáximo' : 'Back-off set'}
+        )}
+        {!isWarmup && (completed?.rir != null || rir != null) && (
+          <button
+            type="button"
+            onClick={() => {
+              const next = buildDraft()
+              if (!next) return
+              setDraft(next)
+              setRirOpen(true)
+            }}
+            className="min-h-7 rounded-full bg-primary/10 px-1.5 py-0.5 font-bold text-primary"
+            aria-label={`Editar RIR da série ${setNumber}`}
+          >
+            RIR {completed?.rir ?? rir}{(completed?.rir ?? rir) === 4 ? '+' : ''}
+          </button>
+        )}
+        {!isWarmup && !isDone && targetLabel && (
+          <span className="text-muted-foreground">Meta RIR {targetLabel}</span>
+        )}
+        {saveState === 'queued' && <span className="text-[#ffcf7a]">Salva offline</span>}
+        {editing && canEdit && (
+          <button
+            type="button"
+            onClick={() => {
+              setEditing(false)
+              setWeightInput(null)
+              setRepsInput(null)
+              setRir(completed?.rir ?? null)
+              setError(null)
+            }}
+            className="ml-auto inline-flex min-h-7 items-center gap-1 px-1 text-muted-foreground"
+          >
+            <RotateCcw className="size-3" /> Cancelar edição
+          </button>
+        )}
+        {isWarmup && completed && onRemove && (
+          <button
+            type="button"
+            onClick={() => void onRemove()}
+            className="ml-auto inline-flex min-h-7 items-center gap-1 px-1 text-destructive"
+          >
+            <Trash2 className="size-3" /> Remover
+          </button>
+        )}
+      </div>
+
+      {error && (
+        <p id={`${id}-error`} role="alert" className="mt-1 pl-9 text-xs text-destructive sm:pl-12">
+          {error}
         </p>
       )}
-      {!isWarmup && isDone && completed?.rir != null && (
-        <p className="text-[10px] text-muted-foreground mt-1 pl-[40px]">
-          RIR registrado: <span className="text-primary font-semibold">{completed.rir}</span>
-        </p>
-      )}
+
+      <RIRPickerSheet
+        open={rirOpen}
+        onOpenChange={setRirOpen}
+        setNumber={setNumber}
+        targetMin={targetRirMin}
+        targetMax={targetRirMax}
+        saving={saving}
+        onSelect={(selectedRir) => {
+          const next = draft
+          if (!next) return
+          void save({ ...next, rir: selectedRir })
+        }}
+      />
     </div>
   )
 }

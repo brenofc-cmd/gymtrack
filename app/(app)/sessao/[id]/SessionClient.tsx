@@ -1,157 +1,249 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { SessionHeader } from '@/components/session/SessionHeader'
-import { ExerciseCard } from '@/components/session/ExerciseCard'
-import { RestTimerBar } from '@/components/session/RestTimerBar'
-import { FinishSessionModal } from '@/components/session/FinishSessionModal'
-import { useSessionStore } from '@/lib/store/sessionStore'
+import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useRouter } from 'next/navigation'
+import { Activity } from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import {
+  timerIsActive,
+  useSessionStore,
+  type ExerciseFeedback,
+  type LocalSetLog,
+} from '@/lib/store/sessionStore'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { SessionWithLogs } from '@/lib/queries/sessions'
 import type { WorkoutWithExercises } from '@/types/database'
 import { readinessGuidance, type ReadinessStatus } from '@/lib/training/readiness'
+import { ActiveWorkoutHeader } from '@/components/session/ActiveWorkoutHeader'
+import {
+  CurrentExercisePanel,
+  type PreviousExerciseSet,
+} from '@/components/session/CurrentExercisePanel'
+import { ExerciseNavigator } from '@/components/session/ExerciseNavigator'
+import { FinishWorkoutSheet } from '@/components/session/FinishWorkoutSheet'
+import { RestTimerDock } from '@/components/session/RestTimerDock'
+import { SessionExitSheet } from '@/components/session/SessionExitSheet'
 
 interface SessionClientProps {
   session: SessionWithLogs
   workout: WorkoutWithExercises
-  lastLogs: Array<{ weight_kg: number | null; reps: number; rir: number | null } | null>
+  previousSets: PreviousExerciseSet[][]
   prWeights: Array<number | null>
   progressions: Array<ProgressionSuggestion | null>
   exerciseHistories: Array<Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>>
   readinessStatus: ReadinessStatus
 }
 
+function normalizeSetRole(value: string): LocalSetLog['set_role'] {
+  return value === 'warmup' || value === 'top' || value === 'backoff'
+    ? value
+    : 'standard'
+}
+
 export function SessionClient({
   session,
   workout,
-  lastLogs,
+  previousSets,
   prWeights,
   progressions,
   exerciseHistories,
   readinessStatus,
 }: SessionClientProps) {
-  const { sessionId, startSession, sets, setCurrentExerciseIndex } = useSessionStore()
-  const [currentIndex, setCurrentIndex] = useState(0)
-  const [finishModalOpen, setFinishModalOpen] = useState(false)
-  const exercises = workout.workout_exercises
-  const firstCompoundIndex = exercises.findIndex(
-    (exercise) => exercise.exercise.exercise_type === 'composto'
+  const router = useRouter()
+  const store = useSessionStore()
+  const {
+    sessionId,
+    currentExerciseIndex,
+    currentExerciseId,
+    sets,
+    feedback,
+    skippedExerciseIds,
+    restTimer,
+    hydrateSession,
+    setCurrentExercise,
+    setExerciseSkipped,
+    pauseSessionClock,
+    pauseRestTimer,
+    resetSession,
+  } = store
+  const [orderedExercises, setOrderedExercises] = useState(workout.workout_exercises)
+  const [currentIndex, setCurrentIndex] = useState(() =>
+    sessionId === session.id && currentExerciseId
+      ? Math.max(0, workout.workout_exercises.findIndex((exercise) => exercise.id === currentExerciseId))
+      : sessionId === session.id
+        ? Math.min(currentExerciseIndex, Math.max(0, workout.workout_exercises.length - 1))
+        : 0
   )
+  const [exitOpen, setExitOpen] = useState(false)
+  const [finishOpen, setFinishOpen] = useState(false)
 
   useEffect(() => {
-    if (sessionId !== session.id) startSession(session.id, session.workout_id)
-  }, [session.id, session.workout_id, sessionId, startSession])
+    const serverSets: Record<string, LocalSetLog[]> = {}
+    const serverFeedback: Record<string, ExerciseFeedback> = {}
+    const serverVariation: Record<string, string | null> = {}
 
-  const go = useCallback(
-    (index: number) => {
-      if (index < 0 || index >= exercises.length) return
-      setCurrentIndex(index)
-      setCurrentExerciseIndex(index)
-    },
-    [exercises.length, setCurrentExerciseIndex]
+    const orderedLogs = [...session.set_logs].sort((a, b) =>
+      new Date(a.completed_at ?? 0).getTime() - new Date(b.completed_at ?? 0).getTime()
+    )
+    for (const log of orderedLogs) {
+      const exerciseId = log.workout_exercise_id
+      const local: LocalSetLog = {
+        id: log.id,
+        set_number: log.set_number,
+        weight_kg: log.weight_kg,
+        reps: log.reps,
+        rir: log.rir,
+        is_warmup: log.is_warmup,
+        set_role: normalizeSetRole(log.set_role),
+        completed_at: log.completed_at ?? session.started_at,
+      }
+      serverSets[exerciseId] = [...(serverSets[exerciseId] ?? []), local]
+      serverFeedback[exerciseId] = {
+        executionQuality: log.execution_quality as ExerciseFeedback['executionQuality'],
+        painLevel: log.pain_level as ExerciseFeedback['painLevel'],
+        romQuality: log.rom_quality as ExerciseFeedback['romQuality'],
+        notes: log.notes ?? '',
+      }
+      serverVariation[exerciseId] = log.performed_exercise_id
+    }
+
+    hydrateSession(
+      session.id,
+      session.workout_id,
+      session.started_at,
+      serverSets,
+      serverFeedback,
+      serverVariation
+    )
+  }, [hydrateSession, session.id, session.set_logs, session.started_at, session.workout_id])
+
+  const originalIndexById = useMemo(
+    () => new Map(workout.workout_exercises.map((exercise, index) => [exercise.id, index])),
+    [workout.workout_exercises]
   )
+  const firstCompoundId = workout.workout_exercises.find(
+    (exercise) => exercise.exercise.exercise_type === 'composto'
+  )?.id
 
-  const completedSetCount = exercises.reduce(
+  const go = useCallback((index: number) => {
+    if (index < 0 || index >= orderedExercises.length) return
+    setCurrentIndex(index)
+    setCurrentExercise(orderedExercises[index].id, index)
+  }, [orderedExercises, setCurrentExercise])
+
+  const moveCurrent = useCallback((direction: -1 | 1) => {
+    const nextIndex = currentIndex + direction
+    if (nextIndex < 0 || nextIndex >= orderedExercises.length) return
+    setOrderedExercises((items) => {
+      const next = [...items]
+      ;[next[currentIndex], next[nextIndex]] = [next[nextIndex], next[currentIndex]]
+      return next
+    })
+    setCurrentIndex(nextIndex)
+    setCurrentExercise(orderedExercises[currentIndex].id, nextIndex)
+  }, [currentIndex, orderedExercises, setCurrentExercise])
+
+  const completedSetCount = orderedExercises.reduce(
     (total, exercise) => total + (sets[exercise.id] ?? []).filter((set) => !set.is_warmup).length,
     0
   )
-  const totalSetCount = exercises.reduce((total, exercise) => total + exercise.target_sets, 0)
-  const current = exercises[currentIndex]
+  const totalSetCount = orderedExercises.reduce((total, exercise) => total + exercise.target_sets, 0)
+  const current = orderedExercises[currentIndex]
+  const originalIndex = current ? originalIndexById.get(current.id) ?? 0 : 0
   const readinessMessage = readinessGuidance(readinessStatus)
 
+  useEffect(() => {
+    if (current) setCurrentExercise(current.id, currentIndex)
+  }, [current, currentIndex, setCurrentExercise])
+
+  if (!current) return null
+
+  async function cancelWorkout() {
+    const supabase = createClient()
+    const { error } = await supabase.from('workout_sessions').delete().eq('id', session.id)
+    if (error) throw error
+    resetSession(session.id)
+    router.push('/')
+    router.refresh()
+  }
+
+  function exitWorkout(pause: boolean) {
+    if (pause) {
+      pauseSessionClock()
+      if (timerIsActive(restTimer) && restTimer.pausedRemaining == null) pauseRestTimer()
+    }
+    router.push('/')
+  }
+
   return (
-    <div className="flex min-h-dvh flex-col bg-background">
-      <SessionHeader
+    <div className="min-h-dvh overflow-x-hidden bg-background">
+      <ActiveWorkoutHeader
         startedAt={session.started_at}
         workoutName={workout.name}
         workoutLetter={workout.letter ?? ''}
         completedSets={completedSetCount}
         totalSets={totalSetCount}
-        onFinish={() => setFinishModalOpen(true)}
+        onExit={() => setExitOpen(true)}
+        onFinish={() => setFinishOpen(true)}
       />
 
-      <div className="mx-auto flex w-full max-w-lg gap-1.5 px-4 pt-3">
-        {exercises.map((exercise, index) => {
-          const validSets = (sets[exercise.id] ?? []).filter((set) => !set.is_warmup)
-          const done = validSets.length >= exercise.target_sets
-          const active = index === currentIndex
-          return (
-            <button
-              key={exercise.id}
-              type="button"
-              onClick={() => go(index)}
-              aria-label={`Abrir exercício ${index + 1}: ${exercise.exercise.name_pt}`}
-              aria-current={active ? 'step' : undefined}
-              className={cn(
-                'h-5 flex-1 rounded-full border-4 border-background transition-colors',
-                active ? 'bg-primary' : done ? 'bg-primary/40' : 'bg-secondary'
-              )}
-            >
-              <span className="sr-only">{done ? 'Concluído' : 'Pendente'}</span>
-            </button>
-          )
-        })}
-      </div>
+      <ExerciseNavigator
+        exercises={orderedExercises}
+        currentIndex={currentIndex}
+        completedSets={completedSetCount}
+        totalSets={totalSetCount}
+        sets={sets}
+        feedback={feedback}
+        skippedExerciseIds={skippedExerciseIds}
+        onGo={go}
+      />
 
-      {workout.objective && (
-        <p className="mx-auto w-full max-w-lg px-4 pt-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">
-          {workout.objective}
-        </p>
-      )}
+      <main className="mx-auto w-full max-w-3xl px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
+        {readinessMessage && (
+          <div className="mb-2 flex gap-2 rounded-xl bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
+            <Activity className="mt-0.5 size-4 shrink-0" />
+            {readinessMessage}
+          </div>
+        )}
 
-      {readinessMessage && (
-        <div className="mx-auto mt-2 w-[calc(100%-2rem)] max-w-lg rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-xs leading-relaxed text-[#ffcf7a]">
-          {readinessMessage}
-        </div>
-      )}
-
-      <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-40 pt-3">
-        <ExerciseCard
+        <CurrentExercisePanel
           key={current.id}
           sessionId={session.id}
           workoutExercise={current}
-          isOpen
-          onToggle={() => {}}
-          lastWeight={lastLogs[currentIndex]?.weight_kg ?? null}
-          lastReps={lastLogs[currentIndex]?.reps ?? null}
-          lastRir={lastLogs[currentIndex]?.rir ?? null}
-          prWeight={prWeights[currentIndex] ?? null}
-          progression={progressions[currentIndex] ?? null}
-          history={exerciseHistories[currentIndex] ?? []}
-          showWarmupPlan={currentIndex === firstCompoundIndex}
-          onAllSetsComplete={() => go(currentIndex + 1)}
+          exerciseNumber={currentIndex + 1}
+          totalExercises={orderedExercises.length}
+          previousSets={previousSets[originalIndex] ?? []}
+          bestWeight={prWeights[originalIndex] ?? null}
+          progression={progressions[originalIndex] ?? null}
+          history={exerciseHistories[originalIndex] ?? []}
+          showWarmupPlan={current.id === firstCompoundId}
+          canMoveEarlier={currentIndex > 0}
+          canMoveLater={currentIndex < orderedExercises.length - 1}
+          onMoveEarlier={() => moveCurrent(-1)}
+          onMoveLater={() => moveCurrent(1)}
+          onSkip={() => {
+            setExerciseSkipped(current.id, true)
+            if (currentIndex < orderedExercises.length - 1) go(currentIndex + 1)
+          }}
+          onNextExercise={() => go(currentIndex + 1)}
+          hasNextExercise={currentIndex < orderedExercises.length - 1}
         />
+      </main>
 
-        <div className="mt-4 flex items-center justify-between px-1">
-          <button
-            type="button"
-            onClick={() => go(currentIndex - 1)}
-            disabled={currentIndex === 0}
-            className="flex h-10 items-center gap-1.5 rounded-xl border border-input px-4 text-sm font-medium text-muted-foreground disabled:opacity-25"
-          >
-            <ChevronLeft className="size-4" /> Anterior
-          </button>
-          <span className="font-mono text-xs text-muted-foreground">{currentIndex + 1} / {exercises.length}</span>
-          <button
-            type="button"
-            onClick={() => go(currentIndex + 1)}
-            disabled={currentIndex === exercises.length - 1}
-            className="flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary disabled:border-input disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-25"
-          >
-            Próximo <ChevronRight className="size-4" />
-          </button>
-        </div>
-      </div>
-
-      <RestTimerBar />
-      <FinishSessionModal
-        open={finishModalOpen}
-        onClose={() => setFinishModalOpen(false)}
+      <RestTimerDock exercises={orderedExercises} currentExerciseId={current.id} />
+      <SessionExitSheet
+        open={exitOpen}
+        onOpenChange={setExitOpen}
+        onExit={exitWorkout}
+        onCancelWorkout={cancelWorkout}
+      />
+      <FinishWorkoutSheet
+        open={finishOpen}
+        onOpenChange={setFinishOpen}
         sessionId={session.id}
         startedAt={session.started_at}
-        workoutExercises={exercises}
+        workoutExercises={workout.workout_exercises}
+        bestWeights={prWeights}
       />
     </div>
   )

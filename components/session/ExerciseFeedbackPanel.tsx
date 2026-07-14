@@ -2,11 +2,10 @@
 
 import { useState } from 'react'
 import { OctagonAlert } from 'lucide-react'
-import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
-import { saveExerciseFeedback } from '@/lib/queries/sessions'
+import { persistExerciseFeedback } from '@/lib/offline/syncQueue'
 import type { ExecutionQuality, PainLevel, RomQuality } from '@/types/database'
 
 interface ExerciseFeedbackPanelProps {
@@ -56,17 +55,15 @@ export function ExerciseFeedbackPanel({
     romQuality?: RomQuality | null
     notes?: string
   }) {
-    try {
-      const supabase = createClient()
-      await saveExerciseFeedback(supabase, sessionId, workoutExerciseId, {
+    const supabase = createClient()
+    await persistExerciseFeedback(supabase, {
+        sessionId,
+        workoutExerciseId,
         execution_quality: next.executionQuality ?? fb.executionQuality,
         pain_level: next.painLevel ?? fb.painLevel,
         rom_quality: next.romQuality ?? fb.romQuality,
         notes: next.notes ?? fb.notes,
       })
-    } catch {
-      toast.error('Feedback guardado localmente; será salvo nas próximas séries.')
-    }
   }
 
   return (
@@ -88,7 +85,7 @@ export function ExerciseFeedbackPanel({
               }}
               aria-pressed={fb.executionQuality === opt.value}
               className={cn(
-                'px-2.5 h-7 rounded-md text-xs font-medium border transition-colors',
+                'min-h-11 px-3 rounded-lg text-xs font-medium border transition-colors',
                 fb.executionQuality === opt.value
                   ? opt.value === 'ruim'
                     ? 'bg-amber-500/15 text-amber-500 border-amber-500/40'
@@ -116,7 +113,7 @@ export function ExerciseFeedbackPanel({
               }}
               aria-pressed={fb.romQuality === option.value}
               className={cn(
-                'h-7 rounded-md border px-2.5 text-xs font-medium transition-colors',
+                'min-h-11 rounded-lg border px-3 text-xs font-medium transition-colors',
                 fb.romQuality === option.value
                   ? option.value === 'reduzida' ? 'border-amber-500/40 bg-amber-500/15 text-amber-500' : 'border-primary/40 bg-primary/15 text-primary'
                   : 'border-border text-muted-foreground hover:border-primary/40'
@@ -147,7 +144,7 @@ export function ExerciseFeedbackPanel({
                 }}
                 aria-pressed={fb.painLevel === opt.value}
                 className={cn(
-                  'px-2.5 h-7 rounded-md text-xs font-medium border transition-colors',
+                  'min-h-11 px-3 rounded-lg text-xs font-medium border transition-colors',
                   fb.painLevel === opt.value
                     ? serious
                       ? 'bg-destructive/15 text-destructive border-destructive/40'
@@ -190,9 +187,9 @@ export function ExerciseFeedbackPanel({
           setSavingNotes(false)
         }}
         placeholder="Observações do exercício (opcional)..."
-        rows={1}
+        rows={3}
         maxLength={300}
-        className="w-full rounded-lg border border-border bg-transparent px-2.5 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
+        className="w-full rounded-xl border border-border bg-transparent px-3 py-3 text-base placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary/50 resize-none"
       />
     </div>
   )
