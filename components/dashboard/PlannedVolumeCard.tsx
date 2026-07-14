@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { ChevronDown, BarChart3 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { VOLUME_SEMANAL_ALVO } from '@/lib/routine/rotina-v2'
+import { VOLUME_SEMANAL_ALVO, secondaryVolumeByMuscle } from '@/lib/routine/powerbuilding-v4'
 
 const MUSCLE_LABEL: Record<string, string> = {
   peito: 'Peitoral',
@@ -25,11 +25,14 @@ const MUSCLE_LABEL: Record<string, string> = {
 export function PlannedVolumeCard() {
   const [open, setOpen] = useState(false)
   const entries = Object.entries(VOLUME_SEMANAL_ALVO)
+  const secondary = secondaryVolumeByMuscle()
   const max = Math.max(...entries.map(([, v]) => v))
 
   return (
     <div className="rounded-2xl bg-card border border-border overflow-hidden">
       <button
+        type="button"
+        aria-expanded={open}
         onClick={() => setOpen((v) => !v)}
         className="w-full flex items-center gap-2 p-4 text-left"
       >
@@ -64,6 +67,10 @@ export function PlannedVolumeCard() {
             Séries diretas válidas por semana. Participação secundária (ex.: tríceps no
             supino) não é somada como série direta.
           </p>
+          <details className="text-[10px] text-muted-foreground">
+            <summary className="cursor-pointer font-semibold text-primary">Ver contribuição secundária estimada</summary>
+            <p className="mt-1">{Object.entries(secondary).map(([muscle, sets]) => `${muscle}: ${sets}`).join(' · ')}</p>
+          </details>
         </div>
       )}
     </div>

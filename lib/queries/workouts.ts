@@ -7,7 +7,8 @@ import type {
   WorkoutExerciseWithExercise,
 } from '@/types/database'
 import { todayLetter } from '@/lib/utils/weekday'
-import { ROUTINE_VERSION } from '@/lib/routine/rotina-v2'
+import { ROUTINE_VERSION } from '@/lib/routine/powerbuilding-v4'
+import { nextRotatingWorkout } from '@/lib/training/schedule'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -87,9 +88,9 @@ export async function getWorkoutById(
 
 /**
  * Treino sugerido do dia:
- * 1. Se a rotina tem dias da semana definidos (rotina v2), usa o dia atual
- *    no fuso America/Sao_Paulo. Domingo → null (descanso).
- * 2. Caso contrário, mantém a rotação clássica (próximo após o último feito).
+ * Domingo continua como descanso. Nos demais dias, a agenda mostra o dia
+ * planejado quando não há histórico e passa a continuar a sequência após o
+ * último treino concluído, evitando pular uma sessão perdida.
  */
 export async function getSuggestedWorkout(
   supabase: SupabaseDB,
@@ -110,20 +111,14 @@ export async function getSuggestedWorkout(
 
   if (workouts.length === 0) return 'A'
 
-  const hasWeekdays = workouts.some((w) => w.day_of_week != null)
-  if (hasWeekdays) {
-    const letter = todayLetter()
-    if (letter === null) return null // domingo: descanso
-    const match = workouts.find((w) => w.letter === letter)
-    if (match) return letter
-  }
+  const scheduledToday = todayLetter()
+  if (scheduledToday === null) return null
 
-  // Fallback: rotação pela ordem
   const rotation = workouts
     .map((w) => w.letter as WorkoutLetter | null)
     .filter((l): l is WorkoutLetter => l != null)
 
-  if (rotation.length === 0) return 'A'
+  if (rotation.length === 0) return scheduledToday
 
   const { data: lastSession } = await supabase
     .from('workout_sessions')
@@ -134,7 +129,7 @@ export async function getSuggestedWorkout(
     .limit(1)
     .single()
 
-  if (!lastSession) return rotation[0]
+  if (!lastSession) return rotation.includes(scheduledToday) ? scheduledToday : rotation[0]
 
   const { data: workout } = await supabase
     .from('workouts')
@@ -142,10 +137,9 @@ export async function getSuggestedWorkout(
     .eq('id', (lastSession as { workout_id: string }).workout_id)
     .single()
 
-  if (!workout) return rotation[0]
+  if (!workout) return rotation.includes(scheduledToday) ? scheduledToday : rotation[0]
 
   const lastLetter = (workout as { letter: string }).letter as WorkoutLetter
-  const idx = rotation.indexOf(lastLetter)
-  if (idx === -1) return rotation[0]
-  return rotation[(idx + 1) % rotation.length]
+  if (!rotation.includes(lastLetter)) return rotation[0]
+  return nextRotatingWorkout(scheduledToday, lastLetter)
 }

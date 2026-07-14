@@ -6,7 +6,6 @@ import { AnimatePresence, motion } from 'framer-motion'
 import {
   ChevronDown,
   CheckCircle2,
-  Trophy,
   Flame,
   TrendingUp,
   MinusCircle,
@@ -29,7 +28,8 @@ import { useSessionStore } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
 import { persistSetLog } from '@/lib/offline/syncQueue'
 import { buildWarmupPlan } from '@/lib/progression/warmup'
-import { MOVEMENT_PATTERN_LABEL, AVISO_ABDOMEN } from '@/lib/routine/rotina-v2'
+import { MOVEMENT_PATTERN_LABEL, AVISO_ABDOMEN } from '@/lib/routine/powerbuilding-v4'
+import { backoffWeight } from '@/lib/training/strength'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
@@ -97,6 +97,7 @@ export function ExerciseCard({
     startRestTimer,
     variation,
     setVariation,
+    feedback,
   } = useSessionStore()
 
   const allLogged = storeSets[workoutExercise.id] ?? []
@@ -105,7 +106,6 @@ export function ExerciseCard({
   const totalSets = workoutExercise.target_sets
   const allDone = completedSets.length >= totalSets
   const notifiedDoneRef = useRef(false)
-  const [newPR, setNewPR] = useState(false)
   const [showInstructions, setShowInstructions] = useState(false)
   const [extraWarmupRows, setExtraWarmupRows] = useState(0)
   const [detailOpen, setDetailOpen] = useState(false)
@@ -130,25 +130,25 @@ export function ExerciseCard({
     weight: number | null,
     reps: number,
     rir: number | null,
-    isWarmup: boolean
+    isWarmup: boolean,
+    setRole: 'warmup' | 'top' | 'backoff' | 'standard'
   ) {
     const completed_at = new Date().toISOString()
     const logId = crypto.randomUUID()
+    const currentFeedback = feedback[workoutExercise.id]
     logSet(workoutExercise.id, {
       set_number: setNumber,
       weight_kg: weight,
       reps,
       rir,
       is_warmup: isWarmup,
+      set_role: setRole,
       completed_at,
     })
 
     // Aquecimento não dispara o cronômetro de descanso completo
     if (!isWarmup) {
       startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
-      if (weight !== null && prWeight !== null && weight > prWeight) {
-        setNewPR(true)
-      }
     }
 
     try {
@@ -162,6 +162,10 @@ export function ExerciseCard({
         reps,
         rir,
         is_warmup: isWarmup,
+        set_role: setRole,
+        execution_quality: currentFeedback?.executionQuality ?? null,
+        pain_level: currentFeedback?.painLevel ?? null,
+        rom_quality: currentFeedback?.romQuality ?? null,
         performed_exercise_id: selectedVariation,
         completed_at,
       })
@@ -176,9 +180,19 @@ export function ExerciseCard({
   // Pré-preenchimento: última série desta sessão, senão última sessão
   function getDefaultForSet(setIndex: number) {
     const prev = completedSets[setIndex - 1]
-    if (prev) return { weight: prev.weight_kg, reps: prev.reps }
+    const isBackoff = workoutExercise.top_set_enabled && setIndex > 0
+    if (prev) {
+      return {
+        weight: isBackoff && prev.weight_kg != null
+          ? backoffWeight(prev.weight_kg, workoutExercise.backoff_percentage ?? 7.5, exercise.equipment === 'halter' ? 1 : 2.5)
+          : prev.weight_kg,
+        reps: isBackoff ? Math.max(workoutExercise.target_reps_min, 8) : prev.reps,
+      }
+    }
     return {
-      weight: lastWeight,
+      weight: isBackoff && lastWeight != null
+        ? backoffWeight(lastWeight, workoutExercise.backoff_percentage ?? 7.5, exercise.equipment === 'halter' ? 1 : 2.5)
+        : lastWeight,
       reps: lastReps ?? workoutExercise.target_reps_min,
     }
   }
@@ -221,12 +235,6 @@ export function ExerciseCard({
             {isAbdominal && movementPattern && (
               <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">
                 {MOVEMENT_PATTERN_LABEL[movementPattern as keyof typeof MOVEMENT_PATTERN_LABEL] ?? movementPattern}
-              </span>
-            )}
-            {newPR && (
-              <span className="flex items-center gap-1 text-xs text-amber-500 font-semibold">
-                <Trophy className="w-3 h-3" />
-                Novo recorde!
               </span>
             )}
             {allDone ? (
@@ -375,7 +383,8 @@ export function ExerciseCard({
                         defaultWeight={suggestedWarmups[i]?.weightKg ?? null}
                         defaultReps={i === 0 ? 10 : i === 1 ? 6 : i === 2 ? 3 : null}
                         completed={completed}
-                        onComplete={(w, r) => handleSetComplete(i + 1, w, r, null, true)}
+                        setRole="warmup"
+                        onComplete={(w, r) => handleSetComplete(i + 1, w, r, null, true, 'warmup')}
                       />
                     )
                   })}
@@ -403,16 +412,20 @@ export function ExerciseCard({
                 {Array.from({ length: totalSets }, (_, i) => {
                   const completed = completedSets[i] ?? null
                   const defaults = getDefaultForSet(i)
+                  const setRole = workoutExercise.top_set_enabled
+                    ? i === 0 ? 'top' : 'backoff'
+                    : 'standard'
                   return (
                     <SetRow
                       key={i}
                       setNumber={i + 1}
+                      setRole={setRole}
                       defaultWeight={defaults.weight}
                       defaultReps={defaults.reps}
                       targetRirMin={workoutExercise.rir_min}
                       targetRirMax={workoutExercise.rir_max}
                       completed={completed}
-                      onComplete={(w, r, rir) => handleSetComplete(i + 1, w, r, rir, false)}
+                      onComplete={(w, r, rir) => handleSetComplete(i + 1, w, r, rir, false, setRole)}
                     />
                   )
                 })}

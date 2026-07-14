@@ -7,7 +7,7 @@ import { cn } from '@/lib/utils'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
 import { saveExerciseFeedback } from '@/lib/queries/sessions'
-import type { ExecutionQuality, PainLevel } from '@/types/database'
+import type { ExecutionQuality, PainLevel, RomQuality } from '@/types/database'
 
 interface ExerciseFeedbackPanelProps {
   sessionId: string
@@ -28,6 +28,12 @@ const PAIN_OPTIONS: Array<{ value: PainLevel; label: string }> = [
   { value: 'forte', label: 'Forte' },
 ]
 
+const ROM_OPTIONS: Array<{ value: RomQuality; label: string }> = [
+  { value: 'completa', label: 'Completa' },
+  { value: 'adequada', label: 'Adequada' },
+  { value: 'reduzida', label: 'Reduzida' },
+]
+
 export function ExerciseFeedbackPanel({
   sessionId,
   workoutExerciseId,
@@ -37,6 +43,7 @@ export function ExerciseFeedbackPanel({
   const fb = feedback[workoutExerciseId] ?? {
     executionQuality: null,
     painLevel: null,
+    romQuality: null,
     notes: '',
   }
   const [savingNotes, setSavingNotes] = useState(false)
@@ -46,6 +53,7 @@ export function ExerciseFeedbackPanel({
   async function persist(next: {
     executionQuality?: ExecutionQuality | null
     painLevel?: PainLevel | null
+    romQuality?: RomQuality | null
     notes?: string
   }) {
     try {
@@ -53,6 +61,7 @@ export function ExerciseFeedbackPanel({
       await saveExerciseFeedback(supabase, sessionId, workoutExerciseId, {
         execution_quality: next.executionQuality ?? fb.executionQuality,
         pain_level: next.painLevel ?? fb.painLevel,
+        rom_quality: next.romQuality ?? fb.romQuality,
         notes: next.notes ?? fb.notes,
       })
     } catch {
@@ -71,6 +80,7 @@ export function ExerciseFeedbackPanel({
           {EXECUTION_OPTIONS.map((opt) => (
             <button
               key={opt.value}
+              type="button"
               onClick={() => {
                 const value = fb.executionQuality === opt.value ? null : opt.value
                 setFeedback(workoutExerciseId, { executionQuality: value })
@@ -92,6 +102,32 @@ export function ExerciseFeedbackPanel({
         </div>
       </div>
 
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="w-16 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">Amplitude</span>
+        <div className="flex gap-1">
+          {ROM_OPTIONS.map((option) => (
+            <button
+              key={option.value}
+              type="button"
+              onClick={() => {
+                const value = fb.romQuality === option.value ? null : option.value
+                setFeedback(workoutExerciseId, { romQuality: value })
+                void persist({ romQuality: value })
+              }}
+              aria-pressed={fb.romQuality === option.value}
+              className={cn(
+                'h-7 rounded-md border px-2.5 text-xs font-medium transition-colors',
+                fb.romQuality === option.value
+                  ? option.value === 'reduzida' ? 'border-amber-500/40 bg-amber-500/15 text-amber-500' : 'border-primary/40 bg-primary/15 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/40'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
       {/* Dor */}
       <div className="flex items-center gap-2 flex-wrap">
         <span className="text-[10px] uppercase tracking-wide text-muted-foreground w-16 shrink-0">
@@ -103,6 +139,7 @@ export function ExerciseFeedbackPanel({
             return (
               <button
                 key={opt.value}
+                type="button"
                 onClick={() => {
                   const value = fb.painLevel === opt.value ? null : opt.value
                   setFeedback(workoutExerciseId, { painLevel: value })

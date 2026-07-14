@@ -8,14 +8,16 @@ import {
   Settings,
   Sparkles,
   UserRound,
+  BookOpenText,
 } from 'lucide-react'
-import { AVISO_GERAL } from '@/lib/routine/rotina-v2'
+import { AVISO_GERAL } from '@/lib/routine/powerbuilding-v4'
 
 const items = [
   { href: '/acompanhamento', label: 'Recuperação e saúde', description: 'Check-in diário', icon: HeartPulse },
   { href: '/suplementos', label: 'Suplementos', description: 'Rotina e registros', icon: Sparkles },
   { href: '/historico', label: 'Histórico', description: 'Treinos concluídos', icon: History },
   { href: '/exercicios', label: 'Exercícios', description: 'Catálogo e execução', icon: Dumbbell },
+  { href: '/aprendizado', label: 'Centro de aprendizado', description: 'Método, segurança e fontes', icon: BookOpenText },
   { href: '/perfil', label: 'Perfil', description: 'Dados e metas', icon: UserRound },
   { href: '/configuracoes', label: 'Configurações', description: 'Timer, unidade e preferências', icon: Settings },
   { href: '/onboarding', label: 'Revisar onboarding', description: 'Objetivo e experiência', icon: ClipboardList },

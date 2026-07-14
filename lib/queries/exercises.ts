@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database } from '@/types/database'
-import { calc1RM } from '@/lib/utils/volume'
+import type { Database, ExecutionQuality, PainLevel } from '@/types/database'
+import { estimated1RM, isValidPRSet, type RomQuality, type StrengthSet } from '@/lib/training/strength'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -158,7 +158,7 @@ export async function getExercisePR(
   // Aquecimento não entra nos recordes
   const { data: logs } = await supabase
     .from('set_logs')
-    .select('weight_kg, reps, completed_at, session_id')
+    .select('weight_kg, reps, completed_at, session_id, is_warmup, pain_level, execution_quality, rom_quality')
     .in('workout_exercise_id', wexIds)
     .eq('is_warmup', false)
 
@@ -173,34 +173,36 @@ export async function getExercisePR(
     .in('id', sessionIds)
 
   const finishedSessionIds = new Set((sessions ?? []).map((s) => s.id))
-  const userLogs = (
-    logs as Array<{ weight_kg: number | null; reps: number; completed_at: string; session_id: string }>
-  ).filter((l) => finishedSessionIds.has(l.session_id))
+  const userLogs = logs.filter((log) => finishedSessionIds.has(log.session_id))
 
   if (userLogs.length === 0) return null
 
   let maxWeight: number | null = null
   let maxReps = 0
   let achievedAt: string | null = null
-  let best1RMLog: { weight: number; reps: number } | null = null
+  let bestEstimated1RM: number | null = null
 
   for (const log of userLogs) {
-    if (log.weight_kg !== null) {
+    const set: StrengthSet = {
+      weightKg: log.weight_kg,
+      reps: log.reps,
+      isWarmup: log.is_warmup,
+      painLevel: log.pain_level as PainLevel | null,
+      executionQuality: log.execution_quality as ExecutionQuality | null,
+      romQuality: log.rom_quality as RomQuality | null,
+    }
+    if (isValidPRSet(set) && log.weight_kg !== null) {
       if (maxWeight === null || log.weight_kg > maxWeight) {
         maxWeight = log.weight_kg
         achievedAt = log.completed_at
       }
-      const estimated = calc1RM(log.weight_kg, log.reps)
-      if (!best1RMLog || estimated > calc1RM(best1RMLog.weight, best1RMLog.reps)) {
-        best1RMLog = { weight: log.weight_kg, reps: log.reps }
-      }
+      if (log.reps > maxReps) maxReps = log.reps
     }
-    if (log.reps > maxReps) maxReps = log.reps
+    const estimate = estimated1RM(set)
+    if (estimate !== null) bestEstimated1RM = Math.max(bestEstimated1RM ?? 0, estimate)
   }
 
-  const estimated1RM = best1RMLog ? Math.round(calc1RM(best1RMLog.weight, best1RMLog.reps) * 10) / 10 : null
-
-  return { maxWeight, maxReps, estimated1RM, achievedAt }
+  return { maxWeight, maxReps, estimated1RM: bestEstimated1RM, achievedAt }
 }
 
 export async function getExerciseProgressHistory(

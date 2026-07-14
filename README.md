@@ -1,9 +1,9 @@
 # GymTrack
 
 App de acompanhamento de treino (Next.js 16 + Supabase) com a rotina
-**PPL 6 dias** (Push/Pull/Legs A-B, domingo descanso), progressão dupla com
-RIR, cronômetro de descanso por timestamp real, registro de execução/dor e
-histórico preservado entre versões de rotina.
+**Powerbuilding PPL A/B v4** (força técnica + hipertrofia, domingo descanso),
+progressão dupla e top set/back-off conservador, prontidão diária, e1RM seguro,
+RIR, cronômetro persistido, registro de execução/dor e histórico preservado.
 
 📋 **Documentação da rotina, progressão, migrations e rollback:**
 [docs/ROTINA.md](docs/ROTINA.md)

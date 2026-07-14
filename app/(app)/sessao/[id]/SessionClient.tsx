@@ -11,6 +11,7 @@ import { useSessionStore } from '@/lib/store/sessionStore'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { SessionWithLogs } from '@/lib/queries/sessions'
 import type { WorkoutWithExercises } from '@/types/database'
+import { readinessGuidance, type ReadinessStatus } from '@/lib/training/readiness'
 
 interface SessionClientProps {
   session: SessionWithLogs
@@ -19,6 +20,7 @@ interface SessionClientProps {
   prWeights: Array<number | null>
   progressions: Array<ProgressionSuggestion | null>
   exerciseHistories: Array<Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>>
+  readinessStatus: ReadinessStatus
 }
 
 export function SessionClient({
@@ -28,6 +30,7 @@ export function SessionClient({
   prWeights,
   progressions,
   exerciseHistories,
+  readinessStatus,
 }: SessionClientProps) {
   const { sessionId, startSession, sets, setCurrentExerciseIndex } = useSessionStore()
   const [currentIndex, setCurrentIndex] = useState(0)
@@ -56,6 +59,7 @@ export function SessionClient({
   )
   const totalSetCount = exercises.reduce((total, exercise) => total + exercise.target_sets, 0)
   const current = exercises[currentIndex]
+  const readinessMessage = readinessGuidance(readinessStatus)
 
   return (
     <div className="flex min-h-dvh flex-col bg-background">
@@ -95,6 +99,12 @@ export function SessionClient({
         <p className="mx-auto w-full max-w-lg px-4 pt-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">
           {workout.objective}
         </p>
+      )}
+
+      {readinessMessage && (
+        <div className="mx-auto mt-2 w-[calc(100%-2rem)] max-w-lg rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-xs leading-relaxed text-[#ffcf7a]">
+          {readinessMessage}
+        </div>
       )}
 
       <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-40 pt-3">

@@ -21,6 +21,10 @@ export async function saveSetLog(
     reps: number
     rir?: number | null
     is_warmup?: boolean
+    set_role?: 'warmup' | 'top' | 'backoff' | 'standard'
+    execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
+    pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+    rom_quality?: 'completa' | 'adequada' | 'reduzida' | null
     performed_exercise_id?: string | null
     completed_at: string
   }
@@ -34,6 +38,10 @@ export async function saveSetLog(
     reps: log.reps,
     rir: log.rir ?? null,
     is_warmup: log.is_warmup ?? false,
+    set_role: log.set_role ?? (log.is_warmup ? 'warmup' : 'standard'),
+    execution_quality: log.execution_quality ?? null,
+    pain_level: log.pain_level ?? null,
+    rom_quality: log.rom_quality ?? null,
     performed_exercise_id: log.performed_exercise_id ?? null,
     completed_at: log.completed_at,
   }
@@ -54,6 +62,7 @@ export async function saveExerciseFeedback(
   feedback: {
     execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
     pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+    rom_quality?: 'completa' | 'adequada' | 'reduzida' | null
     notes?: string | null
   }
 ): Promise<void> {
@@ -62,6 +71,7 @@ export async function saveExerciseFeedback(
     .update({
       execution_quality: feedback.execution_quality ?? null,
       pain_level: feedback.pain_level ?? null,
+      rom_quality: feedback.rom_quality ?? null,
       notes: feedback.notes || null,
     })
     .eq('session_id', sessionId)

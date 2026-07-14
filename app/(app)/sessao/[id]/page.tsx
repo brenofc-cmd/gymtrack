@@ -12,6 +12,7 @@ import {
 import { suggestForExercise } from '@/lib/progression/progression'
 import type { ExerciseType, MovementPattern } from '@/types/database'
 import type { ExecutionQuality, PainLevel } from '@/types/database'
+import type { ReadinessStatus } from '@/lib/training/readiness'
 import { SessionClient } from './SessionClient'
 
 export default async function SessaoPage(props: {
@@ -40,7 +41,7 @@ export default async function SessaoPage(props: {
   )
   if (!workoutData) notFound()
 
-  const [lastLogs, prWeights, progressions, exerciseHistories] = await Promise.all([
+  const [lastLogs, prWeights, progressions, exerciseHistories, readiness] = await Promise.all([
     Promise.all(
       workoutData.workout_exercises.map((we) =>
         getLastSetLogForExercise(admin, we.id, id, {
@@ -83,6 +84,12 @@ export default async function SessaoPage(props: {
         getExerciseProgressHistory(admin, we.exercise_id, user.id, 8)
       )
     ),
+    admin
+      .from('daily_readiness')
+      .select('recommendation')
+      .eq('user_id', user.id)
+      .eq('readiness_date', new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date()))
+      .maybeSingle(),
   ])
 
   return (
@@ -93,6 +100,7 @@ export default async function SessaoPage(props: {
       prWeights={prWeights}
       progressions={progressions}
       exerciseHistories={exerciseHistories}
+      readinessStatus={(readiness.data?.recommendation as ReadinessStatus | undefined) ?? 'ready'}
     />
   )
 }

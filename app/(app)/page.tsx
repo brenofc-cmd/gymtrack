@@ -20,7 +20,7 @@ import {
 } from '@/lib/queries/sessions'
 import { getStreakStats } from '@/lib/utils/streak'
 import { formatVolume } from '@/lib/utils/volume'
-import { DIA_LABEL } from '@/lib/routine/rotina-v2'
+import { DIA_LABEL, TRAINING_FOCUS_LABEL } from '@/lib/routine/powerbuilding-v4'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import type { WorkoutLetter } from '@/types/database'
 
@@ -62,6 +62,7 @@ export default async function DashboardPage() {
     latestWeight,
     latestSleep,
     latestRecovery,
+    latestReadiness,
     nutritionGoal,
     hydrationRows,
   ] = await Promise.all([
@@ -91,6 +92,13 @@ export default async function DashboardPage() {
       .select('fatigue, motivation, soreness, stress, logged_on')
       .eq('user_id', user.id)
       .order('logged_on', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    admin
+      .from('daily_readiness')
+      .select('recommendation, recommendation_reason, readiness_date')
+      .eq('user_id', user.id)
+      .order('readiness_date', { ascending: false })
       .limit(1)
       .maybeSingle(),
     admin
@@ -153,11 +161,8 @@ export default async function DashboardPage() {
     : '—'
   const waterToday = hydrationRows.data?.reduce((total, item) => total + item.amount_ml, 0) ?? 0
   const waterGoal = nutritionGoal.data?.water_ml ?? 3000
-  const readinessGood =
-    latestRecovery.data == null ||
-    ((latestRecovery.data.fatigue ?? 3) <= 3 &&
-      (latestRecovery.data.soreness ?? 3) <= 3 &&
-      (latestRecovery.data.stress ?? 3) <= 3)
+  const readinessStatus = latestReadiness.data?.recommendation ?? 'ready'
+  const readinessGood = readinessStatus === 'ready'
 
   return (
     <div className="mx-auto flex w-full max-w-[520px] flex-col gap-3.5 px-4 py-5 lg:py-7">
@@ -195,6 +200,9 @@ export default async function DashboardPage() {
             </div>
             <p className="text-xs text-muted-foreground">
               Treino {workout.letter} · {workout.day_of_week ? DIA_LABEL[workout.day_of_week] : 'Hoje'}
+            </p>
+            <p className="mt-1 text-xs font-semibold text-primary">
+              {TRAINING_FOCUS_LABEL[workout.session_focus as keyof typeof TRAINING_FOCUS_LABEL] ?? 'Hipertrofia'}
             </p>
             <h2 className="mt-0.5 text-3xl font-extrabold leading-tight tracking-[-0.02em]">
               {workout.name}
@@ -246,10 +254,10 @@ export default async function DashboardPage() {
         </span>
         <span className="min-w-0 flex-1">
           <span className="block text-[13px] font-semibold">
-            {readinessGood ? 'Prontidão boa' : 'Recuperação pede atenção'}
+            {readinessGood ? 'Prontidão boa' : readinessStatus === 'stop_for_pain' ? 'Dor pede interrupção' : 'Recuperação pede atenção'}
           </span>
           <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
-            Sono {sleepLabel} · fadiga {latestRecovery.data?.fatigue ?? '—'} · dor {latestRecovery.data?.soreness ?? '—'}
+            {latestReadiness.data?.recommendation_reason ?? `Sono ${sleepLabel} · fadiga ${latestRecovery.data?.fatigue ?? '—'} · dor ${latestRecovery.data?.soreness ?? '—'}`}
           </span>
         </span>
         <span className="text-xs font-semibold text-primary">Check-in</span>

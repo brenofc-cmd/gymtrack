@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { getWorkouts, getSuggestedWorkout } from '@/lib/queries/workouts'
 import { getLastSessionsPerWorkout } from '@/lib/queries/sessions'
-import { DIA_LABEL } from '@/lib/routine/rotina-v2'
+import { DIA_LABEL } from '@/lib/routine/powerbuilding-v4'
 
 export default async function TreinosPage() {
   const supabase = await createClient()

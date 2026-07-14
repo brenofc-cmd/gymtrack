@@ -1,6 +1,6 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
-import type { Database, Tables } from '@/types/database'
-import { calc1RM } from '@/lib/utils/volume'
+import type { Database, ExecutionQuality, PainLevel, Tables } from '@/types/database'
+import { estimated1RM, isValidPRSet, type RomQuality, type StrengthSet } from '@/lib/training/strength'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -42,6 +42,10 @@ export async function getExerciseProgressSummaries(
       reps,
       completed_at,
       session_id,
+      is_warmup,
+      pain_level,
+      execution_quality,
+      rom_quality,
       performed_exercise:exercises!set_logs_performed_exercise_id_fkey(id, name_pt, muscle_group),
       workout_exercise:workout_exercises!inner(
         exercise:exercises!inner(id, name_pt, muscle_group)
@@ -58,6 +62,10 @@ export async function getExerciseProgressSummaries(
     reps: number
     completed_at: string | null
     session_id: string
+    is_warmup: boolean
+    pain_level: Tables<'set_logs'>['pain_level']
+    execution_quality: Tables<'set_logs'>['execution_quality']
+    rom_quality: Tables<'set_logs'>['rom_quality']
     performed_exercise: { id: string; name_pt: string; muscle_group: string } | null
     workout_exercise: { exercise: { id: string; name_pt: string; muscle_group: string } }
   }
@@ -83,9 +91,19 @@ export async function getExerciseProgressSummaries(
     }
 
     const weight = row.weight_kg ?? 0
-    const estimated = row.weight_kg == null ? null : calc1RM(row.weight_kg, row.reps)
-    summary.maxWeight = summary.maxWeight == null ? row.weight_kg : Math.max(summary.maxWeight, weight)
-    summary.maxReps = Math.max(summary.maxReps, row.reps)
+    const strengthSet: StrengthSet = {
+      weightKg: row.weight_kg,
+      reps: row.reps,
+      isWarmup: row.is_warmup,
+      painLevel: row.pain_level as PainLevel | null,
+      executionQuality: row.execution_quality as ExecutionQuality | null,
+      romQuality: row.rom_quality as RomQuality | null,
+    }
+    const estimated = estimated1RM(strengthSet)
+    if (isValidPRSet(strengthSet)) {
+      summary.maxWeight = summary.maxWeight == null ? row.weight_kg : Math.max(summary.maxWeight, weight)
+      summary.maxReps = Math.max(summary.maxReps, row.reps)
+    }
     summary.estimated1RM = estimated == null
       ? summary.estimated1RM
       : Math.max(summary.estimated1RM ?? 0, estimated)

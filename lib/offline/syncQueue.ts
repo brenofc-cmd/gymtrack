@@ -15,6 +15,10 @@ export type SetLogPayload = {
   reps: number
   rir: number | null
   is_warmup: boolean
+  set_role: 'warmup' | 'top' | 'backoff' | 'standard'
+  execution_quality: 'boa' | 'aceitavel' | 'ruim' | null
+  pain_level: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+  rom_quality: 'completa' | 'adequada' | 'reduzida' | null
   performed_exercise_id: string | null
   completed_at: string
 }
@@ -57,6 +61,10 @@ async function send(supabase: SupabaseDB, payload: SetLogPayload) {
     reps: payload.reps,
     rir: payload.rir,
     is_warmup: payload.is_warmup,
+    set_role: payload.set_role,
+    execution_quality: payload.execution_quality,
+    pain_level: payload.pain_level,
+    rom_quality: payload.rom_quality,
     performed_exercise_id: payload.performed_exercise_id,
     completed_at: payload.completed_at,
   })
