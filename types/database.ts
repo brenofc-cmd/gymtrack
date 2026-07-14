@@ -1013,7 +1013,13 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      swap_workout_exercise: {
+        Args: {
+          p_replacement_exercise_id: string
+          p_workout_exercise_id: string
+        }
+        Returns: undefined
+      }
     }
     Enums: {
       [_ in never]: never

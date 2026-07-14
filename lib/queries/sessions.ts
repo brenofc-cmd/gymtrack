@@ -15,6 +15,7 @@ export async function saveSetLog(
   sessionId: string,
   workoutExerciseId: string,
   log: {
+    id?: string
     set_number: number
     weight_kg: number | null
     reps: number
@@ -24,7 +25,8 @@ export async function saveSetLog(
     completed_at: string
   }
 ): Promise<void> {
-  const { error } = await supabase.from('set_logs').insert({
+  const payload = {
+    id: log.id,
     session_id: sessionId,
     workout_exercise_id: workoutExerciseId,
     set_number: log.set_number,
@@ -34,7 +36,10 @@ export async function saveSetLog(
     is_warmup: log.is_warmup ?? false,
     performed_exercise_id: log.performed_exercise_id ?? null,
     completed_at: log.completed_at,
-  })
+  }
+  const { error } = log.id
+    ? await supabase.from('set_logs').upsert(payload, { onConflict: 'id' })
+    : await supabase.from('set_logs').insert(payload)
   if (error) throw error
 }
 

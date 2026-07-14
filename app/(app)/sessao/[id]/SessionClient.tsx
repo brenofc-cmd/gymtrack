@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { ChevronLeft, ChevronRight, Check } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { SessionHeader } from '@/components/session/SessionHeader'
 import { ExerciseCard } from '@/components/session/ExerciseCard'
@@ -10,7 +10,7 @@ import { FinishSessionModal } from '@/components/session/FinishSessionModal'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { SessionWithLogs } from '@/lib/queries/sessions'
-import type { WorkoutWithExercises, WorkoutExerciseWithExercise } from '@/types/database'
+import type { WorkoutWithExercises } from '@/types/database'
 
 interface SessionClientProps {
   session: SessionWithLogs
@@ -18,12 +18,7 @@ interface SessionClientProps {
   lastLogs: Array<{ weight_kg: number | null; reps: number; rir: number | null } | null>
   prWeights: Array<number | null>
   progressions: Array<ProgressionSuggestion | null>
-}
-
-function shortName(name: string): string {
-  const words = name.split(' ')
-  if (words.length <= 2 || name.length <= 20) return name
-  return words.slice(0, 2).join(' ')
+  exerciseHistories: Array<Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>>
 }
 
 export function SessionClient({
@@ -32,21 +27,18 @@ export function SessionClient({
   lastLogs,
   prWeights,
   progressions,
+  exerciseHistories,
 }: SessionClientProps) {
   const { sessionId, startSession, sets, setCurrentExerciseIndex } = useSessionStore()
   const [currentIndex, setCurrentIndex] = useState(0)
   const [finishModalOpen, setFinishModalOpen] = useState(false)
   const exercises = workout.workout_exercises
-
-  // Índice do primeiro exercício composto (recebe o plano de aquecimento)
   const firstCompoundIndex = exercises.findIndex(
-    (we) => we.exercise.exercise_type === 'composto'
+    (exercise) => exercise.exercise.exercise_type === 'composto'
   )
 
   useEffect(() => {
-    if (sessionId !== session.id) {
-      startSession(session.id, session.workout_id)
-    }
+    if (sessionId !== session.id) startSession(session.id, session.workout_id)
   }, [session.id, session.workout_id, sessionId, startSession])
 
   const go = useCallback(
@@ -58,117 +50,92 @@ export function SessionClient({
     [exercises.length, setCurrentExerciseIndex]
   )
 
-  const handleAllSetsComplete = useCallback(
-    (index: number) => {
-      go(index + 1)
-    },
-    [go]
+  const completedSetCount = exercises.reduce(
+    (total, exercise) => total + (sets[exercise.id] ?? []).filter((set) => !set.is_warmup).length,
+    0
   )
-
-  const we = exercises[currentIndex]
+  const totalSetCount = exercises.reduce((total, exercise) => total + exercise.target_sets, 0)
+  const current = exercises[currentIndex]
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex min-h-dvh flex-col bg-background">
       <SessionHeader
         startedAt={session.started_at}
         workoutName={workout.name}
         workoutLetter={workout.letter ?? ''}
+        completedSets={completedSetCount}
+        totalSets={totalSetCount}
         onFinish={() => setFinishModalOpen(true)}
       />
 
-      {/* Objetivo do treino */}
+      <div className="mx-auto flex w-full max-w-lg gap-1.5 px-4 pt-3">
+        {exercises.map((exercise, index) => {
+          const validSets = (sets[exercise.id] ?? []).filter((set) => !set.is_warmup)
+          const done = validSets.length >= exercise.target_sets
+          const active = index === currentIndex
+          return (
+            <button
+              key={exercise.id}
+              type="button"
+              onClick={() => go(index)}
+              aria-label={`Abrir exercício ${index + 1}: ${exercise.exercise.name_pt}`}
+              aria-current={active ? 'step' : undefined}
+              className={cn(
+                'h-5 flex-1 rounded-full border-4 border-background transition-colors',
+                active ? 'bg-primary' : done ? 'bg-primary/40' : 'bg-secondary'
+              )}
+            >
+              <span className="sr-only">{done ? 'Concluído' : 'Pendente'}</span>
+            </button>
+          )
+        })}
+      </div>
+
       {workout.objective && (
-        <p className="px-4 pt-2 text-xs text-muted-foreground max-w-lg mx-auto w-full">
+        <p className="mx-auto w-full max-w-lg px-4 pt-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">
           {workout.objective}
         </p>
       )}
 
-      {/* Queue — pill scroll horizontal */}
-      <div className="overflow-x-auto" style={{ scrollbarWidth: 'none' }}>
-        <div className="flex gap-2 px-4 py-3 w-max">
-          {exercises.map((ex: WorkoutExerciseWithExercise, i: number) => {
-            const validSets = (sets[ex.id] ?? []).filter((s) => !s.is_warmup)
-            const done = validSets.length >= ex.target_sets
-            const isCurrent = i === currentIndex
-            return (
-              <button
-                key={ex.id}
-                onClick={() => go(i)}
-                className={cn(
-                  'flex items-center gap-1.5 h-8 px-3 rounded-full text-xs font-semibold border transition-colors shrink-0',
-                  isCurrent
-                    ? 'bg-primary text-primary-foreground border-primary'
-                    : done
-                    ? 'bg-primary/10 text-primary border-primary/20'
-                    : 'bg-transparent text-muted-foreground border-border'
-                )}
-              >
-                <span className="font-mono tabular-nums text-[10px] opacity-70">
-                  {String(i + 1).padStart(2, '0')}
-                </span>
-                {done && !isCurrent && <Check className="w-3 h-3 shrink-0" />}
-                <span className="max-w-[88px] truncate">{shortName(ex.exercise.name_pt)}</span>
-              </button>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Exercício em foco */}
-      <div className="flex-1 max-w-lg mx-auto w-full px-4 pt-2 pb-36">
+      <div className="mx-auto w-full max-w-lg flex-1 px-4 pb-40 pt-3">
         <ExerciseCard
-          key={we.id}
+          key={current.id}
           sessionId={session.id}
-          workoutExercise={we}
-          isOpen={true}
+          workoutExercise={current}
+          isOpen
           onToggle={() => {}}
           lastWeight={lastLogs[currentIndex]?.weight_kg ?? null}
           lastReps={lastLogs[currentIndex]?.reps ?? null}
           lastRir={lastLogs[currentIndex]?.rir ?? null}
           prWeight={prWeights[currentIndex] ?? null}
           progression={progressions[currentIndex] ?? null}
+          history={exerciseHistories[currentIndex] ?? []}
           showWarmupPlan={currentIndex === firstCompoundIndex}
-          onAllSetsComplete={() => handleAllSetsComplete(currentIndex)}
+          onAllSetsComplete={() => go(currentIndex + 1)}
         />
 
-        {/* Navegação prev / next */}
-        <div className="flex items-center justify-between mt-4 px-1">
+        <div className="mt-4 flex items-center justify-between px-1">
           <button
+            type="button"
             onClick={() => go(currentIndex - 1)}
             disabled={currentIndex === 0}
-            className={cn(
-              'flex items-center gap-1.5 h-10 px-4 rounded-xl border text-sm font-medium transition-colors',
-              currentIndex === 0
-                ? 'border-border text-muted-foreground/30 cursor-not-allowed'
-                : 'border-border text-foreground hover:bg-zinc-800 active:scale-[0.97]'
-            )}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-input px-4 text-sm font-medium text-muted-foreground disabled:opacity-25"
           >
-            <ChevronLeft className="w-4 h-4" />
-            Anterior
+            <ChevronLeft className="size-4" /> Anterior
           </button>
-
-          <span className="text-xs text-muted-foreground font-mono tabular-nums">
-            {currentIndex + 1} / {exercises.length}
-          </span>
-
+          <span className="font-mono text-xs text-muted-foreground">{currentIndex + 1} / {exercises.length}</span>
           <button
+            type="button"
             onClick={() => go(currentIndex + 1)}
             disabled={currentIndex === exercises.length - 1}
-            className={cn(
-              'flex items-center gap-1.5 h-10 px-4 rounded-xl border text-sm font-medium transition-colors',
-              currentIndex === exercises.length - 1
-                ? 'border-border text-muted-foreground/30 cursor-not-allowed'
-                : 'border-primary/30 text-primary bg-primary/5 hover:bg-primary/10 active:scale-[0.97]'
-            )}
+            className="flex h-10 items-center gap-1.5 rounded-xl border border-primary/30 bg-primary/5 px-4 text-sm font-medium text-primary disabled:border-input disabled:bg-transparent disabled:text-muted-foreground disabled:opacity-25"
           >
-            Próximo
-            <ChevronRight className="w-4 h-4" />
+            Próximo <ChevronRight className="size-4" />
           </button>
         </div>
       </div>
 
       <RestTimerBar />
-
       <FinishSessionModal
         open={finishModalOpen}
         onClose={() => setFinishModalOpen(false)}

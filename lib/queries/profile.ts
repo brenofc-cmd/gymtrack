@@ -4,6 +4,8 @@ import type { Database } from '@/types/database'
 type SupabaseDB = SupabaseClient<Database>
 
 export interface UserProfile {
+  goal: string | null
+  height_cm: number | null
   weight_kg: number | null
   weekly_goal: number
 }
@@ -12,16 +14,19 @@ export async function getUserProfile(
   supabase: SupabaseDB,
   userId: string
 ): Promise<UserProfile> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  const { data } = await (supabase as any)
+  const { data, error } = await supabase
     .from('user_profiles')
-    .select('weight_kg, weekly_goal')
+    .select('goal, height_cm, weight_kg, weekly_goal')
     .eq('id', userId)
-    .single()
+    .maybeSingle()
+
+  if (error) throw error
 
   return {
-    weight_kg: (data as { weight_kg: number | null } | null)?.weight_kg ?? null,
-    weekly_goal: (data as { weekly_goal: number } | null)?.weekly_goal ?? 3,
+    goal: data?.goal ?? null,
+    height_cm: data?.height_cm ?? null,
+    weight_kg: data?.weight_kg ?? null,
+    weekly_goal: data?.weekly_goal ?? 3,
   }
 }
 
@@ -30,12 +35,12 @@ export async function upsertUserProfile(
   userId: string,
   profile: Partial<UserProfile>
 ): Promise<void> {
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  await (supabase as any).from('user_profiles').upsert({
+  const { error } = await supabase.from('user_profiles').upsert({
     id: userId,
     ...profile,
     updated_at: new Date().toISOString(),
   })
+  if (error) throw error
 }
 
 export async function getLifetimeStats(

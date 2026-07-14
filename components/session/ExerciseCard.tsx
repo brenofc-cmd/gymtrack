@@ -15,15 +15,19 @@ import {
   Repeat2,
   BookOpen,
   Plus,
+  Info,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 import { SetRow } from './SetRow'
 import { ExerciseFeedbackPanel } from './ExerciseFeedbackPanel'
+import { ExerciseDetailSheet } from './ExerciseDetailSheet'
+import { ExerciseSwapSheet } from './ExerciseSwapSheet'
 import { WarmupPanel } from './WarmupPanel'
 import { useSessionStore } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
-import { saveSetLog } from '@/lib/queries/sessions'
+import { persistSetLog } from '@/lib/offline/syncQueue'
+import { buildWarmupPlan } from '@/lib/progression/warmup'
 import { MOVEMENT_PATTERN_LABEL, AVISO_ABDOMEN } from '@/lib/routine/rotina-v2'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
@@ -38,6 +42,7 @@ interface ExerciseCardProps {
   lastRir: number | null
   prWeight: number | null
   progression: ProgressionSuggestion | null
+  history: Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>
   /** Mostra plano de aquecimento (primeiro composto do treino) */
   showWarmupPlan: boolean
   onAllSetsComplete: () => void
@@ -79,6 +84,7 @@ export function ExerciseCard({
   lastRir,
   prWeight,
   progression,
+  history,
   showWarmupPlan,
   onAllSetsComplete,
 }: ExerciseCardProps) {
@@ -101,10 +107,15 @@ export function ExerciseCard({
   const [newPR, setNewPR] = useState(false)
   const [showInstructions, setShowInstructions] = useState(false)
   const [extraWarmupRows, setExtraWarmupRows] = useState(0)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [swapOpen, setSwapOpen] = useState(false)
 
   const selectedVariation = variation[workoutExercise.id] ?? null
-  const isAbdominal = exercise.exercise_type === 'abdominal'
-  const movementPattern = exercise.movement_pattern
+  const selectedExercise =
+    substitutions.find((substitution) => substitution.exercise.id === selectedVariation)?.exercise ??
+    exercise
+  const isAbdominal = selectedExercise.exercise_type === 'abdominal'
+  const movementPattern = selectedExercise.movement_pattern
 
   useEffect(() => {
     if (allDone && !notifiedDoneRef.current) {
@@ -121,6 +132,7 @@ export function ExerciseCard({
     isWarmup: boolean
   ) {
     const completed_at = new Date().toISOString()
+    const logId = crypto.randomUUID()
     logSet(workoutExercise.id, {
       set_number: setNumber,
       weight_kg: weight,
@@ -140,7 +152,10 @@ export function ExerciseCard({
 
     try {
       const supabase = createClient()
-      await saveSetLog(supabase, sessionId, workoutExercise.id, {
+      const result = await persistSetLog(supabase, {
+        id: logId,
+        sessionId,
+        workoutExerciseId: workoutExercise.id,
         set_number: setNumber,
         weight_kg: weight,
         reps,
@@ -149,6 +164,9 @@ export function ExerciseCard({
         performed_exercise_id: selectedVariation,
         completed_at,
       })
+      if (result.queued) {
+        toast.info('Sem conexão. A série será sincronizada automaticamente.')
+      }
     } catch {
       toast.error('Não foi possível salvar a série. Ela está guardada localmente.')
     }
@@ -165,8 +183,13 @@ export function ExerciseCard({
   }
 
   const progressionStyle = progression ? PROGRESSION_STYLE[progression.action] : null
-  const guidance = workoutExercise.technique_notes ?? exercise.instructions ?? []
-  const warmupRowCount = Math.max(warmupSets.length, 0) + extraWarmupRows
+  const guidance =
+    selectedVariation === null
+      ? workoutExercise.technique_notes ?? exercise.instructions ?? []
+      : selectedExercise.instructions ?? []
+  const suggestedWarmups = buildWarmupPlan(lastWeight).slice(1)
+  const warmupRowCount =
+    Math.max(warmupSets.length, showWarmupPlan ? suggestedWarmups.length : 0) + extraWarmupRows
 
   return (
     <div
@@ -181,10 +204,10 @@ export function ExerciseCard({
         className="w-full flex items-center gap-3 p-3 text-left"
       >
         <div className="relative w-12 h-12 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-          {exercise.gif_url ? (
+          {selectedExercise.gif_url ? (
             <Image
-              src={exercise.gif_url}
-              alt={exercise.name_pt}
+              src={selectedExercise.gif_url}
+              alt={selectedExercise.name_pt}
               fill
               className="object-cover"
               unoptimized
@@ -198,7 +221,7 @@ export function ExerciseCard({
 
         <div className="flex-1 min-w-0">
           <p className="font-semibold text-sm leading-tight truncate">
-            {exercise.name_pt}
+            {selectedExercise.name_pt}
           </p>
           <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
             {isAbdominal && movementPattern && (
@@ -310,51 +333,30 @@ export function ExerciseCard({
                 </div>
               )}
 
-              {/* Variação / substituição */}
-              {substitutions.length > 0 && (
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="flex items-center gap-1 text-[10px] uppercase tracking-wide text-muted-foreground">
-                    <Repeat2 className="w-3 h-3" />
-                    Variação
-                  </span>
-                  <div className="flex gap-1 flex-wrap">
-                    <button
-                      onClick={() => setVariation(workoutExercise.id, null)}
-                      className={cn(
-                        'px-2 h-7 rounded-md text-xs font-medium border transition-colors',
-                        selectedVariation === null
-                          ? 'bg-primary text-primary-foreground border-primary'
-                          : 'border-border text-muted-foreground hover:border-primary/40'
-                      )}
-                    >
-                      {exercise.name_pt.length > 24
-                        ? exercise.name_pt.slice(0, 24) + '…'
-                        : exercise.name_pt}
-                    </button>
-                    {substitutions.map((sub) => (
-                      <button
-                        key={sub.id}
-                        onClick={() => setVariation(workoutExercise.id, sub.exercise.id)}
-                        className={cn(
-                          'px-2 h-7 rounded-md text-xs font-medium border transition-colors',
-                          selectedVariation === sub.exercise.id
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'border-border text-muted-foreground hover:border-primary/40'
-                        )}
-                      >
-                        {sub.exercise.name_pt.length > 24
-                          ? sub.exercise.name_pt.slice(0, 24) + '…'
-                          : sub.exercise.name_pt}
-                      </button>
-                    ))}
-                  </div>
-                  {selectedVariation !== null && (
-                    <p className="w-full text-[10px] text-muted-foreground">
-                      O histórico desta variação é registrado separadamente para não comparar
-                      cargas incompatíveis.
-                    </p>
-                  )}
-                </div>
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  type="button"
+                  onClick={() => setDetailOpen(true)}
+                  className="flex h-10 items-center justify-center gap-2 rounded-xl border border-input bg-secondary/30 text-xs font-semibold text-[#c7d0db] transition-colors hover:border-primary/30 hover:text-primary"
+                >
+                  <Info className="size-3.5" />
+                  Detalhes
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSwapOpen(true)}
+                  disabled={substitutions.length === 0}
+                  className="flex h-10 items-center justify-center gap-2 rounded-xl border border-input bg-secondary/30 text-xs font-semibold text-[#c7d0db] transition-colors hover:border-primary/30 hover:text-primary disabled:cursor-not-allowed disabled:opacity-35"
+                >
+                  <Repeat2 className="size-3.5" />
+                  Trocar exercício
+                </button>
+              </div>
+              {selectedVariation !== null && (
+                <p className="rounded-lg border border-primary/15 bg-primary/5 px-3 py-2 text-[10.5px] leading-relaxed text-muted-foreground">
+                  Hoje: <span className="font-semibold text-primary">{selectedExercise.name_pt}</span>.
+                  O histórico fica separado para não comparar cargas incompatíveis.
+                </p>
               )}
 
               {/* Plano de aquecimento (primeiro composto) */}
@@ -376,8 +378,8 @@ export function ExerciseCard({
                         key={`w-${i}`}
                         setNumber={i + 1}
                         isWarmup
-                        defaultWeight={null}
-                        defaultReps={null}
+                        defaultWeight={suggestedWarmups[i]?.weightKg ?? null}
+                        defaultReps={i === 0 ? 10 : i === 1 ? 6 : i === 2 ? 3 : null}
                         completed={completed}
                         onComplete={(w, r) => handleSetComplete(i + 1, w, r, null, true)}
                       />
@@ -474,6 +476,21 @@ export function ExerciseCard({
           </motion.div>
         )}
       </AnimatePresence>
+
+      <ExerciseDetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        exercise={selectedExercise}
+        guidance={guidance}
+        history={selectedVariation === null ? history : []}
+      />
+      <ExerciseSwapSheet
+        open={swapOpen}
+        onOpenChange={setSwapOpen}
+        workoutExercise={workoutExercise}
+        selectedVariation={selectedVariation}
+        onSelectToday={(exerciseId) => setVariation(workoutExercise.id, exerciseId)}
+      />
     </div>
   )
 }

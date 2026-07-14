@@ -7,6 +7,7 @@ import {
   getLastSetLogForExercise,
   getLastSessionSets,
   getExercisePR,
+  getExerciseProgressHistory,
 } from '@/lib/queries/exercises'
 import { suggestForExercise } from '@/lib/progression/progression'
 import type { ExerciseType, MovementPattern } from '@/types/database'
@@ -39,7 +40,7 @@ export default async function SessaoPage(props: {
   )
   if (!workoutData) notFound()
 
-  const [lastLogs, prWeights, progressions] = await Promise.all([
+  const [lastLogs, prWeights, progressions, exerciseHistories] = await Promise.all([
     Promise.all(
       workoutData.workout_exercises.map((we) =>
         getLastSetLogForExercise(admin, we.id, id, {
@@ -77,6 +78,11 @@ export default async function SessaoPage(props: {
         )
       })
     ),
+    Promise.all(
+      workoutData.workout_exercises.map((we) =>
+        getExerciseProgressHistory(admin, we.exercise_id, user.id, 8)
+      )
+    ),
   ])
 
   return (
@@ -86,6 +92,7 @@ export default async function SessaoPage(props: {
       lastLogs={lastLogs}
       prWeights={prWeights}
       progressions={progressions}
+      exerciseHistories={exerciseHistories}
     />
   )
 }

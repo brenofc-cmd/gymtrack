@@ -11,51 +11,79 @@ import { Label } from '@/components/ui/label'
 
 interface ProfileFormProps {
   userId: string
+  initialGoal: string | null
+  initialHeightCm: number | null
   initialWeightKg: number | null
   initialWeeklyGoal: number
 }
 
-export function ProfileForm({ userId, initialWeightKg, initialWeeklyGoal }: ProfileFormProps) {
+export function ProfileForm({
+  userId,
+  initialGoal,
+  initialHeightCm,
+  initialWeightKg,
+  initialWeeklyGoal,
+}: ProfileFormProps) {
+  const [goal, setGoal] = useState(initialGoal ?? 'hipertrofia')
+  const [heightCm, setHeightCm] = useState(initialHeightCm?.toString() ?? '')
   const [weightKg, setWeightKg] = useState(initialWeightKg?.toString() ?? '')
   const [weeklyGoal, setWeeklyGoal] = useState(initialWeeklyGoal.toString())
   const [saving, setSaving] = useState(false)
 
   async function handleSave() {
     setSaving(true)
-    const supabase = createClient()
-    const w = weightKg ? parseFloat(weightKg) : null
-    const g = Math.min(7, Math.max(1, parseInt(weeklyGoal, 10) || 3))
+    try {
+      const supabase = createClient()
+      const h = heightCm ? parseFloat(heightCm) : null
+      const w = weightKg ? parseFloat(weightKg) : null
+      const g = Math.min(7, Math.max(1, parseInt(weeklyGoal, 10) || 3))
 
-    await upsertUserProfile(supabase, userId, {
-      weight_kg: w && w > 0 ? w : null,
-      weekly_goal: g,
-    })
+      await upsertUserProfile(supabase, userId, {
+        goal,
+        height_cm: h && h > 0 ? h : null,
+        weight_kg: w && w > 0 ? w : null,
+        weekly_goal: g,
+      })
 
-    toast.success('Perfil atualizado!')
-    setSaving(false)
+      toast.success('Perfil atualizado!')
+    } catch {
+      toast.error('Não foi possível salvar o perfil. Tente novamente.')
+    } finally {
+      setSaving(false)
+    }
   }
 
   return (
     <div className="rounded-2xl bg-card border border-border p-4 space-y-4">
-      <h2 className="text-sm font-semibold">Configurações</h2>
+      <div>
+        <h2 className="text-sm font-semibold">Dados pessoais</h2>
+        <p className="mt-1 text-xs text-muted-foreground">Usados somente para personalizar suas metas e evolução.</p>
+      </div>
 
       <div className="space-y-1.5">
-        <Label htmlFor="weight" className="text-xs text-muted-foreground">
-          Peso corporal (kg)
+        <Label htmlFor="goal" className="text-xs text-muted-foreground">
+          Objetivo principal
         </Label>
-        <div className="relative">
-          <Input
-            id="weight"
-            type="number"
-            inputMode="decimal"
-            placeholder="ex: 80.5"
-            value={weightKg}
-            onChange={(e) => setWeightKg(e.target.value)}
-            className="pr-10"
-          />
-          <span className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-muted-foreground pointer-events-none">
-            kg
-          </span>
+        <select
+          id="goal"
+          value={goal}
+          onChange={(event) => setGoal(event.target.value)}
+          className="h-10 w-full rounded-lg border border-input bg-secondary px-3 text-sm outline-none focus:border-primary"
+        >
+          <option value="hipertrofia">Ganhar massa</option>
+          <option value="recomposicao">Recomposição corporal</option>
+          <option value="saude">Saúde e rotina</option>
+        </select>
+      </div>
+
+      <div className="grid grid-cols-2 gap-2">
+        <div className="space-y-1.5">
+          <Label htmlFor="weight" className="text-xs text-muted-foreground">Peso (kg)</Label>
+          <Input id="weight" type="number" inputMode="decimal" placeholder="80,5" value={weightKg} onChange={(event) => setWeightKg(event.target.value)} />
+        </div>
+        <div className="space-y-1.5">
+          <Label htmlFor="height" className="text-xs text-muted-foreground">Altura (cm)</Label>
+          <Input id="height" type="number" inputMode="decimal" placeholder="175" value={heightCm} onChange={(event) => setHeightCm(event.target.value)} />
         </div>
       </div>
 

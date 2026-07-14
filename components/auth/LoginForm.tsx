@@ -20,11 +20,16 @@ export function LoginForm() {
     e.preventDefault()
     setLoading(true)
     const supabase = createClient()
-    const { error } = await supabase.auth.signInWithPassword({ email, password })
+    const { data, error } = await supabase.auth.signInWithPassword({ email, password })
     if (error) {
       toast.error(error.message)
     } else {
-      router.push('/')
+      const { data: preferences } = await supabase
+        .from('user_preferences')
+        .select('onboarding_done')
+        .eq('id', data.user.id)
+        .maybeSingle()
+      router.push(preferences?.onboarding_done ? '/' : '/onboarding')
       router.refresh()
     }
     setLoading(false)
@@ -37,7 +42,7 @@ export function LoginForm() {
     const { error } = await supabase.auth.signUp({
       email,
       password,
-      options: { emailRedirectTo: `${window.location.origin}/` },
+      options: { emailRedirectTo: `${window.location.origin}/auth/callback` },
     })
     if (error) {
       toast.error(error.message)
