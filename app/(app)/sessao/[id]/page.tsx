@@ -12,7 +12,7 @@ import {
 import { suggestForExercise } from '@/lib/progression/progression'
 import type { ExerciseType, MovementPattern } from '@/types/database'
 import type { ExecutionQuality, PainLevel } from '@/types/database'
-import type { ReadinessStatus } from '@/lib/training/readiness'
+import { adjustProgressionForReadiness, type ReadinessStatus } from '@/lib/training/readiness'
 import { SessionClient } from './SessionClient'
 
 export default async function SessaoPage(props: {
@@ -92,15 +92,20 @@ export default async function SessaoPage(props: {
       .maybeSingle(),
   ])
 
+  const readinessStatus = (readiness.data?.recommendation as ReadinessStatus | undefined) ?? 'ready'
+  const adjustedProgressions = progressions.map((suggestion) =>
+    adjustProgressionForReadiness(suggestion, readinessStatus)
+  )
+
   return (
     <SessionClient
       session={sessionData}
       workout={workoutData}
       lastLogs={lastLogs}
       prWeights={prWeights}
-      progressions={progressions}
+      progressions={adjustedProgressions}
       exerciseHistories={exerciseHistories}
-      readinessStatus={(readiness.data?.recommendation as ReadinessStatus | undefined) ?? 'ready'}
+      readinessStatus={readinessStatus}
     />
   )
 }

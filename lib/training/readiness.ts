@@ -1,3 +1,5 @@
+import type { ProgressionSuggestion } from '@/lib/progression/progression'
+
 export type JointPain = 'none' | 'mild' | 'moderate' | 'severe'
 export type ReadinessStatus = 'ready' | 'attention' | 'low_recovery' | 'stop_for_pain'
 
@@ -72,4 +74,24 @@ export function readinessGuidance(status: ReadinessStatus): string | null {
     return 'Dor articular moderada/forte registrada: não execute o movimento afetado. Use apenas uma variação indolor ou encerre a sessão.'
   }
   return null
+}
+
+export function adjustProgressionForReadiness(
+  suggestion: ProgressionSuggestion | null,
+  status: ReadinessStatus
+): ProgressionSuggestion | null {
+  if (suggestion === null || status === 'ready') return suggestion
+  if (status === 'stop_for_pain') return {
+    action: 'bloquear_por_dor',
+    reason: 'A prontidão de hoje registrou dor articular moderada ou forte. Não progrida; interrompa o movimento afetado.',
+  }
+  if (status === 'low_recovery') return {
+    action: 'revisar',
+    reason: 'A recuperação de hoje está baixa. Reduza a carga em cerca de 5–10%, trabalhe em RIR 3–4 e não aumente volume.',
+  }
+  if (suggestion.action === 'aumentar') return {
+    action: 'manter',
+    reason: 'O desempenho anterior permitiria progressão, mas a prontidão de hoje pede manter a carga e acrescentar 1 RIR.',
+  }
+  return suggestion
 }
