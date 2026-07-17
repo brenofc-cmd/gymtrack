@@ -4,6 +4,7 @@ import {
   ClipboardList,
   Dumbbell,
   HeartPulse,
+  Activity,
   History,
   Settings,
   Sparkles,
@@ -13,6 +14,7 @@ import {
 import { AVISO_GERAL } from '@/lib/routine/powerbuilding-v4'
 
 const items = [
+  { href: '/abdomen', label: 'Abdômen Diário', description: 'Rotina matinal independente', icon: Activity },
   { href: '/acompanhamento', label: 'Recuperação e saúde', description: 'Check-in diário', icon: HeartPulse },
   { href: '/suplementos', label: 'Suplementos', description: 'Rotina e registros', icon: Sparkles },
   { href: '/historico', label: 'Histórico', description: 'Treinos concluídos', icon: History },

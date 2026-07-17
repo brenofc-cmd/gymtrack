@@ -5,6 +5,7 @@ import { usePathname } from 'next/navigation'
 import {
   ChevronRight,
   HeartPulse,
+  Activity,
   Settings,
   Sparkles,
   UserRound,
@@ -13,6 +14,7 @@ import { cn } from '@/lib/utils'
 import { navItemIsActive, PRIMARY_NAV_ITEMS } from './nav-items'
 
 const SECONDARY_ITEMS = [
+  { href: '/abdomen', label: 'Abdômen Diário', icon: Activity },
   { href: '/acompanhamento', label: 'Recuperação', icon: HeartPulse },
   { href: '/suplementos', label: 'Suplementos', icon: Sparkles },
   { href: '/perfil', label: 'Perfil', icon: UserRound },
@@ -22,7 +24,7 @@ const SECONDARY_ITEMS = [
 export function AppSidebar() {
   const pathname = usePathname()
 
-  if (pathname.startsWith('/sessao/') || pathname.startsWith('/onboarding')) return null
+  if (pathname.startsWith('/sessao/') || pathname.startsWith('/abdomen/sessao') || pathname.startsWith('/onboarding')) return null
 
   return (
     <aside className="sticky top-0 hidden h-dvh w-[228px] shrink-0 flex-col border-r border-sidebar-border bg-sidebar px-3 py-5 lg:flex">

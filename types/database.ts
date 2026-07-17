@@ -6,6 +6,178 @@ export type Json =
   | { [key: string]: Json | undefined }
   | Json[]
 
+export type DailyCoreSessionType = 'hipertrofia' | 'estabilidade' | 'recuperacao' | 'descanso'
+export type DailyCoreIntensity = 'moderada' | 'leve' | 'muito_leve' | 'descanso'
+export type DailyCoreMeasureType = 'repeticoes' | 'tempo' | 'respiracoes'
+export type DailyCoreStatus = 'nao_iniciado' | 'em_andamento' | 'concluido' | 'interrompido'
+export type DailyCoreCompletionKind = 'treino' | 'recuperacao_completa' | 'descanso' | 'pausa_por_dor'
+export type DailyCoreExecutionQuality = 'excelente' | 'boa' | 'aceitavel' | 'ruim'
+export type DailyCorePainLevel = 'sem_dor' | 'desconforto_leve' | 'dor_moderada' | 'dor_forte' | 'dor_lombar'
+export type DailyCorePainCheck = 'sem_dor' | 'dor_muscular_leve' | 'dor_muscular_moderada' | 'dor_forte' | 'dor_lombar'
+
+export type DailyCoreDayRow = {
+  day_of_week: number
+  name: string
+  objective: string
+  session_type: DailyCoreSessionType
+  intensity: DailyCoreIntensity
+  duration_min: number
+  duration_max: number
+  is_rest: boolean
+  educational_note: string
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreExerciseRow = {
+  id: string
+  slug: string
+  day_of_week: number
+  name: string
+  objective: string
+  exercise_type: string
+  measure_type: DailyCoreMeasureType
+  target_sets: number
+  target_reps_min: number | null
+  target_reps_max: number | null
+  target_seconds_min: number | null
+  target_seconds_max: number | null
+  per_side: boolean
+  rir_min: number | null
+  rir_max: number | null
+  rest_seconds_min: number
+  rest_seconds_max: number
+  primary_muscle: string
+  equipment: string | null
+  short_cue: string
+  instructions: string[]
+  progression_rule: string
+  order_index: number
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreVariationRow = {
+  id: string
+  exercise_id: string
+  name: string
+  difficulty: number
+  equipment_required: string | null
+  is_default: boolean
+  is_equipment_fallback: boolean
+  order_index: number
+  created_at: string
+}
+
+export type DailyCorePreferenceRow = {
+  user_id: string
+  has_ab_wheel: boolean
+  has_resistance_band: boolean
+  has_weighted_backpack: boolean
+  manual_rep_count: boolean
+  routine_time: string
+  adaptation_started_on: string
+  skip_adaptation: boolean
+  onboarding_completed_at: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreReminderRow = {
+  user_id: string
+  enabled: boolean
+  reminder_time: string
+  weekdays: number[]
+  sound_enabled: boolean
+  vibration_enabled: boolean
+  snoozed_until: string | null
+  disabled_until: string | null
+  last_notified_on: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreSessionRow = {
+  id: string
+  user_id: string
+  day_of_week: number
+  session_date: string
+  session_type: DailyCoreSessionType
+  status: DailyCoreStatus
+  completion_kind: DailyCoreCompletionKind | null
+  adaptation_week: number
+  started_at: string | null
+  finished_at: string | null
+  duration_seconds: number | null
+  client_updated_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreSetRow = {
+  id: string
+  session_id: string
+  user_id: string
+  exercise_id: string
+  variation_id: string | null
+  set_number: number
+  reps: number | null
+  duration_seconds: number | null
+  weight_kg: number | null
+  rir: number | null
+  execution_quality: DailyCoreExecutionQuality | null
+  pain_level: DailyCorePainLevel | null
+  lumbar_controlled: boolean | null
+  notes: string | null
+  completed_at: string
+  client_updated_at: string
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreProgressionRow = {
+  id: string
+  user_id: string
+  exercise_id: string
+  current_variation_id: string | null
+  suggested_variation_id: string | null
+  suggested_reps: number | null
+  suggested_seconds: number | null
+  suggested_weight_kg: number | null
+  status: 'manter' | 'progredir' | 'bloqueada_por_dor' | 'revisar_tecnica'
+  reason: string
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCorePainLogRow = {
+  id: string
+  user_id: string
+  session_id: string | null
+  exercise_id: string | null
+  logged_on: string
+  pain_level: DailyCorePainCheck
+  notes: string | null
+  created_at: string
+  updated_at: string
+}
+
+export type DailyCoreConflictRow = {
+  id: string
+  user_id: string
+  workout_exercise_id: string
+  was_hidden: boolean
+  reason: string
+  created_at: string
+}
+
+type DbTable<Row, Insert, Update = Partial<Insert>> = {
+  Row: Row
+  Insert: Insert
+  Update: Update
+  Relationships: []
+}
+
 export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
@@ -14,6 +186,46 @@ export type Database = {
   }
   public: {
     Tables: {
+      daily_core_days: DbTable<
+        DailyCoreDayRow,
+        Omit<DailyCoreDayRow, 'created_at' | 'updated_at'> & Partial<Pick<DailyCoreDayRow, 'created_at' | 'updated_at'>>
+      >
+      daily_core_exercises: DbTable<
+        DailyCoreExerciseRow,
+        Omit<DailyCoreExerciseRow, 'id' | 'created_at' | 'updated_at'> & Partial<Pick<DailyCoreExerciseRow, 'id' | 'created_at' | 'updated_at'>>
+      >
+      daily_core_variations: DbTable<
+        DailyCoreVariationRow,
+        Omit<DailyCoreVariationRow, 'id' | 'created_at'> & Partial<Pick<DailyCoreVariationRow, 'id' | 'created_at'>>
+      >
+      daily_core_preferences: DbTable<
+        DailyCorePreferenceRow,
+        Pick<DailyCorePreferenceRow, 'user_id'> & Partial<Omit<DailyCorePreferenceRow, 'user_id'>>
+      >
+      daily_core_reminders: DbTable<
+        DailyCoreReminderRow,
+        Pick<DailyCoreReminderRow, 'user_id'> & Partial<Omit<DailyCoreReminderRow, 'user_id'>>
+      >
+      daily_core_sessions: DbTable<
+        DailyCoreSessionRow,
+        Pick<DailyCoreSessionRow, 'user_id' | 'day_of_week' | 'session_date' | 'session_type'> & Partial<Omit<DailyCoreSessionRow, 'user_id' | 'day_of_week' | 'session_date' | 'session_type'>>
+      >
+      daily_core_sets: DbTable<
+        DailyCoreSetRow,
+        Pick<DailyCoreSetRow, 'session_id' | 'user_id' | 'exercise_id' | 'set_number'> & Partial<Omit<DailyCoreSetRow, 'session_id' | 'user_id' | 'exercise_id' | 'set_number'>>
+      >
+      daily_core_progressions: DbTable<
+        DailyCoreProgressionRow,
+        Pick<DailyCoreProgressionRow, 'user_id' | 'exercise_id'> & Partial<Omit<DailyCoreProgressionRow, 'user_id' | 'exercise_id'>>
+      >
+      daily_core_pain_logs: DbTable<
+        DailyCorePainLogRow,
+        Pick<DailyCorePainLogRow, 'user_id' | 'pain_level'> & Partial<Omit<DailyCorePainLogRow, 'user_id' | 'pain_level'>>
+      >
+      daily_core_main_exercise_conflicts: DbTable<
+        DailyCoreConflictRow,
+        Omit<DailyCoreConflictRow, 'id' | 'created_at'> & Partial<Pick<DailyCoreConflictRow, 'id' | 'created_at'>>
+      >
       body_measurements: {
         Row: {
           arm_left_cm: number | null

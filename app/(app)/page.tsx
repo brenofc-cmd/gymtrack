@@ -22,6 +22,7 @@ import { getStreakStats } from '@/lib/utils/streak'
 import { formatVolume } from '@/lib/utils/volume'
 import { DIA_LABEL, TRAINING_FOCUS_LABEL } from '@/lib/routine/powerbuilding-v4'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
+import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
 import type { WorkoutLetter } from '@/types/database'
 
 function formatDate(): string {
@@ -184,6 +185,8 @@ export default async function DashboardPage() {
           startedAt={activeSession.started_at}
         />
       )}
+
+      <DailyCoreHomeCard userId={user.id} />
 
       {workout ? (
         <section className="relative overflow-hidden rounded-[20px] border border-border bg-card p-5">
