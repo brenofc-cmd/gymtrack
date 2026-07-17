@@ -3,10 +3,24 @@ import { NextResponse, type NextRequest } from 'next/server'
 
 export async function updateSession(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request })
+  const pathname = request.nextUrl.pathname
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+  // Permite que o app mostre a tela de login/estado de configuração em vez de
+  // lançar um overlay de runtime quando o ambiente local ainda não tem .env.
+  if (!supabaseUrl || !supabaseKey) {
+    if (pathname !== '/login' && !pathname.startsWith('/api/')) {
+      const url = request.nextUrl.clone()
+      url.pathname = '/login'
+      return NextResponse.redirect(url)
+    }
+    return supabaseResponse
+  }
 
   const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    supabaseUrl,
+    supabaseKey,
     {
       cookies: {
         getAll() {
@@ -28,8 +42,6 @@ export async function updateSession(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser()
-
-  const pathname = request.nextUrl.pathname
 
   // Protect app routes
   if (!user && pathname !== '/login' && !pathname.startsWith('/api/')) {

@@ -1,5 +1,7 @@
 # GymTrack
 
+Documentação da rotina matinal independente: [`docs/ABDOMEN_DIARIO.md`](docs/ABDOMEN_DIARIO.md).
+
 App de acompanhamento de treino (Next.js 16 + Supabase) com a rotina
 **Powerbuilding PPL A/B v4** (força técnica + hipertrofia, domingo descanso),
 progressão dupla e top set/back-off conservador, prontidão diária, e1RM seguro,

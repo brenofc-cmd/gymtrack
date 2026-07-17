@@ -43,7 +43,9 @@ A fase padrão é `fundamentals`. `intro_powerbuilding` depende de histórico, a
 
 ## Abdômen e volume
 
-Abdômen aparece em três dias: flexão carregada (A), controle pélvico (C), anti-extensão e anti-rotação (F), totalizando 11 séries diretas. Definição visual também depende de gordura corporal, alimentação, genética, sono e consistência; não existe redução localizada.
+O Abdômen Diário substitui o volume abdominal da ficha principal por sessões matinais independentes. A migration `20260717010046_daily_core.sql` preserva os exercícios antigos no histórico e os oculta em qualquer rotina ativa para evitar duplicidade; consulte [`ABDOMEN_DIARIO.md`](./ABDOMEN_DIARIO.md).
+
+Definição visual também depende de gordura corporal, alimentação, genética, sono e consistência; não existe redução localizada.
 
 `directVolumeByMuscle` conta séries diretas. `secondaryVolumeByMuscle` mostra separadamente contribuição estimada de compostos (0,5 por série), sem fingir precisão absoluta.
 

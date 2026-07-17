@@ -8,7 +8,7 @@ import { navItemIsActive, PRIMARY_NAV_ITEMS } from './nav-items'
 export function BottomNav() {
   const pathname = usePathname()
 
-  if (pathname.startsWith('/sessao/') || pathname.startsWith('/onboarding')) return null
+  if (pathname.startsWith('/sessao/') || pathname.startsWith('/abdomen/sessao') || pathname.startsWith('/onboarding')) return null
 
   return (
     <nav
