@@ -18,6 +18,54 @@ export type CoreExercisePlan = CoreExerciseWithVariations & {
   effectiveRir: number | null
 }
 
+export type CoreExercisePresentation = {
+  variation: DailyCoreVariationRow | null
+  name: string
+  imageUrl: string
+  imageAlt: string
+  shortCue: string
+  instructions: string[]
+  commonMistakes: string[]
+  measureType: DailyCoreExerciseRow['measure_type']
+  targetRepsMin: number | null
+  targetRepsMax: number | null
+  targetSecondsMin: number | null
+  targetSecondsMax: number | null
+  perSide: boolean
+  restSecondsMin: number
+  restSecondsMax: number
+  equipment: string | null
+}
+
+export function resolveCoreExercise(
+  exercise: CoreExercisePlan | CoreExerciseWithVariations,
+  variationId?: string | null
+): CoreExercisePresentation {
+  const planned = 'selectedVariation' in exercise ? exercise.selectedVariation : null
+  const variation = variationId
+    ? exercise.variations.find((item) => item.id === variationId) ?? planned
+    : planned
+
+  return {
+    variation,
+    name: variation?.name ?? exercise.name,
+    imageUrl: variation?.image_url ?? exercise.image_url,
+    imageAlt: variation?.image_alt ?? exercise.image_alt,
+    shortCue: variation?.short_cue ?? exercise.short_cue,
+    instructions: variation?.instructions?.length ? variation.instructions : exercise.instructions,
+    commonMistakes: variation?.common_mistakes?.length ? variation.common_mistakes : exercise.common_mistakes,
+    measureType: variation?.measure_type ?? exercise.measure_type,
+    targetRepsMin: variation?.target_reps_min ?? exercise.target_reps_min,
+    targetRepsMax: variation?.target_reps_max ?? exercise.target_reps_max,
+    targetSecondsMin: variation?.target_seconds_min ?? exercise.target_seconds_min,
+    targetSecondsMax: variation?.target_seconds_max ?? exercise.target_seconds_max,
+    perSide: variation?.per_side ?? exercise.per_side,
+    restSecondsMin: variation?.rest_seconds_min ?? exercise.rest_seconds_min,
+    restSecondsMax: variation?.rest_seconds_max ?? exercise.rest_seconds_max,
+    equipment: variation?.equipment_required ?? exercise.equipment,
+  }
+}
+
 export function localDateISO(date = new Date()): string {
   return new Intl.DateTimeFormat('en-CA', {
     timeZone: DAILY_CORE_TIME_ZONE,
@@ -122,7 +170,9 @@ export function evaluateProgression(
       suggestedWeightKg: null,
     }
   }
-  const techniqueIsGood = sets.every((set) => set.execution_quality === 'boa' || set.execution_quality === 'excelente')
+  const requiresTechniqueRating = exercise.exercise_type === 'hipertrofia' || exercise.exercise_type === 'anti_extensao'
+  const techniqueIsGood = !requiresTechniqueRating
+    || sets.every((set) => set.execution_quality === 'boa' || set.execution_quality === 'excelente')
   if (!techniqueIsGood) {
     return {
       status: 'revisar_tecnica',

@@ -10,14 +10,15 @@ import {
   type CoreExerciseWithVariations,
 } from '@/lib/daily-core/logic'
 import { coreTimerRemaining } from '@/lib/daily-core/store'
-import type { DailyCoreExerciseRow, DailyCorePreferenceRow, DailyCoreSessionRow, DailyCoreSetRow } from '@/types/database'
+import type { DailyCoreExerciseRow, DailyCorePreferenceRow, DailyCoreSessionRow, DailyCoreSetRow, DailyCoreVariationRow } from '@/types/database'
 
 const baseExercise: DailyCoreExerciseRow = {
   id: 'exercise-1', slug: 'crunch-carga', day_of_week: 1, name: 'Crunch com carga', objective: 'Flexão',
   exercise_type: 'hipertrofia', measure_type: 'repeticoes', target_sets: 3, target_reps_min: 10,
   target_reps_max: 15, target_seconds_min: null, target_seconds_max: null, per_side: false, rir_min: 1,
   rir_max: 2, rest_seconds_min: 60, rest_seconds_max: 75, primary_muscle: 'abdômen', equipment: null,
-  short_cue: 'Controle', instructions: ['Controle'], progression_rule: 'Progressão dupla', order_index: 0,
+  short_cue: 'Controle', instructions: ['Controle'], common_mistakes: ['Perder o controle'],
+  image_url: '/exercises/core/crunch.png', image_alt: 'Crunch controlado', progression_rule: 'Progressão dupla', order_index: 0,
   created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
 }
 
@@ -29,6 +30,16 @@ const preferences: DailyCorePreferenceRow = {
 
 function exercise(overrides: Partial<CoreExerciseWithVariations>): CoreExerciseWithVariations {
   return { ...baseExercise, variations: [], ...overrides }
+}
+
+function variation(overrides: Pick<DailyCoreVariationRow, 'id' | 'exercise_id' | 'name'> & Partial<DailyCoreVariationRow>): DailyCoreVariationRow {
+  return {
+    difficulty: 1, equipment_required: null, is_default: false, is_equipment_fallback: false, order_index: 0,
+    image_url: null, image_alt: null, short_cue: null, instructions: null, common_mistakes: null,
+    measure_type: null, target_reps_min: null, target_reps_max: null, target_seconds_min: null,
+    target_seconds_max: null, per_side: null, rest_seconds_min: null, rest_seconds_max: null, created_at: '',
+    ...overrides,
+  }
 }
 
 function set(overrides: Partial<DailyCoreSetRow> = {}): DailyCoreSetRow {
@@ -66,8 +77,8 @@ describe('Abdômen Diário — seleção semanal', () => {
     const pallof = exercise({
       id: 'pallof', slug: 'pallof-press',
       variations: [
-        { id: 'band', exercise_id: 'pallof', name: 'Pallof', difficulty: 1, equipment_required: 'elástico', is_default: true, is_equipment_fallback: false, order_index: 0, created_at: '' },
-        { id: 'dead-bug', exercise_id: 'pallof', name: 'Dead bug', difficulty: 1, equipment_required: null, is_default: false, is_equipment_fallback: true, order_index: 1, created_at: '' },
+        variation({ id: 'band', exercise_id: 'pallof', name: 'Pallof', equipment_required: 'elástico', is_default: true }),
+        variation({ id: 'dead-bug', exercise_id: 'pallof', name: 'Dead bug', is_equipment_fallback: true, order_index: 1 }),
       ],
     })
     expect(buildExercisePlan([pallof], preferences, 0)[0].selectedVariation?.id).toBe('dead-bug')
@@ -116,6 +127,13 @@ describe('Abdômen Diário — progressão própria', () => {
   it('ab wheel não progride sem controle lombar', () => {
     const wheel = { ...baseExercise, slug: 'ab-wheel' }
     expect(evaluateProgression(wheel, [set({ lumbar_controlled: false }), set(), set()]).status).toBe('revisar_tecnica')
+  })
+
+  it('não exige nota de técnica quando esse campo não aparece na sessão', () => {
+    const stability = { ...baseExercise, exercise_type: 'estabilidade' as const }
+    const sets = [1, 2, 3].map((setNumber) => set({ set_number: setNumber, execution_quality: null }))
+
+    expect(evaluateProgression(stability, sets).status).toBe('progredir')
   })
 })
 

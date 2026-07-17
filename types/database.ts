@@ -51,6 +51,9 @@ export type DailyCoreExerciseRow = {
   equipment: string | null
   short_cue: string
   instructions: string[]
+  common_mistakes: string[]
+  image_url: string
+  image_alt: string
   progression_rule: string
   order_index: number
   created_at: string
@@ -66,6 +69,19 @@ export type DailyCoreVariationRow = {
   is_default: boolean
   is_equipment_fallback: boolean
   order_index: number
+  image_url: string | null
+  image_alt: string | null
+  short_cue: string | null
+  instructions: string[] | null
+  common_mistakes: string[] | null
+  measure_type: DailyCoreMeasureType | null
+  target_reps_min: number | null
+  target_reps_max: number | null
+  target_seconds_min: number | null
+  target_seconds_max: number | null
+  per_side: boolean | null
+  rest_seconds_min: number | null
+  rest_seconds_max: number | null
   created_at: string
 }
 
