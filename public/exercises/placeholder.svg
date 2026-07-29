@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Imagem do exercício indisponível">
+  <rect width="400" height="300" fill="#15181d"/>
+  <rect x="0.5" y="0.5" width="399" height="299" fill="none" stroke="#2a2f37" stroke-width="1"/>
+  <g stroke="#4a515c" stroke-width="10" stroke-linecap="round">
+    <line x1="140" y1="150" x2="260" y2="150"/>
+    <line x1="128" y1="118" x2="128" y2="182"/>
+    <line x1="272" y1="118" x2="272" y2="182"/>
+    <line x1="106" y1="130" x2="106" y2="170"/>
+    <line x1="294" y1="130" x2="294" y2="170"/>
+  </g>
+  <text x="200" y="228" text-anchor="middle" font-family="system-ui, sans-serif" font-size="16" font-weight="600" fill="#8b93a1">Imagem indisponível</text>
+  <text x="200" y="250" text-anchor="middle" font-family="system-ui, sans-serif" font-size="12" fill="#5c6470">Siga as instruções escritas do exercício</text>
+</svg>
