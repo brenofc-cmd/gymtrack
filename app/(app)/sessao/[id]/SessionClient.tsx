@@ -26,6 +26,7 @@ import { ExerciseNavigator } from '@/components/session/ExerciseNavigator'
 import { FinishWorkoutSheet } from '@/components/session/FinishWorkoutSheet'
 import { RestTimerDock } from '@/components/session/RestTimerDock'
 import { SessionExitSheet } from '@/components/session/SessionExitSheet'
+import { WorkoutOverview } from '@/components/session/WorkoutOverview'
 
 interface SessionClientProps {
   session: SessionWithLogs
@@ -97,6 +98,7 @@ export function SessionClient({
   )
   const [exitOpen, setExitOpen] = useState(false)
   const [finishOpen, setFinishOpen] = useState(false)
+  const [overviewOpen, setOverviewOpen] = useState(true)
 
   useEffect(() => {
     const serverSets: Record<string, LocalSetLog[]> = {}
@@ -211,10 +213,12 @@ export function SessionClient({
         totalSets={totalSetCount}
         blockWeekNumber={session.block_week_number}
         onExit={() => setExitOpen(true)}
+        onBackToOverview={() => setOverviewOpen(true)}
+        overview={overviewOpen}
         onFinish={() => setFinishOpen(true)}
       />
 
-      <ExerciseNavigator
+      {!overviewOpen && <ExerciseNavigator
         exercises={orderedExercises}
         currentIndex={currentIndex}
         completedSets={completedSetCount}
@@ -223,9 +227,19 @@ export function SessionClient({
         feedback={feedback}
         skippedExerciseIds={skippedExerciseIds}
         onGo={go}
-      />
+      />}
 
-      <main className="mx-auto w-full max-w-3xl px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
+      {overviewOpen ? (
+        <WorkoutOverview
+          exercises={orderedExercises}
+          sets={sets}
+          skippedExerciseIds={skippedExerciseIds}
+          onOpenExercise={(index) => {
+            go(index)
+            setOverviewOpen(false)
+          }}
+        />
+      ) : <main className="mx-auto w-full max-w-3xl px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
         {readinessMessage && (
           <div className="mb-2 flex gap-2 rounded-xl bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
             <Activity className="mt-0.5 size-4 shrink-0" />
@@ -266,7 +280,7 @@ export function SessionClient({
           onNextExercise={() => go(currentIndex + 1)}
           hasNextExercise={currentIndex < orderedExercises.length - 1}
         />
-      </main>
+      </main>}
 
       <RestTimerDock
         exercises={orderedExercises}

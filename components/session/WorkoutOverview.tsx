@@ -1,0 +1,66 @@
+'use client'
+
+import Image from 'next/image'
+import { Check, ChevronRight, Clock, Dumbbell } from 'lucide-react'
+import { getExerciseImage } from '@/lib/exercise-media'
+import type { LocalSetLog } from '@/lib/store/sessionStore'
+import type { WorkoutExerciseWithExercise } from '@/types/database'
+
+type WorkoutOverviewProps = {
+  exercises: WorkoutExerciseWithExercise[]
+  sets: Record<string, LocalSetLog[]>
+  skippedExerciseIds: string[]
+  onOpenExercise: (index: number) => void
+}
+
+export function WorkoutOverview({ exercises, sets, skippedExerciseIds, onOpenExercise }: WorkoutOverviewProps) {
+  return (
+    <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
+      <div className="mb-4">
+        <p className="metric-label text-primary">Visão geral</p>
+        <h1 className="mt-1 text-xl font-extrabold">Exercícios do treino</h1>
+        <p className="mt-1 text-xs text-muted-foreground">Toque em um exercício para executar suas séries. O switch é marcado ao concluir todas elas.</p>
+      </div>
+
+      <ol className="space-y-2.5">
+        {exercises.map((item, index) => {
+          const completed = (sets[item.id] ?? []).filter((set) => !set.is_warmup).length
+          const done = completed >= item.target_sets
+          const skipped = skippedExerciseIds.includes(item.id)
+          return (
+            <li key={item.id}>
+              <button
+                type="button"
+                onClick={() => onOpenExercise(index)}
+                className="flex min-h-24 w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-input active:scale-[0.99]"
+              >
+                <div className="relative size-[74px] shrink-0 overflow-hidden rounded-xl bg-secondary">
+                  <Image src={getExerciseImage(item.exercise.gif_url)} alt={`Demonstração de ${item.exercise.name_pt}`} fill className="object-cover" />
+                </div>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate text-sm font-extrabold">{index + 1}. {item.exercise.name_pt}</span>
+                  <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-1"><Dumbbell className="size-3" />{completed}/{item.target_sets} séries</span>
+                    <span className="inline-flex items-center gap-1"><Clock className="size-3" />{item.rest_seconds}s descanso</span>
+                  </span>
+                  <span className="mt-1 block text-[10px] font-semibold text-primary">{skipped ? 'Pulado' : done ? 'Concluído' : 'Toque para começar'}</span>
+                </span>
+                <span
+                  role="switch"
+                  aria-checked={done}
+                  aria-label={`${item.exercise.name_pt}: ${done ? 'concluído' : 'pendente'}`}
+                  className={`relative flex h-7 w-12 shrink-0 items-center rounded-full p-1 transition-colors ${done ? 'bg-primary' : 'bg-secondary'}`}
+                >
+                  <span className={`grid size-5 place-items-center rounded-full bg-white text-primary transition-transform ${done ? 'translate-x-5' : 'translate-x-0'}`}>
+                    {done && <Check className="size-3.5" strokeWidth={3} />}
+                  </span>
+                </span>
+                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+              </button>
+            </li>
+          )
+        })}
+      </ol>
+    </main>
+  )
+}

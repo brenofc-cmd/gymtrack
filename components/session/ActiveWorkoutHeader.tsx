@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Pause, Play, TimerReset, X } from 'lucide-react'
+import { ArrowLeft, Pause, Play, TimerReset, X } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import {
   sessionElapsed,
@@ -21,6 +21,8 @@ interface ActiveWorkoutHeaderProps {
   totalSets: number
   blockWeekNumber?: number | null
   onExit: () => void
+  onBackToOverview?: () => void
+  overview?: boolean
   onFinish: () => void
 }
 
@@ -33,6 +35,8 @@ export function ActiveWorkoutHeader({
   totalSets,
   blockWeekNumber,
   onExit,
+  onBackToOverview,
+  overview = false,
   onFinish,
 }: ActiveWorkoutHeaderProps) {
   const { sessionClock, pauseSessionClock, resumeSessionClock } = useSessionStore()
@@ -53,11 +57,11 @@ export function ActiveWorkoutHeader({
         <div className="mx-auto flex min-h-[84px] max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
           <button
             type="button"
-            onClick={onExit}
-            aria-label="Fechar treino"
+            onClick={overview ? onExit : onBackToOverview}
+            aria-label={overview ? 'Sair do treino' : 'Voltar para visão geral'}
             className="grid size-11 shrink-0 place-items-center rounded-xl border border-input text-muted-foreground hover:text-foreground"
           >
-            <X className="size-4" />
+            {overview ? <X className="size-4" /> : <ArrowLeft className="size-4" />}
           </button>
 
           <div className="min-w-0 flex-1">

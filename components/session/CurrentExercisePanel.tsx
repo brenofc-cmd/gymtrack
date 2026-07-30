@@ -176,6 +176,11 @@ export function CurrentExercisePanel({
       performed_exercise_id: selectedVariation,
       completed_at: completedAt,
     })
+    // Ao concluir a última série válida, segue automaticamente para o próximo
+    // exercício. O botão de volta no cabeçalho mantém a visão geral acessível.
+    if (!isWarmup && !completed && setNumber === workoutExercise.target_sets && hasNextExercise) {
+      window.setTimeout(onNextExercise, 250)
+    }
     return result.queued ? 'queued' : 'saved'
   }
 
@@ -224,39 +229,41 @@ export function CurrentExercisePanel({
 
   return (
     <article className="overflow-hidden rounded-2xl bg-card shadow-[0_12px_40px_rgba(0,0,0,.2)]">
-      <header className="flex items-start gap-3 px-3 pb-2 pt-3 sm:px-4">
-        <div className="relative size-14 shrink-0 overflow-hidden rounded-xl bg-secondary">
+      <header className="px-3 pb-2 pt-3 sm:px-4">
+        <div className="relative mx-auto h-40 w-full max-w-md overflow-hidden rounded-2xl bg-secondary sm:h-48">
           <Image
             src={getExerciseImage(selectedExercise.gif_url)}
             alt={`Demonstração de ${selectedExercise.name_pt}`}
             fill
-            sizes="56px"
+            sizes="(max-width: 768px) 100vw, 448px"
             className="object-cover"
           />
         </div>
-        <div className="min-w-0 flex-1">
-          <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
-            Exercício {exerciseNumber} de {totalExercises}
-          </p>
-          <h1 className="mt-0.5 text-base font-extrabold leading-tight text-foreground sm:text-lg">
-            {selectedExercise.name_pt}
-          </h1>
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
-            {' · '}RIR {workoutExercise.rir_min === workoutExercise.rir_max
-              ? workoutExercise.rir_min
-              : `${workoutExercise.rir_min ?? '—'}–${workoutExercise.rir_max ?? '—'}`}
-            {' · '}Descanso {Math.floor(workoutExercise.rest_seconds / 60)}:{String(workoutExercise.rest_seconds % 60).padStart(2, '0')}
-          </p>
+        <div className="mt-3 flex items-start gap-3">
+          <div className="min-w-0 flex-1">
+            <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
+              Exercício {exerciseNumber} de {totalExercises}
+            </p>
+            <h1 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground">
+              {selectedExercise.name_pt}
+            </h1>
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
+              {' · '}RIR {workoutExercise.rir_min === workoutExercise.rir_max
+                ? workoutExercise.rir_min
+                : `${workoutExercise.rir_min ?? '—'}–${workoutExercise.rir_max ?? '—'}`}
+              {' · '}Descanso {Math.floor(workoutExercise.rest_seconds / 60)}:{String(workoutExercise.rest_seconds % 60).padStart(2, '0')}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setActionsOpen(true)}
+            aria-label={`Ações de ${selectedExercise.name_pt}`}
+            className="grid size-12 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground"
+          >
+            <MoreHorizontal className="size-5" />
+          </button>
         </div>
-        <button
-          type="button"
-          onClick={() => setActionsOpen(true)}
-          aria-label={`Ações de ${selectedExercise.name_pt}`}
-          className="grid size-12 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground"
-        >
-          <MoreHorizontal className="size-5" />
-        </button>
       </header>
 
       <div className="space-y-2 px-2.5 pb-3 sm:px-4">
