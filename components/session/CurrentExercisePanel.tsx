@@ -1,7 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import Image from 'next/image'
 import {
   CheckCircle2,
   CircleAlert,
@@ -11,7 +10,7 @@ import {
   ShieldAlert,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { backoffWeight } from '@/lib/training/strength'
 import { getLoadInputConfig } from '@/lib/training/load-input'
 import { useSessionStore, type LocalSetLog } from '@/lib/store/sessionStore'
@@ -231,12 +230,10 @@ export function CurrentExercisePanel({
     <article className="overflow-hidden rounded-2xl bg-card shadow-[0_12px_40px_rgba(0,0,0,.2)]">
       <header className="px-3 pb-2 pt-3 sm:px-4">
         <div className="relative mx-auto h-40 w-full max-w-md overflow-hidden rounded-2xl bg-secondary sm:h-48">
-          <Image
-            src={getExerciseImage(selectedExercise.gif_url)}
-            alt={`Demonstração de ${selectedExercise.name_pt}`}
-            fill
-            sizes="(max-width: 768px) 100vw, 448px"
-            className="object-cover"
+          <ExerciseAnimation
+            name={selectedExercise.name_pt}
+            primaryMuscle={selectedExercise.muscle_group}
+            movementPattern={selectedExercise.movement_pattern}
           />
         </div>
         <div className="mt-3 flex items-start gap-3">

@@ -1,5 +1,4 @@
 import { redirect, notFound } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { ArrowLeft, Trophy } from 'lucide-react'
 import { format } from 'date-fns'
@@ -15,12 +14,15 @@ import { analyzeTrend } from '@/lib/progression/trend'
 import { getLoadInputConfig } from '@/lib/training/load-input'
 import { ExerciseTrendCard } from '@/components/progress/ExerciseTrendCard'
 import { ProgressChart } from '@/components/exercise/ProgressChart'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
+import { exerciseDetailBackHref } from '@/lib/navigation/exercise-detail'
 
 export default async function ExercicioPage(props: {
   params: Promise<{ id: string }>
+  searchParams: Promise<{ from?: string; workout?: string; workoutSource?: string }>
 }) {
   const { id } = await props.params
+  const detailContext = await props.searchParams
 
   const supabase = await createClient()
   const {
@@ -45,6 +47,7 @@ export default async function ExercicioPage(props: {
     6: analyzeTrend(trend6, 6),
     8: analyzeTrend(trend8, 8),
   } as const
+  const backHref = exerciseDetailBackHref(detailContext)
 
   const MUSCLE_LABELS: Record<string, string> = {
     peito: 'Peitoral',
@@ -64,7 +67,7 @@ export default async function ExercicioPage(props: {
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-3 px-4 py-4">
-          <Link href="/exercicios" className="p-2 -ml-2 text-muted-foreground hover:text-foreground">
+          <Link href={backHref} aria-label="Voltar" className="p-2 -ml-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <h1 className="font-bold text-base leading-tight truncate">
@@ -76,12 +79,10 @@ export default async function ExercicioPage(props: {
       <div className="space-y-4">
         {/* Exercise photo */}
         <div className="relative w-full aspect-square bg-zinc-900">
-          <Image
-            src={getExerciseImage(exercise.gif_url)}
-            alt={`Demonstração de ${exercise.name_pt}`}
-            fill
-            className="object-contain"
-            priority
+          <ExerciseAnimation
+            name={exercise.name_pt}
+            primaryMuscle={exercise.muscle_group}
+            movementPattern={exercise.movement_pattern}
           />
         </div>
 

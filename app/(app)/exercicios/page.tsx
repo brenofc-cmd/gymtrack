@@ -1,8 +1,7 @@
 import { redirect } from 'next/navigation'
-import Image from 'next/image'
 import Link from 'next/link'
 import { createClient } from '@/lib/supabase/server'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import type { Exercise } from '@/types/database'
 
 export default async function ExerciciosPage() {
@@ -15,11 +14,11 @@ export default async function ExerciciosPage() {
 
   const { data: exercises } = await supabase
     .from('exercises')
-    .select('id, name_pt, muscle_group, equipment, gif_url')
+    .select('id, name_pt, muscle_group, equipment, movement_pattern')
     .order('muscle_group')
     .order('name_pt')
 
-  const groups = new Map<string, Pick<Exercise, 'id' | 'name_pt' | 'muscle_group' | 'equipment' | 'gif_url'>[]>()
+  const groups = new Map<string, Pick<Exercise, 'id' | 'name_pt' | 'muscle_group' | 'equipment' | 'movement_pattern'>[]>()
   for (const ex of exercises ?? []) {
     if (!groups.has(ex.muscle_group)) groups.set(ex.muscle_group, [])
     groups.get(ex.muscle_group)!.push(ex)
@@ -42,11 +41,11 @@ export default async function ExerciciosPage() {
                 className="flex items-center gap-3 rounded-xl bg-card border border-border p-2.5 text-sm hover:bg-card/80 active:scale-[0.98] transition-all"
               >
                 <span className="relative size-14 shrink-0 overflow-hidden rounded-lg bg-zinc-900">
-                  <Image
-                    src={getExerciseImage(ex.gif_url)}
-                    alt={`Demonstração de ${ex.name_pt}`}
-                    fill
-                    className="object-cover"
+                  <ExerciseAnimation
+                    name={ex.name_pt}
+                    primaryMuscle={ex.muscle_group}
+                    movementPattern={ex.movement_pattern}
+                    compact
                   />
                 </span>
                 <span className="min-w-0 flex-1">

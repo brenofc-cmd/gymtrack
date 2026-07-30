@@ -202,7 +202,7 @@ export const DAVID_LAID_PUBLIC_DUP_V5: RoutineDayDef[] = [
 ]
 
 export const DIA_LABEL: Record<number, string> = { 1: 'Segunda-feira', 2: 'Terça-feira', 3: 'Quarta-feira', 4: 'Quinta-feira', 5: 'Sexta-feira', 6: 'Sábado', 7: 'Domingo' }
-export const TRAINING_FOCUS_LABEL: Record<TrainingFocus, string> = { strength_hypertrophy: 'Powerbuilding — força + hipertrofia', max_strength_hypertrophy: 'Powerbuilding — força + hipertrofia', strength: 'Força', rest: 'Descanso', strength_technique: 'Força técnica', hypertrophy: 'Hipertrofia', recovery: 'Recuperação' }
+export const TRAINING_FOCUS_LABEL: Record<TrainingFocus, string> = { strength_hypertrophy: 'Força + hipertrofia', max_strength_hypertrophy: 'Força máxima + hipertrofia', strength: 'Força', rest: 'Descanso', strength_technique: 'Força técnica', hypertrophy: 'Hipertrofia', recovery: 'Recuperação' }
 export const MOVEMENT_PATTERN_LABEL: Record<MovementPattern, string> = { horizontal_push: 'Empurrar horizontal', incline_push: 'Empurrar inclinado', vertical_push: 'Empurrar vertical', vertical_pull: 'Puxar vertical', horizontal_pull: 'Puxar horizontal', squat: 'Agachamento', hip_hinge: 'Dobradiça de quadril', unilateral_leg: 'Unilateral de pernas', knee_flexion: 'Flexão de joelho', hip_extension: 'Extensão de quadril', lateral_delt: 'Deltoide lateral', elbow_flexion: 'Flexão de cotovelo', elbow_extension: 'Extensão de cotovelo', calf_raise: 'Panturrilha', rear_delt: 'Deltoide posterior', trunk_flexion: 'Flexão do tronco', pelvic_curl: 'Retroversão pélvica', anti_extension: 'Anti-extensão', anti_rotation: 'Anti-rotação' }
 export const AVISO_GERAL = 'A prescrição permanece igual à rotina pública. Cargas, RIR, descansos, readiness e deload são a camada de progressão individual do GymTrack.'
 

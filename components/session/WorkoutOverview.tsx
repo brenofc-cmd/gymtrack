@@ -1,19 +1,21 @@
 'use client'
 
-import Image from 'next/image'
 import { Check, ChevronRight, Clock, Dumbbell } from 'lucide-react'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
+import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
+import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
 import type { LocalSetLog } from '@/lib/store/sessionStore'
-import type { WorkoutExerciseWithExercise } from '@/types/database'
+import type { WorkoutExerciseWithExercise, WorkoutLetter } from '@/types/database'
 
 type WorkoutOverviewProps = {
   exercises: WorkoutExerciseWithExercise[]
   sets: Record<string, LocalSetLog[]>
   skippedExerciseIds: string[]
+  workoutLetter: WorkoutLetter
   onOpenExercise: (index: number) => void
 }
 
-export function WorkoutOverview({ exercises, sets, skippedExerciseIds, onOpenExercise }: WorkoutOverviewProps) {
+export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLetter, onOpenExercise }: WorkoutOverviewProps) {
   return (
     <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
       <div className="mb-4">
@@ -35,10 +37,20 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, onOpenExe
                 className="flex min-h-24 w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-input active:scale-[0.99]"
               >
                 <div className="relative size-[74px] shrink-0 overflow-hidden rounded-xl bg-secondary">
-                  <Image src={getExerciseImage(item.exercise.gif_url)} alt={`Demonstração de ${item.exercise.name_pt}`} fill className="object-cover" />
+                  <ExerciseAnimation
+                    name={item.exercise.name_pt}
+                    primaryMuscle={item.exercise.muscle_group}
+                    movementPattern={item.exercise.movement_pattern}
+                    compact
+                  />
                 </div>
                 <span className="min-w-0 flex-1">
-                  <span className="block truncate text-sm font-extrabold">{index + 1}. {item.exercise.name_pt}</span>
+                  <span className="flex min-w-0 items-center gap-1.5">
+                    <span className="block min-w-0 truncate text-sm font-extrabold">{index + 1}. {item.exercise.name_pt}</span>
+                    <TrainingStimulusBadge
+                      exercise={{ ...item, exercise_type: item.exercise.exercise_type }}
+                    />
+                  </span>
                   <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><Dumbbell className="size-3" />{completed}/{item.target_sets} séries</span>
                     <span className="inline-flex items-center gap-1"><Clock className="size-3" />{item.rest_seconds}s descanso</span>
@@ -61,6 +73,9 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, onOpenExe
           )
         })}
       </ol>
+      <div className="mt-4">
+        <OptionalTreadmillCard workoutLetter={workoutLetter} compact />
+      </div>
     </main>
   )
 }

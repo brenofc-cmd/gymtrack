@@ -1,11 +1,10 @@
 'use client'
 
-import Image from 'next/image'
 import { useState } from 'react'
-import { AlertTriangle, BookOpen, History, Play, Video } from 'lucide-react'
+import { AlertTriangle, BookOpen, History, Video } from 'lucide-react'
 import { BottomSheet } from '@/components/ui/bottom-sheet'
 import { ProgressChart } from '@/components/exercise/ProgressChart'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { cn } from '@/lib/utils'
 import type { Exercise } from '@/types/database'
 
@@ -57,7 +56,11 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
       {tab === 'execution' && (
         <div className="mt-4 space-y-4">
           <div className="relative aspect-video overflow-hidden rounded-2xl border border-border bg-background">
-            <Image src={getExerciseImage(exercise.gif_url)} alt={`Execução de ${exercise.name_pt}`} fill className="object-contain" />
+            <ExerciseAnimation
+              name={exercise.name_pt}
+              primaryMuscle={exercise.muscle_group}
+              movementPattern={exercise.movement_pattern}
+            />
           </div>
           <ol className="space-y-2.5">
             {(guidance.length > 0 ? guidance : exercise.instructions ?? []).map((step, index) => (
@@ -97,13 +100,16 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
 
       {tab === 'video' && (
         <div className="mt-4">
-          <div className="grid aspect-video place-items-center rounded-2xl border border-dashed border-input bg-background">
-            <div className="text-center">
-              <span className="mx-auto grid size-12 place-items-center rounded-full border border-primary/30 bg-primary/10 text-primary"><Play className="ml-0.5 size-5" fill="currentColor" /></span>
-              <p className="mt-3 text-sm font-semibold">Vídeo técnico em preparação</p>
-              <p className="mt-1 text-xs text-muted-foreground">Placeholder reservado para demonstração validada do exercício.</p>
-            </div>
+          <div className="aspect-video overflow-hidden rounded-2xl border border-border bg-background">
+            <ExerciseAnimation
+              name={exercise.name_pt}
+              primaryMuscle={exercise.muscle_group}
+              movementPattern={exercise.movement_pattern}
+            />
           </div>
+          <p className="mt-2 text-center text-xs text-muted-foreground">
+            Animação anatômica: o músculo principal aparece em vermelho.
+          </p>
         </div>
       )}
     </BottomSheet>

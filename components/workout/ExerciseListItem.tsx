@@ -1,22 +1,24 @@
-import Image from 'next/image'
 import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { getExerciseImage } from '@/lib/exercise-media'
+import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 import { prescriptionLabel } from '@/lib/routine/david-laid-public-dup-v5'
+import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface ExerciseListItemProps {
   workoutExercise: WorkoutExerciseWithExercise
   lastWeight: number | null
   lastReps: number | null
+  detailHref: string
 }
 
 export function ExerciseListItem({
   workoutExercise,
   lastWeight,
   lastReps,
+  detailHref,
 }: ExerciseListItemProps) {
   const { exercise } = workoutExercise
 
@@ -24,7 +26,7 @@ export function ExerciseListItem({
 
   return (
     <Link
-      href={`/exercicios/${exercise.id}`}
+      href={detailHref}
       className={cn(
         'flex items-center gap-3 p-3 rounded-xl bg-card border hover:bg-card/80 active:scale-[0.98] transition-all',
         is_priority ? 'border-amber-500/60' : 'border-border'
@@ -32,11 +34,11 @@ export function ExerciseListItem({
     >
       {/* Exercise thumbnail */}
       <div className="relative w-16 h-16 rounded-lg overflow-hidden bg-zinc-800 shrink-0">
-        <Image
-          src={getExerciseImage(exercise.gif_url)}
-          alt={`Demonstração de ${exercise.name_pt}`}
-          fill
-          className="object-cover"
+        <ExerciseAnimation
+          name={exercise.name_pt}
+          primaryMuscle={exercise.muscle_group}
+          movementPattern={exercise.movement_pattern}
+          compact
         />
       </div>
 
@@ -46,6 +48,9 @@ export function ExerciseListItem({
           <p className="font-semibold text-sm leading-tight truncate">
             {exercise.name_pt}
           </p>
+          <TrainingStimulusBadge
+            exercise={{ ...workoutExercise, exercise_type: exercise.exercise_type }}
+          />
           {is_priority && (
             <Star className="w-3.5 h-3.5 text-amber-500 shrink-0 fill-amber-500" aria-label="Exercício prioritário" />
           )}

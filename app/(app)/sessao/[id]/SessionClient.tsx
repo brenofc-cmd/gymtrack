@@ -12,7 +12,7 @@ import {
 } from '@/lib/store/sessionStore'
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import { cancelSessionLogically, type SessionWithLogs } from '@/lib/queries/sessions'
-import type { WorkoutWithExercises } from '@/types/database'
+import type { WorkoutLetter, WorkoutWithExercises } from '@/types/database'
 import { readinessGuidance, type ReadinessStatus } from '@/lib/training/readiness'
 import { useWakeLock } from '@/lib/hooks/useWakeLock'
 import { classifyDay } from '@/components/workout/WorkoutFocusBadge'
@@ -234,6 +234,7 @@ export function SessionClient({
           exercises={orderedExercises}
           sets={sets}
           skippedExerciseIds={skippedExerciseIds}
+          workoutLetter={(workout.letter ?? 'A') as WorkoutLetter}
           onOpenExercise={(index) => {
             go(index)
             setOverviewOpen(false)

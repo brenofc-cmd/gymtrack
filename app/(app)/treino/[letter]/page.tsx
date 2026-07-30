@@ -10,6 +10,8 @@ import { StartWorkoutButton } from '@/components/workout/StartWorkoutButton'
 import { WorkoutNotes } from '@/components/workout/WorkoutNotes'
 import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
+import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
+import { exerciseDetailHref } from '@/lib/navigation/exercise-detail'
 import type { WorkoutLetter } from '@/types/database'
 
 const VALID_LETTERS: WorkoutLetter[] = ['A', 'B', 'C', 'D', 'E', 'F']
@@ -54,6 +56,7 @@ export default async function TreinoPage(props: {
   // histórico implícito do navegador: o destino explícito preserva o fluxo
   // "lista → conferir treino → voltar para começar".
   const backHref = from === 'dashboard' ? '/' : '/treinos'
+  const workoutSource = from === 'dashboard' ? 'dashboard' : 'treinos'
 
   return (
     <div className="max-w-lg mx-auto pb-28">
@@ -109,6 +112,10 @@ export default async function TreinoPage(props: {
                 workoutExercise={we}
                 lastWeight={lastLog?.weight_kg ?? null}
                 lastReps={lastLog?.reps ?? null}
+                detailHref={exerciseDetailHref(we.exercise.id, {
+                  workoutLetter: workout.letter as WorkoutLetter,
+                  workoutSource,
+                })}
               />
             )
           })}
@@ -118,6 +125,8 @@ export default async function TreinoPage(props: {
           {workout.workout_exercises.length} exercícios ·{' '}
           {workout.workout_exercises.reduce((s, we) => s + we.target_sets, 0)} séries válidas
         </p>
+
+        <OptionalTreadmillCard workoutLetter={workout.letter as WorkoutLetter} />
 
         {/* Aquecimento */}
         {workout.warmup_note && (
