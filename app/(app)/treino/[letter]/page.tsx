@@ -16,8 +16,10 @@ const VALID_LETTERS: WorkoutLetter[] = ['A', 'B', 'C', 'D', 'E', 'F']
 
 export default async function TreinoPage(props: {
   params: Promise<{ letter: string }>
+  searchParams: Promise<{ from?: string }>
 }) {
   const { letter } = await props.params
+  const { from } = await props.searchParams
 
   if (!VALID_LETTERS.includes(letter.toUpperCase() as WorkoutLetter)) notFound()
 
@@ -48,13 +50,17 @@ export default async function TreinoPage(props: {
   )
 
   const dayLabel = workout.day_of_week != null ? DIA_LABEL[workout.day_of_week] : null
+  // O detalhe pode ser aberto pelo painel ou pela lista. Nunca usamos o
+  // histórico implícito do navegador: o destino explícito preserva o fluxo
+  // "lista → conferir treino → voltar para começar".
+  const backHref = from === 'dashboard' ? '/' : '/treinos'
 
   return (
     <div className="max-w-lg mx-auto pb-28">
       {/* Header */}
       <div className="sticky top-0 z-10 bg-background/95 backdrop-blur-sm border-b border-border">
         <div className="flex items-center gap-3 px-4 py-4">
-          <Link href="/" className="p-2 -ml-2 text-muted-foreground hover:text-foreground">
+          <Link href={backHref} aria-label="Voltar para treinos" className="p-2 -ml-2 text-muted-foreground hover:text-foreground">
             <ArrowLeft className="w-5 h-5" />
           </Link>
           <div className="flex-1 min-w-0">

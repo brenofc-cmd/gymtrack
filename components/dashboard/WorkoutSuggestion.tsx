@@ -81,7 +81,7 @@ export function WorkoutSuggestion({
 
         {/* CTA */}
         <Link
-          href={`/treino/${letter}`}
+          href={`/treino/${letter}?from=dashboard`}
           className="flex items-center justify-center gap-2 w-full h-14 rounded-xl bg-primary text-primary-foreground text-base font-semibold hover:bg-primary/90 active:scale-[0.98] transition-all"
         >
           Iniciar Treino {letter}

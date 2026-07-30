@@ -313,7 +313,7 @@ export default async function DashboardPage() {
             </div>
 
             <Link
-              href={`/treino/${workout.letter}`}
+              href={`/treino/${workout.letter}?from=dashboard`}
               className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-primary text-base font-bold text-primary-foreground transition-transform active:scale-[0.985]"
             >
               Ver treino

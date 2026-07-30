@@ -43,7 +43,7 @@ export default async function TreinosPage() {
             return (
               <Link
                 key={workout.id}
-                href={`/treino/${workout.letter}`}
+                href={`/treino/${workout.letter}?from=treinos`}
                 className={`flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors ${isToday ? 'border-primary/40' : 'border-border hover:border-input'}`}
               >
                 <span className={`grid size-11 shrink-0 place-items-center rounded-xl border text-lg font-extrabold ${isToday ? 'border-primary/30 bg-primary/10 text-primary' : 'border-input bg-secondary text-muted-foreground'}`}>

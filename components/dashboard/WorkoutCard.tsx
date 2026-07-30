@@ -26,7 +26,7 @@ export function WorkoutCard({ workout, lastSessionDate }: WorkoutCardProps) {
 
   return (
     <Link
-      href={`/treino/${workout.letter}`}
+      href={`/treino/${workout.letter}?from=dashboard`}
       className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 transition-colors hover:bg-card/80 active:scale-[0.98]"
     >
       <div
