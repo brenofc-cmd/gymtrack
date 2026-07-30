@@ -21,6 +21,8 @@ const videos = [
   ['wger-365-lying-leg-curl.m4v', 'https://wger.de/media/exercise-video/365/becaf013-5044-40d0-bae9-7ed60c973737.MOV'],
   ['wger-366-seated-leg-curl.m4v', 'https://wger.de/media/exercise-video/366/43df4b79-d4c3-4fbf-bcb5-e0d825b84120.MOV'],
   ['wger-348-lateral-raise.m4v', 'https://wger.de/media/exercise-video/348/de69928a-8a35-4096-821c-1f46de5e0e03.MOV'],
+  ['wger-349-one-arm-cable-lateral-raise.m4v', 'https://wger.de/media/exercise-video/349/9896d82e-d8b6-48af-bdd5-b8545dc523e9.MOV'],
+  ['wger-82-bent-over-rear-delt-raise.m4v', 'https://wger.de/media/exercise-video/82/28b53647-27e7-47cf-8852-2ee666c8b628.MOV'],
   ['wger-341-smith-squat.m4v', 'https://wger.de/media/exercise-video/341/0cbfeace-dda9-4166-8424-f51358e88a4f.MOV'],
   ['wger-803-one-arm-cable-triceps.m4v', 'https://wger.de/media/exercise-video/803/99e0001f-217a-4b11-823c-014d24a5415e.MOV'],
   ['wger-367-standing-leg-curl.m4v', 'https://wger.de/media/exercise-video/367/6c24960c-20ab-4ef9-90f8-cf53e630ccec.MOV'],
@@ -57,9 +59,23 @@ async function download(url, destination) {
   await writeFile(destination, new Uint8Array(await response.arrayBuffer()))
 }
 
+async function verifyWgerAttribution(fileName, sourceUrl) {
+  const exerciseId = fileName.match(/^wger-(\d+)-/)?.[1]
+  if (!exerciseId) throw new Error(`Nome sem ID wger: ${fileName}`)
+  const response = await fetch(`https://wger.de/api/v2/video/?exercise=${exerciseId}&limit=100`)
+  if (!response.ok) throw new Error(`Falha ao consultar atribuição do exercício ${exerciseId}: HTTP ${response.status}`)
+  const payload = await response.json()
+  const media = payload.results.find((item) => item.video === sourceUrl)
+  if (!media) throw new Error(`O vídeo ${sourceUrl} não existe mais na API wger.`)
+  if (media.license !== 2 || media.license_author !== 'Goulart') {
+    throw new Error(`Atribuição inesperada para ${fileName}: licença=${media.license}, autor=${media.license_author}`)
+  }
+}
+
 async function processVideo([fileName, sourceUrl], temporaryDir) {
   const sourcePath = join(temporaryDir, basename(new URL(sourceUrl).pathname))
   const outputPath = join(OUTPUT_DIR, fileName)
+  await verifyWgerAttribution(fileName, sourceUrl)
   await download(sourceUrl, sourcePath)
   await run(AVCONVERT, [
     '--source', sourcePath,

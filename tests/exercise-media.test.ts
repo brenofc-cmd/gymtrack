@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest'
 import {
   getExerciseFinishImage,
   getExerciseVideo,
+  getExerciseVideoCatalog,
 } from '@/lib/exercise-media'
 import {
   DAVID_LAID_EXERCISE_CATALOG_V5,
@@ -35,8 +36,22 @@ describe('mídias reais dos exercícios', () => {
     expect(getExerciseVideo('Supino reto com barra')?.url).toContain('wger-73-')
     expect(getExerciseVideo('Barra fixa')?.url).toContain('wger-475-')
     expect(getExerciseVideo('Levantamento terra romeno')?.license).toBe('CC BY-SA 4.0')
+    expect(getExerciseVideo('Paralelas')?.license).toBe('CC BY-SA 4.0')
+    expect(getExerciseVideo('Leg press')?.license).toBe('CC BY-SA 4.0')
+    expect(getExerciseVideo('Elevação lateral unilateral no cabo')?.url).toContain('wger-349-')
+    expect(getExerciseVideo('Crucifixo inverso (reverse fly)')?.url).toContain('wger-82-')
     expect(getExerciseVideo('Levantamento terra convencional')).toBeNull()
     expect(getExerciseVideo('Push press')).toBeNull()
+  })
+
+  it('atribui cada vídeo pelo objeto de mídia da wger', () => {
+    for (const video of getExerciseVideoCatalog()) {
+      expect(video.author).toBe('Goulart')
+      expect(video.provider).toBe('wger')
+      expect(video.license).toBe('CC BY-SA 4.0')
+      expect(video.licenseUrl).toBe('https://creativecommons.org/licenses/by-sa/4.0/')
+      expect(video.sourceUrl).toMatch(/^https:\/\/wger\.de\/api\/v2\/exerciseinfo\/\d+\/$/)
+    }
   })
 
   it('tem no disco todos os vídeos selecionados para o DUP público', () => {
