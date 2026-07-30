@@ -25,12 +25,14 @@ export async function getCoreCatalog(supabase: SupabaseDB) {
     : { data: [], error: null }
   if (variationError) throw variationError
   const variationRows = variations ?? []
+  const allExercises = exerciseRows.map((exercise) => ({
+    ...exercise,
+    variations: variationRows.filter((variation) => variation.exercise_id === exercise.id),
+  })) as CoreExerciseWithVariations[]
   return {
     days: (days ?? []) as DailyCoreDayRow[],
-    exercises: exerciseRows.map((exercise) => ({
-      ...exercise,
-      variations: variationRows.filter((variation) => variation.exercise_id === exercise.id),
-    })) as CoreExerciseWithVariations[],
+    exercises: allExercises.filter((exercise) => exercise.is_active),
+    allExercises,
   }
 }
 export async function getCoreUserState(supabase: SupabaseDB, userId: string) {

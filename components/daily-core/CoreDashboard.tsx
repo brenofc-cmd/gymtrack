@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { useMemo, useState } from 'react'
-import { Activity, ArrowRight, BarChart3, CalendarDays, Check, ChevronRight, CircleGauge, Dumbbell, HeartPulse, Moon, Settings, ShieldCheck, Sparkles } from 'lucide-react'
+import { Activity, ArrowRight, BarChart3, Building2, CalendarDays, Check, ChevronRight, CircleGauge, Dumbbell, HeartPulse, Home, Moon, Settings, ShieldCheck, Sparkles } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
@@ -55,14 +55,14 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
   const Icon = meta.icon
   const weekStart = startOfWeek()
   const weekSessions = sessions.filter((session) => new Date(`${session.session_date}T12:00:00`) >= weekStart && session.status === 'concluido')
-  const strongSessions = weekSessions.filter((session) => session.session_type === 'hipertrofia').length
-  const lightSessions = weekSessions.filter((session) => session.session_type === 'estabilidade').length
+  const gymSessions = weekSessions.filter((session) => session.location === 'academia').length
+  const homeSessions = weekSessions.filter((session) => session.location === 'casa').length
   const volume = sets.filter((set) => weekSessions.some((session) => session.id === set.session_id)).reduce((total, set) => total + (set.weight_kg ?? 0) * (set.reps ?? 0), 0)
   const streak = streakStats(sessions)
   const next = nextSession(allDays, today.day_of_week)
   const completedThisMonth = sessions.filter((session) => session.status === 'concluido' && session.session_date.slice(0, 7) === todayISO.slice(0, 7)).length
   const elapsedDays = Math.max(1, Number(todayISO.slice(8, 10)))
-  const expectedThisMonth = Math.max(1, elapsedDays - Math.floor(elapsedDays / 7))
+  const expectedThisMonth = Math.max(1, Math.round((elapsedDays / 7) * 4))
   const completionRate = Math.min(100, Math.round((completedThisMonth / expectedThisMonth) * 100))
   const fourWeeks = useMemo(() => {
     return [3, 2, 1, 0].map((weeksAgo) => {
@@ -86,27 +86,29 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
   const resolvedPlan = plan.map((exercise) => ({ exercise, presentation: resolveCoreExercise(exercise) }))
   const heroExercise = resolvedPlan[0]?.presentation
 
-  async function completeRecovery() {
+  async function skipToday() {
     setSaving(true)
     const now = new Date().toISOString()
     const supabase = createClient()
     const { error } = await supabase.from('daily_core_sessions').upsert({
       id: todaySession?.id ?? crypto.randomUUID(),
       user_id: userId,
-      day_of_week: 6,
+      day_of_week: today.day_of_week,
       session_date: todayISO,
-      session_type: 'recuperacao',
-      status: 'concluido',
-      completion_kind: 'recuperacao_completa',
+      session_type: today.session_type,
+      status: 'interrompido',
+      completion_kind: 'pulado',
       adaptation_week: adaptationWeek,
-      started_at: now,
+      location: today.location === 'academia' ? 'academia' : 'casa',
+      routine_version: 2,
+      started_at: null,
       finished_at: now,
       duration_seconds: 0,
       client_updated_at: now,
     }, { onConflict: 'user_id,session_date' })
     setSaving(false)
-    if (error) toast.error('Não foi possível registrar a recuperação.')
-    else { toast.success('Recuperação completa registrada sem quebrar sua consistência.'); router.refresh() }
+    if (error) toast.error('Não foi possível pular esta sessão.')
+    else { toast.success('Sessão pulada. O DUP principal não foi alterado.'); router.refresh() }
   }
 
   async function logSundayPain() {
@@ -132,16 +134,21 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
           </div>
           <div className="mt-4 flex flex-wrap gap-2 text-[11px]">
             <span className={`rounded-full border px-2.5 py-1 font-semibold ${meta.className}`}>{meta.label}</span>
+            <span className="inline-flex items-center gap-1 rounded-full border border-input bg-secondary px-2.5 py-1">{today.location === 'academia' ? <Building2 className="size-3" /> : today.location === 'casa' ? <Home className="size-3" /> : <Moon className="size-3" />}{today.location === 'academia' ? 'Academia' : today.location === 'casa' ? 'Em casa' : 'Descanso'}</span>
             <span className="rounded-full border border-input bg-secondary px-2.5 py-1">{today.duration_min === today.duration_max ? `${today.duration_min} min` : `${today.duration_min}–${today.duration_max} min`}</span>
             <span className="rounded-full border border-input bg-secondary px-2.5 py-1">{plan.length} exercício{plan.length === 1 ? '' : 's'}</span>
           </div>
-          {!today.is_rest && todaySession?.status !== 'concluido' && (
+          {!today.is_rest && todaySession?.status !== 'concluido' && todaySession?.completion_kind !== 'pulado' && (
             <Link href="/abdomen/sessao" className="mt-5 flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground">
               {todaySession?.status === 'em_andamento' ? 'Continuar rotina' : `Começar treino de ${today.duration_min}–${today.duration_max} min`} <ArrowRight className="size-4" />
             </Link>
           )}
           {todaySession?.status === 'concluido' && (
             <div className="mt-5 flex h-12 items-center justify-center gap-2 rounded-2xl border border-primary/25 bg-primary/8 text-sm font-bold text-primary"><Check className="size-4" /> Rotina concluída</div>
+          )}
+          {todaySession?.completion_kind === 'pulado' && <div className="mt-5 rounded-2xl border border-input bg-secondary p-3 text-center text-sm font-bold text-muted-foreground">Sessão pulada hoje · DUP mantido</div>}
+          {!today.is_rest && !todaySession && (
+            <button type="button" disabled={saving} onClick={skipToday} className="mt-2 h-11 w-full rounded-xl text-xs font-semibold text-muted-foreground">Não consigo fazer hoje — pular só o core</button>
           )}
         </div>
       </section>
@@ -168,25 +175,32 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
         </section>
       )}
 
+      <section className="surface-card p-4">
+        <p className="metric-label text-primary">Plano semanal canônico</p>
+        <h3 className="mt-1 text-sm font-extrabold">2 sessões em casa + 2 finalizadores na academia</h3>
+        <div className="mt-3 grid gap-2">
+          {allDays.filter((item) => !item.is_rest).map((item) => (
+            <div key={item.day_of_week} className="flex items-center gap-3 rounded-xl bg-secondary/55 p-3">
+              <span className="grid size-9 place-items-center rounded-lg bg-background font-mono text-xs font-black">{['', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB', 'DOM'][item.day_of_week]}</span>
+              <div className="min-w-0 flex-1"><p className="truncate text-xs font-bold">{item.name}</p><p className="text-[10px] text-muted-foreground">{item.duration_min}–{item.duration_max} min</p></div>
+              <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-muted-foreground">{item.location === 'academia' ? <Building2 className="size-3" /> : <Home className="size-3" />}{item.location === 'academia' ? 'Academia' : 'Em casa'}</span>
+            </div>
+          ))}
+        </div>
+      </section>
+
       {adaptationWeek > 0 && adaptationWeek <= 2 && (
         <section className="rounded-2xl border border-[#5ba8ff]/25 bg-[#5ba8ff]/8 p-4">
           <div className="flex items-center gap-2 text-[#78b9ff]"><CircleGauge className="size-4" /><h3 className="text-sm font-bold">Adaptação · semana {adaptationWeek} de 2</h3></div>
-          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">{adaptationWeek === 1 ? 'Duas séries nos exercícios fortes e cerca de 3 RIR.' : 'Até três séries se não houver dor excessiva; mantenha cerca de 3 RIR.'}</p>
+          <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Mantenha as séries prescritas, use cerca de 3 RIR nos exercícios que controlam esforço e priorize aprender o movimento.</p>
         </section>
-      )}
-
-      {today.day_of_week === 6 && todaySession?.status !== 'concluido' && (
-        <button type="button" disabled={saving} onClick={completeRecovery} className="flex w-full items-center gap-3 rounded-2xl border border-[#4ad17e]/25 bg-[#4ad17e]/8 p-4 text-left disabled:opacity-60">
-          <HeartPulse className="size-5 shrink-0 text-[#62dc91]" />
-          <span><span className="block text-sm font-bold">Estou muito cansado ou dolorido</span><span className="mt-0.5 block text-[11px] text-muted-foreground">Marcar recuperação completa sem quebrar a consistência</span></span>
-        </button>
       )}
 
       {today.is_rest && (
         <section className="surface-card p-5 text-center">
           <Moon className="mx-auto size-7 text-muted-foreground" />
           <h3 className="mt-2 font-bold">Hoje é dia de recuperação.</h3>
-          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">O abdômen também precisa se recuperar para crescer e funcionar bem. A próxima sessão será segunda-feira: flexão do tronco.</p>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">O core também precisa se recuperar. Consulte abaixo a próxima sessão programada; pular o core nunca muda a sequência do DUP principal.</p>
           <label className="mt-4 block text-left text-xs font-semibold">Como você está hoje?</label>
           <select value={painChoice} onChange={(event) => setPainChoice(event.target.value as DailyCorePainCheck)} className="mt-1.5 h-12 w-full rounded-xl border border-input bg-secondary px-3 text-sm">
             <option value="sem_dor">Sem dor</option><option value="dor_muscular_leve">Dor muscular leve</option><option value="dor_muscular_moderada">Dor muscular moderada</option><option value="dor_forte">Dor forte</option><option value="dor_lombar">Dor lombar</option>
@@ -196,7 +210,7 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
       )}
 
       <section className="grid grid-cols-2 gap-2" aria-label="Resumo de consistência">
-        <Metric label="Sequência atual" value={`${streak.current} dias`} icon={<Sparkles className="size-4 text-primary" />} />
+        <Metric label="Sequência atual" value={`${streak.current} sessões`} icon={<Sparkles className="size-4 text-primary" />} />
         <Metric label="Conclusão mensal" value={`${completionRate}%`} icon={<Check className="size-4 text-[#62dc91]" />} />
       </section>
 
@@ -207,9 +221,9 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
         </summary>
         <div className="space-y-3 border-t border-border p-3">
           <section className="grid grid-cols-2 gap-2">
-            <Metric label="Melhor sequência" value={`${streak.best} dias`} icon={<CalendarDays className="size-4 text-[#5ba8ff]" />} />
-            <Metric label="Fortes na semana" value={`${strongSessions}/3`} icon={<Dumbbell className="size-4 text-primary" />} />
-            <Metric label="Leves na semana" value={`${lightSessions}/3`} icon={<ShieldCheck className="size-4 text-[#78b9ff]" />} />
+            <Metric label="Melhor sequência" value={`${streak.best} sessões`} icon={<CalendarDays className="size-4 text-[#5ba8ff]" />} />
+            <Metric label="Academia na semana" value={`${gymSessions}/2`} icon={<Dumbbell className="size-4 text-primary" />} />
+            <Metric label="Em casa na semana" value={`${homeSessions}/2`} icon={<ShieldCheck className="size-4 text-[#78b9ff]" />} />
             <Metric label="Volume com carga" value={volume > 0 ? `${Math.round(volume)} kg` : '—'} icon={<Activity className="size-4 text-[#ffb547]" />} />
           </section>
 
@@ -219,7 +233,7 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
               {fourWeeks.map((week) => (
                 <div key={week.label} className="flex flex-1 flex-col items-center gap-1.5">
                   <span className="font-mono text-xs font-bold">{week.count}</span>
-                  <div className="w-full rounded-t-lg bg-primary/80" style={{ height: `${Math.max(8, (week.count / 6) * 64)}px` }} />
+                  <div className="w-full rounded-t-lg bg-primary/80" style={{ height: `${Math.max(8, (week.count / 4) * 64)}px` }} />
                   <span className="text-[10px] text-muted-foreground">{week.label}</span>
                 </div>
               ))}
@@ -261,9 +275,10 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
       </details>
 
       <details className="surface-card p-4">
-        <summary className="cursor-pointer text-sm font-bold">Por que a rotina alterna intensidades?</summary>
+        <summary className="cursor-pointer text-sm font-bold">Por que esta rotina é curta e separada do DUP?</summary>
         <div className="mt-3 space-y-2 text-xs leading-relaxed text-muted-foreground">
-          <p>Treinar abdômen diariamente não significa treiná-lo pesado diariamente. Segunda, quarta e sexta são as sessões principais de hipertrofia; terça, quinta e sábado trabalham controle, estabilidade ou recuperação.</p>
+          <p>Terça e sexta trabalham controle motor em casa. Quarta e sábado somam apenas seis séries diretas semanais de hipertrofia, distribuídas em dois finalizadores curtos na academia.</p>
+          <p>Se faltar tempo, termine o exercício principal do DUP e marque somente o core como não feito. A sequência dos treinos A–F permanece intacta.</p>
           <p>Exercícios abdominais não removem gordura localizada. A aparência depende de desenvolvimento muscular, alimentação, percentual de gordura e genética.</p>
           <p>O shape em V depende principalmente de dorsais, deltoides laterais, peitoral superior e cintura proporcional. Esta rotina complementa, mas não substitui o restante do programa.</p>
         </div>

@@ -8,9 +8,10 @@ export type Json =
 
 export type DailyCoreSessionType = 'hipertrofia' | 'estabilidade' | 'recuperacao' | 'descanso'
 export type DailyCoreIntensity = 'moderada' | 'leve' | 'muito_leve' | 'descanso'
+export type DailyCoreLocation = 'casa' | 'academia' | 'descanso'
 export type DailyCoreMeasureType = 'repeticoes' | 'tempo' | 'respiracoes'
 export type DailyCoreStatus = 'nao_iniciado' | 'em_andamento' | 'concluido' | 'interrompido'
-export type DailyCoreCompletionKind = 'treino' | 'recuperacao_completa' | 'descanso' | 'pausa_por_dor'
+export type DailyCoreCompletionKind = 'treino' | 'recuperacao_completa' | 'descanso' | 'pausa_por_dor' | 'pulado'
 export type DailyCoreExecutionQuality = 'excelente' | 'boa' | 'aceitavel' | 'ruim'
 export type DailyCorePainLevel = 'sem_dor' | 'desconforto_leve' | 'dor_moderada' | 'dor_forte' | 'dor_lombar'
 export type DailyCorePainCheck = 'sem_dor' | 'dor_muscular_leve' | 'dor_muscular_moderada' | 'dor_forte' | 'dor_lombar'
@@ -24,6 +25,7 @@ export type DailyCoreDayRow = {
   duration_min: number
   duration_max: number
   is_rest: boolean
+  location: DailyCoreLocation
   educational_note: string
   created_at: string
   updated_at: string
@@ -56,6 +58,9 @@ export type DailyCoreExerciseRow = {
   image_alt: string
   progression_rule: string
   order_index: number
+  is_active: boolean
+  routine_version: number
+  catalog_exercise_id: string | null
   created_at: string
   updated_at: string
 }
@@ -122,9 +127,13 @@ export type DailyCoreSessionRow = {
   status: DailyCoreStatus
   completion_kind: DailyCoreCompletionKind | null
   adaptation_week: number
+  location: Exclude<DailyCoreLocation, 'descanso'>
+  routine_version: number
   started_at: string | null
   finished_at: string | null
   duration_seconds: number | null
+  paused_at: string | null
+  paused_seconds: number
   client_updated_at: string
   created_at: string
   updated_at: string

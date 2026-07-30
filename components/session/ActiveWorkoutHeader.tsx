@@ -10,6 +10,7 @@ import {
 import { formatDuration } from '@/lib/utils/time'
 import { WorkoutSaveStatus } from './WorkoutSaveStatus'
 import { WorkoutFocusBadge, type DayClassification } from '@/components/workout/WorkoutFocusBadge'
+import { workoutTimeStatus, type WorkoutTimeEstimate } from '@/lib/training/session-time'
 
 interface ActiveWorkoutHeaderProps {
   startedAt: string
@@ -24,6 +25,7 @@ interface ActiveWorkoutHeaderProps {
   onBackToOverview?: () => void
   overview?: boolean
   onFinish: () => void
+  timeEstimate?: WorkoutTimeEstimate
 }
 
 export function ActiveWorkoutHeader({
@@ -38,12 +40,14 @@ export function ActiveWorkoutHeader({
   onBackToOverview,
   overview = false,
   onFinish,
+  timeEstimate,
 }: ActiveWorkoutHeaderProps) {
   const { sessionClock, pauseSessionClock, resumeSessionClock } = useSessionStore()
   const [now, setNow] = useState(() => Date.now())
   const [clockOpen, setClockOpen] = useState(false)
   const paused = sessionClock.pausedAt != null
   const elapsed = sessionElapsed(startedAt, sessionClock, now)
+  const timeStatus = workoutTimeStatus(elapsed)
 
   useEffect(() => {
     if (paused) return
@@ -91,6 +95,11 @@ export function ActiveWorkoutHeader({
               {formatDuration(elapsed)}
             </button>
             <div className="-mt-0.5"><WorkoutSaveStatus compact /></div>
+            {timeStatus !== 'normal' && (
+              <p className={`text-[9px] font-bold ${timeStatus === 'limit' ? 'text-destructive' : 'text-[#ffb547]'}`}>
+                {timeStatus === 'limit' ? 'Limite de 75 min atingido' : 'Restam menos de 10 min'}
+              </p>
+            )}
           </div>
 
           <div className="shrink-0 text-center">
@@ -118,6 +127,13 @@ export function ActiveWorkoutHeader({
           <p className="font-mono text-4xl font-black tabular-nums text-primary">{formatDuration(elapsed)}</p>
           <p className="mt-1 text-xs text-muted-foreground">{paused ? 'Sessão pausada' : 'Sessão em andamento'}</p>
         </div>
+        {timeEstimate && (
+          <div className={`mt-3 rounded-2xl border p-4 ${timeEstimate.exceedsLimit ? 'border-[#ffb547]/30 bg-[#ffb547]/10' : 'border-border bg-secondary/35'}`}>
+            <p className="text-xs font-bold">Estimativa segmentada: {timeEstimate.totalMinutes} min</p>
+            <p className="mt-1 text-[11px] text-muted-foreground">Aquecimento {timeEstimate.warmupMinutes} · treino {timeEstimate.mainMinutes} · core {timeEstimate.coreMinutes} min</p>
+            {timeEstimate.exceedsLimit && <p className="mt-2 text-[11px] font-semibold text-[#ffb547]">A projeção passa de 75 min. Priorize o DUP; ao chegar a 65 min, o core pode ser marcado como não feito.</p>}
+          </div>
+        )}
         <button
           type="button"
           onClick={() => {

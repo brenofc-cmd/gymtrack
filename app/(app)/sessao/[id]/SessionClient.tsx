@@ -27,6 +27,7 @@ import { FinishWorkoutSheet } from '@/components/session/FinishWorkoutSheet'
 import { RestTimerDock } from '@/components/session/RestTimerDock'
 import { SessionExitSheet } from '@/components/session/SessionExitSheet'
 import { WorkoutOverview } from '@/components/session/WorkoutOverview'
+import { estimateWorkoutTime } from '@/lib/training/session-time'
 
 interface SessionClientProps {
   session: SessionWithLogs
@@ -173,6 +174,13 @@ export function SessionClient({
     0
   )
   const totalSetCount = orderedExercises.reduce((total, exercise) => total + exercise.target_sets, 0)
+  const timeEstimate = useMemo(() => estimateWorkoutTime(
+    orderedExercises.map((exercise) => ({
+      target_sets: exercise.target_sets,
+      rest_seconds: exercise.rest_seconds,
+    })),
+    workout.letter === 'C' || workout.letter === 'F' ? 8 : 0
+  ), [orderedExercises, workout.letter])
   const current = orderedExercises[currentIndex]
   const originalIndex = current ? originalIndexById.get(current.id) ?? 0 : 0
   const readinessMessage = readinessGuidance(readinessStatus)
@@ -216,6 +224,7 @@ export function SessionClient({
         onBackToOverview={() => setOverviewOpen(true)}
         overview={overviewOpen}
         onFinish={() => setFinishOpen(true)}
+        timeEstimate={timeEstimate}
       />
 
       {!overviewOpen && <ExerciseNavigator

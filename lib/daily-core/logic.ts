@@ -118,12 +118,15 @@ export function buildExercisePlan(
     })
     .sort((a, b) => a.order_index - b.order_index)
     .map((exercise) => {
-      const isStrong = exercise.exercise_type === 'hipertrofia' || exercise.exercise_type === 'anti_extensao'
       return {
         ...exercise,
         selectedVariation: chooseVariation(exercise, preferences),
-        effectiveSets: isStrong && week === 1 ? Math.min(2, exercise.target_sets) : exercise.target_sets,
-        effectiveRir: isStrong && (week === 1 || week === 2) ? 3 : exercise.rir_min,
+        // O volume canônico (6 séries diretas/semana) não é reduzido na adaptação.
+        // Nas duas primeiras semanas só aumentamos a margem de esforço.
+        effectiveSets: exercise.target_sets,
+        effectiveRir: exercise.rir_min != null && (week === 1 || week === 2)
+          ? Math.max(3, exercise.rir_min)
+          : exercise.rir_min,
       }
     })
 }
@@ -170,7 +173,7 @@ export function evaluateProgression(
       suggestedWeightKg: null,
     }
   }
-  const requiresTechniqueRating = exercise.exercise_type === 'hipertrofia' || exercise.exercise_type === 'anti_extensao'
+  const requiresTechniqueRating = exercise.rir_min != null
   const techniqueIsGood = !requiresTechniqueRating
     || sets.every((set) => set.execution_quality === 'boa' || set.execution_quality === 'excelente')
   if (!techniqueIsGood) {
@@ -193,29 +196,27 @@ export function evaluateProgression(
   }
   if (exercise.measure_type === 'tempo') {
     const top = exercise.target_seconds_max ?? 0
-    const reachedTop = sets.every((set) => (set.duration_seconds ?? 0) >= top)
-    return reachedTop
-      ? {
-          status: 'progredir',
-          reason: 'Limite de tempo atingido com boa postura. Avance para uma variação mais difícil.',
-          suggestedReps: null,
-          suggestedSeconds: top,
-          suggestedWeightKg: null,
-        }
-      : {
-          status: 'manter',
-          reason: 'Aumente apenas 5–10 segundos por vez, sem ultrapassar o limite da faixa.',
-          suggestedReps: null,
-          suggestedSeconds: Math.min(top, Math.max(...sets.map((set) => set.duration_seconds ?? 0)) + 5),
-          suggestedWeightKg: null,
-        }
+    return {
+      status: 'manter',
+      reason: 'Mantenha o tempo dentro da faixa prescrita com postura e respiração controladas.',
+      suggestedReps: null,
+      suggestedSeconds: Math.min(top, Math.max(...sets.map((set) => set.duration_seconds ?? 0)) + 5),
+      suggestedWeightKg: null,
+    }
   }
   const top = exercise.target_reps_max ?? 0
-  const reachedTop = sets.every((set) => (set.reps ?? 0) >= top && (set.rir ?? -1) >= 1)
+  const reachedTop = sets.every((set) => {
+    const setRir = set.rir
+    const rirIsValid = exercise.rir_min == null
+      || (setRir != null && setRir >= exercise.rir_min && setRir <= (exercise.rir_max ?? exercise.rir_min))
+    return (set.reps ?? 0) >= top && rirIsValid
+  })
   if (!reachedTop) {
     return {
       status: 'manter',
-      reason: 'Mantenha a carga até alcançar o topo da faixa em todas as séries com RIR ≥ 1.',
+      reason: exercise.rir_min == null
+        ? 'Mantenha a execução dentro da faixa prescrita.'
+        : `Mantenha a carga até alcançar o topo da faixa em todas as séries com RIR ${exercise.rir_min}–${exercise.rir_max ?? exercise.rir_min}.`,
       suggestedReps: Math.min(top, Math.max(...sets.map((set) => set.reps ?? 0)) + 1),
       suggestedSeconds: null,
       suggestedWeightKg: null,
@@ -224,7 +225,9 @@ export function evaluateProgression(
   const lastWeight = Math.max(...sets.map((set) => set.weight_kg ?? 0))
   return {
     status: 'progredir',
-    reason: 'Topo da faixa atingido com técnica e RIR adequados. Aumente pouco a carga ou avance a variação.',
+    reason: exercise.slug === 'core-v2-reverse-crunch'
+      ? 'Topo da faixa atingido com técnica e RIR adequados. Avance um nível na escada: crunch reverso, elevação de joelhos e então elevação de pernas.'
+      : 'Topo da faixa atingido com técnica e RIR adequados. Aumente a carga pelo menor incremento disponível.',
     suggestedReps: top,
     suggestedSeconds: null,
     suggestedWeightKg: lastWeight > 0 ? Math.round((lastWeight + 1) * 2) / 2 : null,
@@ -234,7 +237,7 @@ export function evaluateProgression(
 export function streakStats(sessions: DailyCoreSessionRow[], today = localDateISO()): { current: number; best: number } {
   const completed = new Set(
     sessions
-      .filter((session) => session.status === 'concluido' || session.completion_kind === 'pausa_por_dor')
+      .filter((session) => session.status === 'concluido')
       .map((session) => session.session_date)
   )
   const allDates = [...completed].sort()
@@ -245,15 +248,8 @@ export function streakStats(sessions: DailyCoreSessionRow[], today = localDateIS
     const date = new Date(`${value}T12:00:00Z`)
     if (!previous) run = 1
     else {
-      let gap = Math.round((date.getTime() - previous.getTime()) / 86_400_000)
-      const cursor = new Date(previous)
-      while (gap > 1) {
-        cursor.setUTCDate(cursor.getUTCDate() + 1)
-        const weekday = cursor.getUTCDay()
-        if (weekday !== 0) break
-        gap -= 1
-      }
-      run = gap <= 1 ? run + 1 : 1
+      const scheduledBetween = countScheduledCoreDays(previous, date)
+      run = scheduledBetween <= 1 ? run + 1 : 1
     }
     best = Math.max(best, run)
     previous = date
@@ -262,8 +258,8 @@ export function streakStats(sessions: DailyCoreSessionRow[], today = localDateIS
   const cursor = new Date(`${today}T12:00:00Z`)
   for (let checked = 0; checked < 366; checked += 1) {
     const iso = cursor.toISOString().slice(0, 10)
-    const sunday = cursor.getUTCDay() === 0
-    if (sunday) {
+    const weekday = cursor.getUTCDay()
+    if (!CORE_ACTIVE_UTC_WEEKDAYS.has(weekday)) {
       cursor.setUTCDate(cursor.getUTCDate() - 1)
       continue
     }
@@ -272,6 +268,28 @@ export function streakStats(sessions: DailyCoreSessionRow[], today = localDateIS
     cursor.setUTCDate(cursor.getUTCDate() - 1)
   }
   return { current, best }
+}
+
+const CORE_ACTIVE_UTC_WEEKDAYS = new Set([2, 3, 5, 6])
+
+function countScheduledCoreDays(from: Date, to: Date): number {
+  const cursor = new Date(from)
+  let count = 0
+  while (cursor < to) {
+    cursor.setUTCDate(cursor.getUTCDate() + 1)
+    if (CORE_ACTIVE_UTC_WEEKDAYS.has(cursor.getUTCDay())) count += 1
+  }
+  return count
+}
+
+export function coreSessionElapsedSeconds(
+  startedAt: string,
+  pausedAt: string | null,
+  pausedSeconds: number,
+  now = Date.now()
+): number {
+  const end = pausedAt ? new Date(pausedAt).getTime() : now
+  return Math.max(0, Math.round((end - new Date(startedAt).getTime()) / 1000) - pausedSeconds)
 }
 
 export function nextSession(days: DailyCoreDayRow[], weekday: number): DailyCoreDayRow | null {

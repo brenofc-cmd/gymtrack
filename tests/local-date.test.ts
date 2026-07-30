@@ -140,8 +140,8 @@ describe('streak do Abdômen Diário usa âncora normalizada (não é bug de UTC
     const today = coreLocalDate()
     expect(today).toBe('2026-07-29')
 
-    // Três dias consecutivos concluídos (27, 28, 29 — 26 é domingo)
-    const sessions = ['2026-07-27', '2026-07-28', '2026-07-29'].map((date) => ({
+    // Três sessões consecutivas do calendário canônico (sábado, terça, quarta).
+    const sessions = ['2026-07-25', '2026-07-28', '2026-07-29'].map((date) => ({
       session_date: date,
       status: 'concluido',
     }))

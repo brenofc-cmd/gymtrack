@@ -28,9 +28,9 @@ export default async function AbdomenPage() {
   if (!userState.preferences) {
     return (
       <main className="mx-auto w-full max-w-[520px] px-4 py-5 lg:py-7">
-        <p className="metric-label text-primary">Nova área independente</p>
-        <h1 className="mt-1 text-[26px] font-extrabold tracking-tight">Abdômen Diário</h1>
-        <p className="mb-5 mt-2 text-sm leading-relaxed text-muted-foreground">Uma rotina matinal de 5–12 minutos que alterna hipertrofia, estabilidade e recuperação.</p>
+        <p className="metric-label text-primary">Core independente da ficha principal</p>
+        <h1 className="mt-1 text-[26px] font-extrabold tracking-tight">Rotina de core</h1>
+        <p className="mb-5 mt-2 text-sm leading-relaxed text-muted-foreground">Duas micro-sessões em casa e dois finalizadores de hipertrofia na academia.</p>
         <CorePreferencesForm userId={user.id} initialPreferences={null} initialReminder={userState.reminder} onboarding />
       </main>
     )
@@ -44,8 +44,8 @@ export default async function AbdomenPage() {
   const sets = await getCoreSessionSets(supabase, userState.sessions.map((session) => session.id))
   return (
     <main className="mx-auto w-full max-w-[520px] px-4 py-5 lg:py-7">
-      <header className="mb-5"><p className="metric-label text-primary">Rotina matinal independente</p><h1 className="mt-1 text-[26px] font-extrabold tracking-tight">Abdômen Diário</h1></header>
-      <CoreDashboard userId={user.id} today={today} allDays={loaded.days} plan={plan} exerciseCatalog={loaded.exercises} sessions={userState.sessions} sets={sets} pain={userState.pain} progressions={userState.progressions} adaptationWeek={week} />
+      <header className="mb-5"><p className="metric-label text-primary">Em casa + academia</p><h1 className="mt-1 text-[26px] font-extrabold tracking-tight">Rotina de core</h1></header>
+      <CoreDashboard userId={user.id} today={today} allDays={loaded.days} plan={plan} exerciseCatalog={loaded.allExercises} sessions={userState.sessions} sets={sets} pain={userState.pain} progressions={userState.progressions} adaptationWeek={week} />
     </main>
   )
 }

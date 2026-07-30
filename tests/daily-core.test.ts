@@ -19,6 +19,7 @@ const baseExercise: DailyCoreExerciseRow = {
   rir_max: 2, rest_seconds_min: 60, rest_seconds_max: 75, primary_muscle: 'abdômen', equipment: null,
   short_cue: 'Controle', instructions: ['Controle'], common_mistakes: ['Perder o controle'],
   image_url: '/exercises/core/crunch.png', image_alt: 'Crunch controlado', progression_rule: 'Progressão dupla', order_index: 0,
+  is_active: true, routine_version: 2, catalog_exercise_id: null,
   created_at: '2026-01-01T00:00:00Z', updated_at: '2026-01-01T00:00:00Z',
 }
 
@@ -56,6 +57,7 @@ function session(date: string, overrides: Partial<DailyCoreSessionRow> = {}): Da
   return {
     id: crypto.randomUUID(), user_id: 'user-1', day_of_week: 1, session_date: date, session_type: 'hipertrofia',
     status: 'concluido', completion_kind: 'treino', adaptation_week: 0, started_at: `${date}T10:00:00Z`,
+    location: 'casa', routine_version: 2, paused_at: null, paused_seconds: 0,
     finished_at: `${date}T10:10:00Z`, duration_seconds: 600, client_updated_at: `${date}T10:10:00Z`,
     created_at: `${date}T10:00:00Z`, updated_at: `${date}T10:10:00Z`, ...overrides,
   }
@@ -85,9 +87,9 @@ describe('Abdômen Diário — seleção semanal', () => {
   })
 })
 describe('Abdômen Diário — adaptação', () => {
-  it('primeira semana reduz hipertrofia para duas séries e RIR 3', () => {
+  it('primeira semana preserva o volume e aumenta a margem para RIR 3', () => {
     const plan = buildExercisePlan([exercise({})], preferences, 1)[0]
-    expect(plan.effectiveSets).toBe(2)
+    expect(plan.effectiveSets).toBe(3)
     expect(plan.effectiveRir).toBe(3)
   })
 
@@ -129,8 +131,8 @@ describe('Abdômen Diário — progressão própria', () => {
     expect(evaluateProgression(wheel, [set({ lumbar_controlled: false }), set(), set()]).status).toBe('revisar_tecnica')
   })
 
-  it('não exige nota de técnica quando esse campo não aparece na sessão', () => {
-    const stability = { ...baseExercise, exercise_type: 'estabilidade' as const }
+  it('não exige nota de técnica quando o exercício não prescreve RIR', () => {
+    const stability = { ...baseExercise, exercise_type: 'estabilidade' as const, rir_min: null, rir_max: null }
     const sets = [1, 2, 3].map((setNumber) => set({ set_number: setNumber, execution_quality: null }))
 
     expect(evaluateProgression(stability, sets).status).toBe('progredir')
@@ -144,18 +146,18 @@ describe('Abdômen Diário — timers e consistência sustentável', () => {
     expect(coreTimerRemaining(persisted, now + 10_000)).toBe(30)
   })
 
-  it('domingo não quebra a sequência e recuperação de sábado conta', () => {
+  it('dias sem core não quebram a sequência das quatro sessões programadas', () => {
     const sessions = [
       session('2026-07-17', { day_of_week: 5 }),
-      session('2026-07-18', { day_of_week: 6, session_type: 'recuperacao', completion_kind: 'recuperacao_completa', duration_seconds: 0 }),
-      session('2026-07-20', { day_of_week: 1 }),
+      session('2026-07-18', { day_of_week: 6 }),
+      session('2026-07-21', { day_of_week: 2 }),
     ]
-    expect(streakStats(sessions, '2026-07-20').current).toBe(3)
+    expect(streakStats(sessions, '2026-07-21').current).toBe(3)
   })
 
-  it('pausa registrada por dor não recebe mensagem punitiva nem quebra consistência', () => {
-    const paused = session('2026-07-20', { status: 'interrompido', completion_kind: 'pausa_por_dor' })
-    expect(streakStats([paused], '2026-07-20').current).toBe(1)
+  it('sessão pulada não conta como concluída', () => {
+    const skipped = session('2026-07-21', { day_of_week: 2, status: 'interrompido', completion_kind: 'pulado' })
+    expect(streakStats([skipped], '2026-07-21').current).toBe(0)
   })
 })
 

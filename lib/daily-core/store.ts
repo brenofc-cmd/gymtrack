@@ -2,7 +2,7 @@
 
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
-import type { DailyCoreExecutionQuality, DailyCorePainLevel, DailyCoreSessionType } from '@/types/database'
+import type { DailyCoreExecutionQuality, DailyCoreLocation, DailyCorePainLevel, DailyCoreSessionType } from '@/types/database'
 
 export interface CoreLocalSet {
   id: string
@@ -16,6 +16,7 @@ export interface CoreLocalSet {
   executionQuality: DailyCoreExecutionQuality | null
   painLevel: DailyCorePainLevel | null
   lumbarControlled: boolean | null
+  notes: string | null
   completedAt: string
 }
 
@@ -33,6 +34,10 @@ export interface ActiveCoreSession {
   sessionType: DailyCoreSessionType
   adaptationWeek: number
   startedAt: string
+  location: Exclude<DailyCoreLocation, 'descanso'>
+  routineVersion: number
+  pausedAt: string | null
+  pausedSeconds: number
 }
 
 interface DailyCoreStore {
@@ -43,6 +48,8 @@ interface DailyCoreStore {
   executionTimer: CoreTimer
   restTimer: CoreTimer
   startSession: (session: ActiveCoreSession) => void
+  pauseSession: () => void
+  resumeSession: () => void
   setCurrentExerciseIndex: (index: number) => void
   selectVariation: (exerciseId: string, variationId: string | null) => void
   logSet: (setLog: CoreLocalSet) => void
@@ -104,6 +111,23 @@ export const useDailyCoreStore = create<DailyCoreStore>()(
       executionTimer: EMPTY_TIMER,
       restTimer: EMPTY_TIMER,
       startSession: (session) => set({ session, currentExerciseIndex: 0, sets: {}, executionTimer: EMPTY_TIMER, restTimer: EMPTY_TIMER }),
+      pauseSession: () => set((state) => {
+        if (!state.session || state.session.pausedAt) return state
+        return {
+          session: { ...state.session, pausedAt: new Date().toISOString() },
+          executionTimer: pauseTimer(state.executionTimer),
+          restTimer: pauseTimer(state.restTimer),
+        }
+      }),
+      resumeSession: () => set((state) => {
+        if (!state.session?.pausedAt) return state
+        const added = Math.max(0, Math.round((Date.now() - new Date(state.session.pausedAt).getTime()) / 1000))
+        return {
+          session: { ...state.session, pausedAt: null, pausedSeconds: state.session.pausedSeconds + added },
+          executionTimer: resumeTimer(state.executionTimer),
+          restTimer: resumeTimer(state.restTimer),
+        }
+      }),
       setCurrentExerciseIndex: (currentExerciseIndex) => set({ currentExerciseIndex }),
       selectVariation: (exerciseId, variationId) => set((state) => ({ selectedVariations: { ...state.selectedVariations, [exerciseId]: variationId } })),
       logSet: (setLog) => set((state) => ({ sets: { ...state.sets, [setLog.exerciseId]: [...(state.sets[setLog.exerciseId] ?? []).filter((item) => item.id !== setLog.id), setLog] } })),

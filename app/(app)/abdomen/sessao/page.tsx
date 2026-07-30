@@ -18,7 +18,7 @@ export default async function AbdomenSessaoPage() {
   const day = catalog.days.find((item) => item.day_of_week === weekday)
   if (!day || day.is_rest) redirect('/abdomen')
   const existingSession = state.sessions.find((session) => session.session_date === localDateISO()) ?? null
-  if (existingSession?.status === 'concluido') redirect('/abdomen')
+  if (existingSession?.status === 'concluido' || existingSession?.completion_kind === 'pulado') redirect('/abdomen')
   const week = adaptationWeek(state.preferences.adaptation_started_on, state.preferences.skip_adaptation)
   const exercises = buildExercisePlan(catalog.exercises.filter((exercise) => exercise.day_of_week === weekday), state.preferences, week)
   return <CoreSessionClient userId={user.id} day={day} exercises={exercises} adaptationWeek={week} existingSession={existingSession} keepScreenAwake={userPreferences.data?.keep_screen_awake ?? true} />

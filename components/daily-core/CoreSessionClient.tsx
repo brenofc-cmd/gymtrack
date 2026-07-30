@@ -5,7 +5,7 @@ import { ArrowLeft, Check, ChevronLeft, ChevronRight, CirclePause, CirclePlay, L
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
-import { evaluateProgression, localDateISO, resolveCoreExercise, type CoreExercisePlan } from '@/lib/daily-core/logic'
+import { coreSessionElapsedSeconds, evaluateProgression, localDateISO, resolveCoreExercise, type CoreExercisePlan } from '@/lib/daily-core/logic'
 import { CORE_SYNC_EVENT, flushCoreSyncQueue, persistCoreOperation, type CoreSyncState } from '@/lib/daily-core/syncQueue'
 import { coreTimerRemaining, useDailyCoreStore, type CoreLocalSet, type CoreTimer } from '@/lib/daily-core/store'
 import type { DailyCoreDayRow, DailyCoreExecutionQuality, DailyCorePainLevel, DailyCoreSessionRow } from '@/types/database'
@@ -43,6 +43,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
   const [quality, setQuality] = useState<DailyCoreExecutionQuality>('boa')
   const [pain, setPain] = useState<DailyCorePainLevel>('sem_dor')
   const [lumbarControlled, setLumbarControlled] = useState(true)
+  const [notes, setNotes] = useState('')
   const [editingSet, setEditingSet] = useState<CoreLocalSet | null>(null)
   const store = useDailyCoreStore()
   const exercise = exercises[store.currentExerciseIndex]
@@ -61,6 +62,10 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
       const session = {
         id: existingSession?.id ?? crypto.randomUUID(), userId, sessionDate: today, dayOfWeek: day.day_of_week,
         sessionType: day.session_type, adaptationWeek, startedAt: existingSession?.started_at ?? new Date().toISOString(),
+        location: day.location === 'academia' ? 'academia' as const : 'casa' as const,
+        routineVersion: existingSession?.routine_version ?? 2,
+        pausedAt: existingSession?.paused_at ?? null,
+        pausedSeconds: existingSession?.paused_seconds ?? 0,
       }
       sessionState.startSession(session)
       void persistCoreOperation(supabase, {
@@ -69,7 +74,9 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
         payload: {
           id: session.id, user_id: userId, day_of_week: day.day_of_week, session_date: today,
           session_type: day.session_type, status: 'em_andamento', adaptation_week: adaptationWeek,
-          started_at: session.startedAt, client_updated_at: session.startedAt,
+          location: session.location, routine_version: session.routineVersion,
+          started_at: session.startedAt, paused_at: session.pausedAt, paused_seconds: session.pausedSeconds,
+          client_updated_at: session.startedAt,
         },
       }).catch(() => toast.info('Sessão guardada no aparelho; sincronizaremos quando possível.'))
     }
@@ -87,7 +94,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
       window.removeEventListener('online', onOnline)
       window.removeEventListener('offline', onOnline)
     }
-  }, [adaptationWeek, day.day_of_week, day.session_type, existingSession, userId])
+  }, [adaptationWeek, day.day_of_week, day.location, day.session_type, existingSession, userId])
 
   function goToExercise(index: number) {
     const next = exercises[index]
@@ -100,6 +107,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
     setPain('sem_dor')
     setQuality('boa')
     setLumbarControlled(true)
+    setNotes('')
     setEditingSet(null)
     store.stopExecutionTimer()
   }
@@ -133,18 +141,19 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
     setQuality(prior.executionQuality ?? 'boa')
     setPain(prior.painLevel ?? 'sem_dor')
     setLumbarControlled(prior.lumbarControlled ?? true)
+    setNotes(prior.notes ?? '')
     store.selectVariation(targetExercise.id, prior.variationId)
     toast.info('Série anterior carregada para revisão.')
   }
 
-  const isStrong = exercise?.exercise_type === 'hipertrofia' || exercise?.exercise_type === 'anti_extensao'
+  const tracksRir = exercise?.rir_min != null
   const nextSetNumber = exerciseSets.length + 1
   const targetLabel = presentation?.measureType === 'tempo'
     ? `${presentation.targetSecondsMin}–${presentation.targetSecondsMax} s${presentation.perSide ? ' por lado' : ''}`
     : `${presentation?.targetRepsMin}–${presentation?.targetRepsMax}${presentation?.perSide ? ' por lado' : ''}`
 
   async function completeSet() {
-    if (!exercise || !presentation || !store.session || (!editingSet && nextSetNumber > exercise.effectiveSets)) return
+    if (!exercise || !presentation || !store.session || store.session.pausedAt || (!editingSet && nextSetNumber > exercise.effectiveSets)) return
     setSaving(true)
     const now = new Date().toISOString()
     const duration = presentation.measureType === 'tempo'
@@ -154,9 +163,10 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
       id: editingSet?.id ?? crypto.randomUUID(), exerciseId: exercise.id, variationId: selectedVariationId,
       setNumber: editingSet?.setNumber ?? nextSetNumber, reps: presentation.measureType === 'tempo' ? null : Math.max(0, Number(reps) || 0),
       durationSeconds: duration, weightKg: weight ? Math.max(0, Number(weight)) : null,
-      rir: isStrong ? Math.max(0, Number(rir) || 0) : null,
-      executionQuality: isStrong ? quality : null, painLevel: pain,
+      rir: tracksRir ? Math.max(0, Number(rir) || 0) : null,
+      executionQuality: tracksRir ? quality : null, painLevel: pain,
       lumbarControlled: exercise.slug === 'ab-wheel' || exercise.slug.includes('prancha') ? lumbarControlled : null,
+      notes: notes.trim() || null,
       completedAt: now,
     }
     store.logSet(localSet)
@@ -170,7 +180,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
         variation_id: localSet.variationId, set_number: localSet.setNumber, reps: localSet.reps,
         duration_seconds: localSet.durationSeconds, weight_kg: localSet.weightKg, rir: localSet.rir,
         execution_quality: localSet.executionQuality, pain_level: localSet.painLevel,
-        lumbar_controlled: localSet.lumbarControlled, completed_at: now, client_updated_at: now,
+        lumbar_controlled: localSet.lumbarControlled, notes: localSet.notes, completed_at: now, client_updated_at: now,
       },
     }).catch(() => undefined)
     if (pain === 'dor_moderada' || pain === 'dor_forte' || pain === 'dor_lombar') {
@@ -205,6 +215,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
         common_mistakes: presentation.commonMistakes,
         image_url: presentation.imageUrl,
         image_alt: presentation.imageAlt,
+        rir_min: exercise.effectiveRir,
       }, updatedSets.map((set) => ({
         reps: set.reps, duration_seconds: set.durationSeconds, weight_kg: set.weightKg, rir: set.rir,
         execution_quality: set.executionQuality, pain_level: set.painLevel, lumbar_controlled: set.lumbarControlled,
@@ -216,6 +227,10 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
           user_id: userId, exercise_id: exercise.id, current_variation_id: selectedVariationId,
           status: decision.status, reason: decision.reason, suggested_reps: decision.suggestedReps,
           suggested_seconds: decision.suggestedSeconds, suggested_weight_kg: decision.suggestedWeightKg,
+          suggested_variation_id: decision.status === 'progredir' && exercise.slug === 'core-v2-reverse-crunch'
+            ? [...exercise.variations].sort((a, b) => a.order_index - b.order_index)
+                .find((variation) => variation.order_index > (exercise.variations.find((item) => item.id === selectedVariationId)?.order_index ?? -1))?.id ?? null
+            : null,
         },
       }).catch(() => undefined)
       toast(decision.status === 'progredir' ? 'Progressão disponível' : 'Exercício concluído', { description: decision.reason })
@@ -226,20 +241,26 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
     setSaving(false)
   }
 
-  async function finish(completion: 'treino' | 'pausa_por_dor' | 'recuperacao_completa' = 'treino') {
+  async function finish(completion: 'treino' | 'pausa_por_dor' | 'pulado' = 'treino') {
     if (!store.session) return
     if (completion === 'treino' && progress < 100 && !window.confirm('Ainda há séries pendentes. Deseja encerrar mesmo assim?')) return
     setSaving(true)
     const now = new Date().toISOString()
-    const durationSeconds = Math.max(0, Math.round((Date.now() - new Date(store.session.startedAt).getTime()) / 1000))
+    const durationSeconds = coreSessionElapsedSeconds(
+      store.session.startedAt,
+      store.session.pausedAt,
+      store.session.pausedSeconds
+    )
     await persistCoreOperation(createClient(), {
       key: `session:${store.session.id}`,
       table: 'daily_core_sessions',
       payload: {
         id: store.session.id, user_id: userId, day_of_week: day.day_of_week, session_date: store.session.sessionDate,
-        session_type: day.session_type, status: completion === 'treino' || completion === 'recuperacao_completa' ? 'concluido' : 'interrompido',
+        session_type: day.session_type, status: completion === 'treino' ? 'concluido' : 'interrompido',
         completion_kind: completion, adaptation_week: adaptationWeek, started_at: store.session.startedAt,
-        finished_at: now, duration_seconds: durationSeconds, client_updated_at: now,
+        location: store.session.location, routine_version: store.session.routineVersion,
+        finished_at: now, duration_seconds: durationSeconds, paused_at: store.session.pausedAt,
+        paused_seconds: store.session.pausedSeconds, client_updated_at: now,
       },
     }).catch(() => undefined)
     store.reset()
@@ -255,8 +276,9 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
   return (
     <div className="mx-auto flex min-h-dvh w-full max-w-[520px] flex-col px-4 pb-6 pt-4">
       <header className="flex items-center gap-3">
-        <button type="button" onClick={() => void finish('pausa_por_dor')} aria-label="Interromper rotina" className="grid size-11 place-items-center rounded-xl border border-input bg-secondary"><ArrowLeft className="size-5" /></button>
-        <div className="min-w-0 flex-1"><p className="metric-label text-primary">Exercício {store.currentExerciseIndex + 1} de {exercises.length}</p><h1 className="truncate text-lg font-extrabold">{presentation.name}</h1></div>
+        <button type="button" onClick={() => { store.pauseSession(); router.push('/abdomen') }} aria-label="Pausar e voltar" className="grid size-11 place-items-center rounded-xl border border-input bg-secondary"><ArrowLeft className="size-5" /></button>
+        <div className="min-w-0 flex-1"><p className="metric-label text-primary">{day.location === 'academia' ? 'Academia' : 'Em casa'} · exercício {store.currentExerciseIndex + 1} de {exercises.length}</p><h1 className="truncate text-lg font-extrabold">{presentation.name}</h1></div>
+        <button type="button" onClick={store.session?.pausedAt ? store.resumeSession : store.pauseSession} aria-label={store.session?.pausedAt ? 'Retomar sessão' : 'Pausar sessão'} className="grid size-10 place-items-center rounded-xl border border-input bg-secondary">{store.session?.pausedAt ? <CirclePlay className="size-4" /> : <CirclePause className="size-4" />}</button>
         <div className={`flex items-center gap-1 text-[10px] ${syncState === 'offline' || pending ? 'text-[#ffb547]' : 'text-muted-foreground'}`}>{syncState === 'offline' ? <WifiOff className="size-3.5" /> : null}{pending ? `${pending} pendente${pending === 1 ? '' : 's'}` : 'Sincronizado'}</div>
       </header>
 
@@ -305,9 +327,9 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
         {presentation.measureType === 'tempo' ? (
           <TimerControls timer={store.executionTimer} label="Cronômetro de execução" onStart={() => store.startExecutionTimer(presentation.targetSecondsMin ?? 20)} onPause={store.pauseExecutionTimer} onResume={store.resumeExecutionTimer} onRestart={store.restartExecutionTimer} onAdd={() => store.addExecutionSeconds(10)} onStop={store.stopExecutionTimer} />
         ) : (
-          <div className={`surface-card grid gap-3 p-4 ${isStrong ? 'grid-cols-2' : 'grid-cols-1'}`}>
+          <div className={`surface-card grid gap-3 p-4 ${tracksRir ? 'grid-cols-2' : 'grid-cols-1'}`}>
             <Field label={presentation.measureType === 'respiracoes' ? 'Respirações' : 'Repetições'} value={reps} onChange={setReps} min={0} />
-            {isStrong && <Field label="Carga opcional (kg)" value={weight} onChange={setWeight} min={0} step="0.5" placeholder="—" inputMode="decimal" />}
+            {tracksRir && <Field label="Carga opcional (kg)" value={weight} onChange={setWeight} min={0} step="0.5" placeholder="—" inputMode="decimal" />}
           </div>
         )}
 
@@ -317,7 +339,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
             <span className={`rounded-full px-2 py-1 text-[10px] ${pain === 'sem_dor' ? 'bg-primary/10 text-primary' : 'bg-destructive/10 text-destructive'}`}>{quality === 'boa' ? 'Boa' : QUALITY_OPTIONS.find((item) => item.value === quality)?.label} · {pain === 'sem_dor' ? 'Sem dor' : PAIN_OPTIONS.find((item) => item.value === pain)?.label}</span>
           </summary>
           <div className="mt-4 space-y-3 border-t border-border pt-4">
-            {isStrong && (
+            {tracksRir && (
               <div className="grid grid-cols-2 gap-3">
                 <label className="block"><span className="metric-label">Qualidade</span><select value={quality} onChange={(event) => setQuality(event.target.value as DailyCoreExecutionQuality)} className="mt-1.5 h-11 w-full rounded-xl border border-input bg-secondary px-3 text-sm">{QUALITY_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
                 <Field label="RIR" value={rir} onChange={setRir} min={0} max={10} />
@@ -325,6 +347,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
             )}
             {(exercise.slug === 'ab-wheel' || exercise.slug.includes('prancha')) && <label className="flex items-center gap-3 rounded-xl bg-secondary/60 p-3 text-xs font-semibold"><input type="checkbox" checked={lumbarControlled} onChange={(event) => setLumbarControlled(event.target.checked)} className="size-4 accent-primary" /> Lombar controlada durante toda a série</label>}
             <label className="block"><span className="metric-label">Dor ou desconforto</span><select value={pain} onChange={(event) => setPain(event.target.value as DailyCorePainLevel)} className="mt-1.5 h-11 w-full rounded-xl border border-input bg-secondary px-3 text-sm">{PAIN_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}</select></label>
+            <label className="block"><span className="metric-label">Observação opcional</span><textarea value={notes} onChange={(event) => setNotes(event.target.value)} rows={2} className="mt-1.5 w-full rounded-xl border border-input bg-secondary p-3 text-sm" /></label>
             {(pain === 'dor_moderada' || pain === 'dor_forte' || pain === 'dor_lombar') && <p className="flex gap-2 text-[11px] leading-relaxed text-destructive"><ShieldAlert className="mt-0.5 size-3.5 shrink-0" />Interrompa o exercício. Procure um profissional se a dor for relevante, progressiva ou persistente.</p>}
           </div>
         </details>
@@ -333,7 +356,8 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
       </section>
 
       <div className="sticky bottom-0 mt-5 space-y-2 bg-background/95 pb-[env(safe-area-inset-bottom)] pt-3 backdrop-blur-xl">
-        <button type="button" onClick={completeSet} disabled={saving || (!editingSet && nextSetNumber > exercise.effectiveSets)} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50">{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} {editingSet ? 'Salvar correção' : 'Concluir série'}</button>
+        {store.session?.pausedAt && <p className="rounded-xl bg-[#ffb547]/10 p-2 text-center text-xs font-semibold text-[#ffb547]">Sessão pausada — retome para registrar séries.</p>}
+        <button type="button" onClick={completeSet} disabled={saving || Boolean(store.session?.pausedAt) || (!editingSet && nextSetNumber > exercise.effectiveSets)} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50">{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} {editingSet ? 'Salvar correção' : 'Concluir série'}</button>
         <div className="grid grid-cols-3 gap-2">
           <button type="button" onClick={previousSet} disabled={completedSets === 0} className="flex h-11 items-center justify-center gap-1 rounded-xl border border-input bg-secondary text-xs font-semibold disabled:opacity-40"><ChevronLeft className="size-4" /> Série anterior</button>
           <button type="button" onClick={() => void finish(pain === 'dor_moderada' || pain === 'dor_forte' || pain === 'dor_lombar' ? 'pausa_por_dor' : 'treino')} className="flex h-11 items-center justify-center gap-1 rounded-xl border border-input bg-secondary text-xs font-semibold"><Square className="size-3.5" /> Encerrar</button>
