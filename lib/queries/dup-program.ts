@@ -7,8 +7,8 @@ import type {
 
 type SupabaseDB = SupabaseClient<Database>
 
-export async function ensureActiveDavidLaidRoutineV5(supabase: SupabaseDB) {
-  const { data, error } = await supabase.rpc('ensure_active_david_laid_routine_v5')
+export async function ensureActiveAdaptedDupRoutineV6(supabase: SupabaseDB) {
+  const { data, error } = await supabase.rpc('ensure_active_powerbuilding_dup_adapted_v6')
   if (error) throw error
   return data
 }

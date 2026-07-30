@@ -904,6 +904,7 @@ export type Database = {
           id: string
           is_warmup: boolean
           is_deload: boolean
+          external_assistance: boolean | null
           notes: string | null
           pain_level: string | null
           performed_exercise_id: string | null
@@ -926,6 +927,7 @@ export type Database = {
           id?: string
           is_warmup?: boolean
           is_deload?: boolean
+          external_assistance?: boolean | null
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
@@ -948,6 +950,7 @@ export type Database = {
           id?: string
           is_warmup?: boolean
           is_deload?: boolean
+          external_assistance?: boolean | null
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
@@ -1476,7 +1479,15 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      ensure_active_powerbuilding_dup_adapted_v6: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       provision_david_laid_public_dup_v5: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      provision_powerbuilding_dup_adapted_v6: {
         Args: { p_user_id: string }
         Returns: Json
       }

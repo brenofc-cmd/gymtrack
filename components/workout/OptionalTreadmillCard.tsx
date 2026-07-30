@@ -41,7 +41,7 @@ export function OptionalTreadmillCard({
         </div>
       </div>
       <p className="border-t border-[#62dc91]/15 px-3 py-2 text-[10px] text-muted-foreground">
-        Não conta como exercício nem como série do DUP público.
+        Opcional e sempre por último. Pule se o tempo estiver acabando ou se prejudicar a recuperação.
       </p>
     </section>
   )

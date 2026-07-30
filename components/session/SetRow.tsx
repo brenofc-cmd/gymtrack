@@ -124,8 +124,12 @@ export function SetRow({
       setWeightInput(inputValue(next.weight))
       setRepsInput(inputValue(next.reps))
       setRirOpen(false)
-    } catch {
-      setError('Não foi possível guardar a série. Tente novamente.')
+    } catch (saveError) {
+      setError(
+        saveError instanceof Error
+          ? saveError.message
+          : 'Não foi possível guardar a série. Tente novamente.'
+      )
     } finally {
       setSaving(false)
     }

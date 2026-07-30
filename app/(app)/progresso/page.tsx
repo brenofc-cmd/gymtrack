@@ -63,7 +63,7 @@ export default async function ProgressoPage() {
       <section className="surface-card p-4">
         <div className="flex items-start justify-between gap-3">
           <div>
-            <p className="metric-label text-primary">DUP público · bloco de 9 semanas</p>
+            <p className="metric-label text-primary">Powerbuilding DUP Adaptado · bloco de 8 semanas</p>
             <h2 className="mt-1 text-sm font-bold">
               {activeBlock ? `Semana ${activeBlock.week_number} de ${activeBlock.total_weeks}` : 'Bloco ainda não iniciado'}
             </h2>

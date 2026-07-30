@@ -121,6 +121,7 @@ export function SessionClient({
         set_role: normalizeSetRole(log.set_role),
         attempt_result: (log.attempt_result as LocalSetLog['attempt_result']) ?? null,
         is_deload: log.is_deload,
+        external_assistance: log.external_assistance,
         completed_at: log.completed_at ?? session.started_at,
       }
       serverSets[exerciseId] = [...(serverSets[exerciseId] ?? []), local]
@@ -128,6 +129,7 @@ export function SessionClient({
         executionQuality: log.execution_quality as ExerciseFeedback['executionQuality'],
         painLevel: log.pain_level as ExerciseFeedback['painLevel'],
         romQuality: log.rom_quality as ExerciseFeedback['romQuality'],
+        externalAssistance: log.external_assistance,
         notes: log.notes ?? '',
       }
       serverVariation[exerciseId] = log.performed_exercise_id

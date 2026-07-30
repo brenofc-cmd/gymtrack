@@ -74,7 +74,7 @@ const activeRow = {
   started_at: '2026-07-29T12:00:00Z',
   finished_at: null,
   cancelled_at: null,
-  workout: { name: 'Push A', is_archived: false, routine_version: 5 },
+  workout: { name: 'Push A', is_archived: false, routine_version: 6 },
 }
 
 // ---------------------------------------------------------------------------
@@ -167,10 +167,10 @@ describe('startOrResumeSession — sessão única', () => {
     const { client, chains } = mockSupabase([
       { data: archivedActive, error: null },
       { data: null, error: null },
-      { data: { id: 'sessao-v5' }, error: null },
+      { data: { id: 'sessao-v6' }, error: null },
     ])
-    const result = await startOrResumeSession(client, 'u1', 'treino-v5')
-    expect(result).toEqual({ kind: 'started', sessionId: 'sessao-v5' })
+    const result = await startOrResumeSession(client, 'u1', 'treino-v6')
+    expect(result).toEqual({ kind: 'started', sessionId: 'sessao-v6' })
     expect(chains[1].calls.map(([method]) => method)).toContain('update')
     expect(chains[2].calls.map(([method]) => method)).toContain('insert')
   })

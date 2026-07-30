@@ -4,6 +4,16 @@
 
 As fotos desta pasta vêm do projeto público [Free Exercise DB](https://github.com/yuhonas/free-exercise-db), disponibilizado sob a licença [Unlicense](https://github.com/yuhonas/free-exercise-db/blob/main/LICENSE). Cada movimento possui duas imagens: posição inicial (`Nome.jpg`) e posição final (`Nome_2.jpg`).
 
+Exceções originais do GymTrack, geradas especificamente para representar a
+variação prescrita com segurança:
+
+- `Seated_Hammer_Curl.jpg` e `_2.jpg`;
+- `Stiff_Leg_Deadlift_Low_Deficit.jpg` e `_2.jpg`;
+- `Reverse_Grip_Bent-Over_Rows.jpg` e `_2.jpg`.
+
+As imagens `Stomach_Vacuum` e `Reverse_Crunch` continuam provenientes do Free
+Exercise DB sob Unlicense.
+
 O comando `npm run sync:exercise-images` baixa novamente os pares usados pelo catálogo do GymTrack.
 
 ## Vídeos reais

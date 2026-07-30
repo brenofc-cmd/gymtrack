@@ -22,6 +22,11 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
         <p className="metric-label text-primary">Visão geral</p>
         <h1 className="mt-1 text-xl font-extrabold">Exercícios do treino</h1>
         <p className="mt-1 text-xs text-muted-foreground">Toque em um exercício para executar suas séries. O switch é marcado ao concluir todas elas.</p>
+        <p className="mt-2 rounded-xl bg-secondary/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
+          Se o tempo estiver acabando: exercício principal → compostos secundários →
+          acessórios → isoladores → cardio. Nunca encurte automaticamente o descanso
+          do agachamento, supino ou levantamento terra.
+        </p>
       </div>
 
       <ol className="space-y-2.5">
@@ -55,6 +60,9 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
                   <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><Dumbbell className="size-3" />{completed}/{item.target_sets} séries</span>
                     <span className="inline-flex items-center gap-1"><Clock className="size-3" />{item.rest_seconds}s descanso</span>
+                    {item.superset_group != null && (
+                      <span className="font-semibold text-primary">Superset {item.superset_group}</span>
+                    )}
                   </span>
                   <span className="mt-1 block text-[10px] font-semibold text-primary">{skipped ? 'Pulado' : done ? 'Concluído' : 'Toque para começar'}</span>
                 </span>

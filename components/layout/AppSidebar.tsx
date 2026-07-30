@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
+import { ROUTINE_NAME } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import {
   ChevronRight,
   HeartPulse,
@@ -83,7 +83,7 @@ export function AppSidebar() {
       </nav>
 
       <div className="mt-auto rounded-xl border border-sidebar-border bg-sidebar-accent/50 p-3">
-        <p className="text-xs font-semibold">Rotina Powerbuilding v{ROUTINE_VERSION}</p>
+        <p className="text-xs font-semibold">{ROUTINE_NAME}</p>
         <p className="mt-1 text-[11px] text-muted-foreground">6 dias · progressão por RIR</p>
       </div>
     </aside>
