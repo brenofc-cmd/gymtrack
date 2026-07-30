@@ -1,4 +1,4 @@
-import { TRAINING_FOCUS_LABEL, type TrainingFocus } from '@/lib/routine/david-laid-public-dup-v5'
+import { TRAINING_FOCUS_LABEL, type TrainingFocus } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import { cn } from '@/lib/utils'
 
 /**

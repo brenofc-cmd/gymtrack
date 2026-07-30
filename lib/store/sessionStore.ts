@@ -14,6 +14,7 @@ export interface LocalSetLog {
   set_role?: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
   attempt_result?: AttemptResult | null
   is_deload?: boolean
+  external_assistance?: boolean | null
   completed_at: string
 }
 
@@ -21,6 +22,7 @@ export interface ExerciseFeedback {
   executionQuality: ExecutionQuality | null
   painLevel: PainLevel | null
   romQuality: RomQuality | null
+  externalAssistance?: boolean | null
   notes: string
 }
 
@@ -125,6 +127,7 @@ const EMPTY_FEEDBACK: ExerciseFeedback = {
   executionQuality: null,
   painLevel: null,
   romQuality: null,
+  externalAssistance: null,
   notes: '',
 }
 

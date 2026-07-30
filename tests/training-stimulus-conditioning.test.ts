@@ -34,7 +34,7 @@ describe('classificação de estímulo por prescrição', () => {
 describe('esteira opcional', () => {
   it('aparece somente nos dois dias com menos entradas de musculação', () => {
     expect(Object.keys(OPTIONAL_TREADMILL_FINISHERS)).toEqual(['A', 'D'])
-    expect(OPTIONAL_TREADMILL_FINISHERS.A?.minutes).toBe('10–15 min')
+    expect(OPTIONAL_TREADMILL_FINISHERS.A?.minutes).toBe('10 min')
     expect(OPTIONAL_TREADMILL_FINISHERS.D?.intensity).toContain('RPE 3–4')
   })
 })

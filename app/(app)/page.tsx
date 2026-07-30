@@ -25,7 +25,7 @@ import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
 import { DeloadCard } from '@/components/dashboard/DeloadCard'
 import { SkipWorkoutButton } from '@/components/dashboard/SkipWorkoutButton'
-import { ensureActiveDavidLaidRoutineV5, getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
+import { ensureActiveAdaptedDupRoutineV6, getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
 
 function formatDate(): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -59,7 +59,7 @@ export default async function DashboardPage() {
     .eq('id', user.id)
     .maybeSingle()
   if (onboarding?.onboarding_done) {
-    await ensureActiveDavidLaidRoutineV5(supabase)
+    await ensureActiveAdaptedDupRoutineV6(supabase)
   }
 
   // Falha de banco NÃO vira fallback silencioso para o treino A: o sentinel

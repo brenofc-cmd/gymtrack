@@ -19,6 +19,7 @@ export type SetLogPayload = {
   set_role: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
   attempt_result?: AttemptResult | null
   is_deload?: boolean
+  external_assistance?: boolean | null
   execution_quality: 'boa' | 'aceitavel' | 'ruim' | null
   pain_level: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
   rom_quality: 'completa' | 'adequada' | 'reduzida' | null
@@ -34,6 +35,7 @@ export type FeedbackPayload = {
   execution_quality: 'boa' | 'aceitavel' | 'ruim' | null
   pain_level: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
   rom_quality: 'completa' | 'adequada' | 'reduzida' | null
+  external_assistance?: boolean | null
   notes: string
 }
 
@@ -104,6 +106,7 @@ async function send(supabase: SupabaseDB, payload: SetLogPayload) {
     execution_quality: payload.execution_quality,
     pain_level: payload.pain_level,
     rom_quality: payload.rom_quality,
+    external_assistance: payload.external_assistance,
     performed_exercise_id: payload.performed_exercise_id,
     completed_at: payload.completed_at,
   })

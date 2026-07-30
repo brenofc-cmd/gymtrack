@@ -37,9 +37,9 @@ describe('motor DUP GymTrack', () => {
     expect(accessoryProgression([{ ...valid[0], pain: true }], 3, 8, 10)).toBe('stop')
   })
 
-  it('calcula unilateral sem duplicação silenciosa e encerra a semana 9', () => {
+  it('calcula unilateral sem duplicação silenciosa e encerra a semana 8', () => {
     expect(unilateralVolume(20, 10, 3)).toBe(1200)
-    expect(nextBlockWeek(8, true)).toEqual({ week: 9, completed: false })
-    expect(nextBlockWeek(9, true)).toEqual({ week: 9, completed: true })
+    expect(nextBlockWeek(7, true)).toEqual({ week: 8, completed: false })
+    expect(nextBlockWeek(8, true)).toEqual({ week: 8, completed: true })
   })
 })

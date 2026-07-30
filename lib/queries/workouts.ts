@@ -6,7 +6,7 @@ import type {
   WorkoutWithExercises,
   WorkoutExerciseWithExercise,
 } from '@/types/database'
-import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
+import { ROUTINE_VERSION } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import { nextRotatingWorkout } from '@/lib/training/schedule'
 
 type SupabaseDB = SupabaseClient<Database>

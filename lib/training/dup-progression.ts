@@ -1,6 +1,5 @@
 /**
- * Camada de progressão individual do GymTrack aplicada à rotina pública.
- * Estes cálculos não são percentuais oficiais de David Laid.
+ * Camada de progressão individual do Powerbuilding DUP Adaptado.
  */
 export const GYMTRACK_DUP_POLICY_LABEL = 'Progressão individual calculada pelo GymTrack.'
 
@@ -67,6 +66,9 @@ export interface LoadRecommendationInput {
   pain?: boolean
   executionQuality?: 'boa' | 'aceitavel' | 'ruim' | null
   prescriptionType: 'fixed_reps' | 'rep_range' | 'rep_max_effort'
+  progressionAllowed?: boolean
+  requiredValidExposures?: number
+  validExposureStreak?: number
 }
 
 export interface LoadRecommendation {
@@ -82,6 +84,14 @@ export function recommendGymTrackLoad(input: LoadRecommendationInput): LoadRecom
   }
   if (input.trainingMax == null && input.previousWeightKg == null) {
     return { suggestedKg: null, action: 'insufficient_data', requiresManualConfirmation: true, reason: 'Sem histórico ou máxima de referência; escolha a carga manualmente.' }
+  }
+  if (input.progressionAllowed === false) {
+    return {
+      suggestedKg: input.previousWeightKg,
+      action: 'maintain',
+      requiresManualConfirmation: false,
+      reason: 'Nesta fase do bloco a carga é mantida para priorizar técnica, consolidação ou deload.',
+    }
   }
 
   const targetRir = input.targetRir ?? GYMTRACK_DUP_PROGRESSION_POLICY.defaultTargetRir
@@ -101,6 +111,16 @@ export function recommendGymTrackLoad(input: LoadRecommendationInput): LoadRecom
     action = 'reduce'
     reason = 'Falhas recentes, técnica ou recuperação indicam redução conservadora.'
   } else if (input.previousAttempt === 'personal_record' || input.previousAttempt === 'completed') {
+    const required = Math.max(1, input.requiredValidExposures ?? 1)
+    const streak = input.validExposureStreak ?? required
+    if (streak < required) {
+      return {
+        suggestedKg: roundToIncrement(input.previousWeightKg ?? suggested, input.incrementKg),
+        action: 'maintain',
+        requiresManualConfirmation: false,
+        reason: `${streak}/${required} exposições válidas na mesma posição, carga e variação. Repita antes de aumentar.`,
+      }
+    }
     const next = (input.previousWeightKg ?? suggested) + input.incrementKg
     if (input.prescriptionType !== 'rep_max_effort') {
       suggested = Math.max(suggested, next)
@@ -119,6 +139,102 @@ export function recommendGymTrackLoad(input: LoadRecommendationInput): LoadRecom
     requiresManualConfirmation: input.prescriptionType === 'rep_max_effort',
     reason,
   }
+}
+
+export interface PrescriptionExposureSet {
+  setNumber: number
+  weightKg: number | null
+  reps: number
+  rir: number | null
+  executionQuality: 'boa' | 'aceitavel' | 'ruim' | null
+  painLevel: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+  romQuality: 'completa' | 'adequada' | 'reduzida' | null
+  externalAssistance: boolean | null
+  attemptResult: AttemptResult | null
+  performedExerciseId: string | null
+}
+
+export interface PrescriptionExposure {
+  sessionId: string
+  finishedAt: string
+  weekNumber: number
+  isDeload: boolean
+  sets: PrescriptionExposureSet[]
+}
+
+export interface ExposurePrescription {
+  targetSets: number
+  targetReps: number
+  rirMin: number
+  rirMax: number
+  plannedExerciseId: string
+}
+
+export function isValidPrescriptionExposure(
+  exposure: PrescriptionExposure,
+  prescription: ExposurePrescription
+) {
+  const workSets = exposure.sets
+    .filter((set) => set.setNumber > 0)
+    .sort((a, b) => a.setNumber - b.setNumber)
+  if (exposure.isDeload || workSets.length < prescription.targetSets) return false
+  const required = workSets.slice(0, prescription.targetSets)
+  const setNumbers = new Set(required.map((set) => set.setNumber))
+  if (setNumbers.size !== prescription.targetSets) return false
+
+  const firstWeight = required[0]?.weightKg
+  const firstVariation = required[0]?.performedExerciseId ?? prescription.plannedExerciseId
+  return required.every((set) =>
+    set.weightKg === firstWeight &&
+    (set.performedExerciseId ?? prescription.plannedExerciseId) === firstVariation &&
+    set.reps >= prescription.targetReps &&
+    set.rir != null &&
+    set.rir >= prescription.rirMin &&
+    set.rir <= prescription.rirMax &&
+    (set.executionQuality === 'boa' || set.executionQuality === 'aceitavel') &&
+    set.romQuality !== null &&
+    set.romQuality !== 'reduzida' &&
+    set.painLevel === 'nenhuma' &&
+    set.externalAssistance === false &&
+    set.attemptResult !== 'technical_failure' &&
+    set.attemptResult !== 'strength_failure' &&
+    set.attemptResult !== 'skipped' &&
+    set.attemptResult !== 'pain'
+  )
+}
+
+/**
+ * Conta exposições da mais recente para a mais antiga. Uma sessão sem séries
+ * não aparece nesta lista e, portanto, não conta nem apaga o sucesso anterior.
+ * Uma exposição inválida zera a sequência; mudar carga ou variação inicia uma
+ * nova sequência válida com contagem 1.
+ */
+export function consecutiveValidPrescriptionExposures(
+  exposures: PrescriptionExposure[],
+  prescriptionForWeek: (week: number) => ExposurePrescription
+) {
+  let streak = 0
+  let referenceWeight: number | null | undefined
+  let referenceVariation: string | undefined
+
+  for (const exposure of [...exposures].sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))) {
+    const prescription = prescriptionForWeek(exposure.weekNumber)
+    if (exposure.isDeload) continue
+    if (!isValidPrescriptionExposure(exposure, prescription)) {
+      if (streak === 0) return 0
+      break
+    }
+
+    const first = exposure.sets[0]
+    const weight = first?.weightKg
+    const variation = first?.performedExerciseId ?? prescription.plannedExerciseId
+    if (streak > 0 && (weight !== referenceWeight || variation !== referenceVariation)) break
+    referenceWeight = weight
+    referenceVariation = variation
+    streak += 1
+    if (streak === 2) break
+  }
+  return streak
 }
 
 export interface AccessorySetResult {
@@ -150,6 +266,6 @@ export function unilateralVolume(weightKg: number, repsPerSide: number, sets: nu
 
 export function nextBlockWeek(currentWeek: number, completedSixSessions: boolean) {
   if (!completedSixSessions) return { week: currentWeek, completed: false }
-  if (currentWeek >= 9) return { week: 9, completed: true }
+  if (currentWeek >= 8) return { week: 8, completed: true }
   return { week: currentWeek + 1, completed: false }
 }

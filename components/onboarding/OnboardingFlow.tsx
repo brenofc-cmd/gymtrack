@@ -87,7 +87,7 @@ export function OnboardingFlow({ userId, initial }: OnboardingFlowProps) {
       })
       if (preferenceResult.error) throw preferenceResult.error
 
-      const provision = await supabase.rpc('ensure_active_david_laid_routine_v5')
+      const provision = await supabase.rpc('ensure_active_powerbuilding_dup_adapted_v6')
       if (provision.error) throw provision.error
 
       const { data: catalog, error: catalogError } = await supabase

@@ -4,6 +4,11 @@ import type { Database, ExecutionQuality, PainLevel } from '@/types/database'
 import { estimated1RM, isValidPRSet, type RomQuality, type StrengthSet } from '@/lib/training/strength'
 import type { TrendSessionPoint, TrendWindow } from '@/lib/progression/trend'
 import { localDateISO } from '@/lib/utils/local-date'
+import {
+  consecutiveValidPrescriptionExposures,
+  type PrescriptionExposure,
+} from '@/lib/training/dup-progression'
+import { effectiveTargetsForProgramWeek } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -152,6 +157,102 @@ export async function getLastSessionSets(
       completed_at: l.completed_at,
     }))
     .sort((a, b) => a.set_number - b.set_number)
+}
+
+/**
+ * Histórico estrito da posição da ficha. Diferente do histórico geral por
+ * exercício, agachamento A 4×5 e agachamento D 4×8 nunca se misturam.
+ */
+export async function getPrescriptionExposureStreak(
+  supabase: SupabaseDB,
+  userId: string,
+  workoutExercise: {
+    id: string
+    exercise_id: string
+    target_sets: number
+    target_reps_min: number
+    rir_min: number | null
+    rir_max: number | null
+    exercise: { exercise_type: string | null }
+  }
+) {
+  const { data: logs, error } = await supabase
+    .from('set_logs')
+    .select(
+      'session_id,set_number,weight_kg,reps,rir,is_warmup,is_deload,execution_quality,pain_level,rom_quality,external_assistance,attempt_result,performed_exercise_id,session:workout_sessions!inner(user_id,finished_at,cancelled_at,block_week_number)'
+    )
+    .eq('workout_exercise_id', workoutExercise.id)
+    .eq('is_warmup', false)
+    .eq('session.user_id', userId)
+    .not('session.finished_at', 'is', null)
+    .is('session.cancelled_at', null)
+    .order('completed_at', { ascending: false })
+    .limit(80)
+  if (error) throw error
+
+  type ExposureLog = {
+    session_id: string
+    set_number: number
+    weight_kg: number | null
+    reps: number
+    rir: number | null
+    is_deload: boolean
+    execution_quality: 'boa' | 'aceitavel' | 'ruim' | null
+    pain_level: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
+    rom_quality: 'completa' | 'adequada' | 'reduzida' | null
+    external_assistance: boolean | null
+    attempt_result: import('@/lib/training/dup-progression').AttemptResult | null
+    performed_exercise_id: string | null
+    session: {
+      finished_at: string
+      block_week_number: number | null
+    }
+  }
+
+  const bySession = new Map<string, PrescriptionExposure>()
+  for (const log of (logs ?? []) as unknown as ExposureLog[]) {
+    const existing = bySession.get(log.session_id) ?? {
+      sessionId: log.session_id,
+      finishedAt: log.session.finished_at,
+      weekNumber: log.session.block_week_number ?? 1,
+      isDeload: log.is_deload,
+      sets: [],
+    }
+    existing.sets.push({
+      setNumber: log.set_number,
+      weightKg: log.weight_kg,
+      reps: log.reps,
+      rir: log.rir,
+      executionQuality: log.execution_quality,
+      painLevel: log.pain_level,
+      romQuality: log.rom_quality,
+      externalAssistance: log.external_assistance,
+      attemptResult: log.attempt_result,
+      performedExerciseId: log.performed_exercise_id,
+    })
+    bySession.set(log.session_id, existing)
+  }
+
+  const exposures = Array.from(bySession.values())
+  const streak = consecutiveValidPrescriptionExposures(exposures, (week) => {
+    const effective = effectiveTargetsForProgramWeek(
+      workoutExercise,
+      workoutExercise.exercise.exercise_type,
+      week
+    )
+    return {
+      targetSets: effective.target_sets,
+      targetReps: workoutExercise.target_reps_min,
+      rirMin: effective.rir_min ?? 1,
+      rirMax: effective.rir_max ?? 2,
+      plannedExerciseId: workoutExercise.exercise_id,
+    }
+  })
+  const latest = exposures.sort((a, b) => b.finishedAt.localeCompare(a.finishedAt))[0]
+  return {
+    streak,
+    weightKg: latest?.sets[0]?.weightKg ?? null,
+  }
 }
 
 export async function getExercisePR(

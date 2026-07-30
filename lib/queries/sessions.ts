@@ -9,7 +9,7 @@ import type {
 } from '@/types/database'
 import type { AttemptResult } from '@/lib/training/dup-progression'
 import { estimateOneRepMax } from '@/lib/training/dup-progression'
-import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
+import { ROUTINE_VERSION } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -27,6 +27,7 @@ export async function saveSetLog(
     set_role?: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
     attempt_result?: AttemptResult | null
     is_deload?: boolean
+    external_assistance?: boolean | null
     execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
     pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
     rom_quality?: 'completa' | 'adequada' | 'reduzida' | null
@@ -50,6 +51,7 @@ export async function saveSetLog(
       ? null
       : estimateOneRepMax(log.weight_kg, log.reps),
     is_deload: log.is_deload ?? false,
+    external_assistance: log.external_assistance ?? null,
     execution_quality: log.execution_quality ?? null,
     pain_level: log.pain_level ?? null,
     rom_quality: log.rom_quality ?? null,
@@ -74,6 +76,7 @@ export async function saveExerciseFeedback(
     execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
     pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
     rom_quality?: 'completa' | 'adequada' | 'reduzida' | null
+    external_assistance?: boolean | null
     notes?: string | null
   }
 ): Promise<void> {
@@ -83,6 +86,7 @@ export async function saveExerciseFeedback(
       execution_quality: feedback.execution_quality ?? null,
       pain_level: feedback.pain_level ?? null,
       rom_quality: feedback.rom_quality ?? null,
+      external_assistance: feedback.external_assistance ?? null,
       notes: feedback.notes || null,
     })
     .eq('session_id', sessionId)

@@ -2,8 +2,10 @@ import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
-import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
-import { prescriptionLabel } from '@/lib/routine/david-laid-public-dup-v5'
+import {
+  MOVEMENT_PATTERN_LABEL,
+  prescriptionLabel,
+} from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
@@ -68,6 +70,11 @@ export function ExerciseListItem({
               {workoutExercise.rir_min === workoutExercise.rir_max
                 ? workoutExercise.rir_min
                 : `${workoutExercise.rir_min}–${workoutExercise.rir_max}`}
+            </span>
+          )}
+          {workoutExercise.superset_group != null && (
+            <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
+              Superset {workoutExercise.superset_group}
             </span>
           )}
           <span className="flex items-center gap-1 text-xs text-muted-foreground">

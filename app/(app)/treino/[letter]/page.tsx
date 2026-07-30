@@ -8,7 +8,11 @@ import { getActiveSession } from '@/lib/queries/sessions'
 import { ExerciseListItem } from '@/components/workout/ExerciseListItem'
 import { StartWorkoutButton } from '@/components/workout/StartWorkoutButton'
 import { WorkoutNotes } from '@/components/workout/WorkoutNotes'
-import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
+import {
+  DIA_LABEL,
+  effectiveTargetsForProgramWeek,
+} from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { getActiveDupBlock } from '@/lib/queries/dup-program'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
 import { exerciseDetailHref } from '@/lib/navigation/exercise-detail'
@@ -33,14 +37,26 @@ export default async function TreinoPage(props: {
   if (!user) redirect('/login')
 
 
-  const [workout, activeSession] = await Promise.all([
+  const [workout, activeSession, activeBlock] = await Promise.all([
     getWorkoutWithExercises(supabase, user.id, letter.toUpperCase() as WorkoutLetter).catch(
       () => null
     ),
     getActiveSession(supabase, user.id).catch(() => null),
+    getActiveDupBlock(supabase, user.id).catch(() => null),
   ])
 
   if (!workout) notFound()
+
+  if (activeBlock?.routine_version === workout.routine_version) {
+    workout.workout_exercises = workout.workout_exercises.map((item) => ({
+      ...item,
+      ...effectiveTargetsForProgramWeek(
+        item,
+        item.exercise.exercise_type,
+        activeBlock.week_number
+      ),
+    }))
+  }
 
   // Últimos logs por exercício (continuidade via exercício de catálogo)
   const lastLogs = await Promise.all(
@@ -96,7 +112,10 @@ export default async function TreinoPage(props: {
           {workout.objective && (
             <p className="mt-2 text-sm text-muted-foreground">{workout.objective}</p>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">Divisão DUP pública associada a David Laid, conforme publicada pela Gymshark.</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Powerbuilding DUP Adaptado — 8 semanas. Inspirado em powerbuilding,
+            sem testes máximos e ajustado para recuperação e técnica.
+          </p>
         </div>
 
         {/* Notas */}

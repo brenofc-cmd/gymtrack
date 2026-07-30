@@ -39,7 +39,9 @@ const VIDEO_RULES: VideoRule[] = [
   wgerVideo(194, 'wger-194-dips.m4v', ['paralelas']),
   wgerVideo(95, 'wger-95-cable-curl.m4v', ['rosca direta no cabo']),
   wgerVideo(211, 'wger-211-dumbbell-triceps-extension.m4v', ['extensao de triceps com halter']),
-  wgerVideo(272, 'wger-272-hammer-curl.m4v', ['rosca martelo']),
+  // Não associar o vídeo em pé à variação sentada: a imagem local é a
+  // demonstração canônica até existir vídeo sentado licenciado.
+  wgerVideo(272, 'wger-272-hammer-curl.m4v', ['rosca martelo em pe']),
   wgerVideo(246, 'wger-246-skull-crusher.m4v', ['triceps testa', 'skull crusher']),
   wgerVideo(365, 'wger-365-lying-leg-curl.m4v', ['cadeira flexora leg curl', 'flexora deitada', 'mesa flexora']),
   wgerVideo(366, 'wger-366-seated-leg-curl.m4v', ['flexora sentada']),
@@ -69,7 +71,7 @@ const VIDEO_RULES: VideoRule[] = [
     'stiff terra romeno',
   ]),
   wgerVideo(537, 'wger-537-incline-dumbbell-bench-press.m4v', ['supino inclinado com halteres']),
-  wgerVideo(659, 'wger-659-cable-triceps-extension.m4v', ['triceps na corda', 'triceps pulldown']),
+  wgerVideo(659, 'wger-659-cable-triceps-extension.m4v', ['triceps na corda', 'triceps pulldown', 'triceps na polia']),
 ]
 
 export function normalizeExerciseName(value: string) {
@@ -110,5 +112,12 @@ export function getExerciseVideo(name: string): ExerciseVideoSource | null {
 }
 
 export function getExerciseVideoCatalog(): ExerciseVideoSource[] {
-  return VIDEO_RULES.map(({ names: _names, ...source }) => ({ ...source }))
+  return VIDEO_RULES.map((source) => ({
+    url: source.url,
+    author: source.author,
+    provider: source.provider,
+    sourceUrl: source.sourceUrl,
+    license: source.license,
+    licenseUrl: source.licenseUrl,
+  }))
 }

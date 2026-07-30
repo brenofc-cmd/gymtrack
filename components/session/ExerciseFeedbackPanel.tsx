@@ -43,6 +43,7 @@ export function ExerciseFeedbackPanel({
     executionQuality: null,
     painLevel: null,
     romQuality: null,
+    externalAssistance: null,
     notes: '',
   }
   const [savingNotes, setSavingNotes] = useState(false)
@@ -53,6 +54,7 @@ export function ExerciseFeedbackPanel({
     executionQuality?: ExecutionQuality | null
     painLevel?: PainLevel | null
     romQuality?: RomQuality | null
+    externalAssistance?: boolean | null
     notes?: string
   }) {
     const supabase = createClient()
@@ -62,6 +64,7 @@ export function ExerciseFeedbackPanel({
         execution_quality: next.executionQuality ?? fb.executionQuality,
         pain_level: next.painLevel ?? fb.painLevel,
         rom_quality: next.romQuality ?? fb.romQuality,
+        external_assistance: next.externalAssistance ?? fb.externalAssistance,
         notes: next.notes ?? fb.notes,
       })
   }
@@ -116,6 +119,39 @@ export function ExerciseFeedbackPanel({
                 'min-h-11 rounded-lg border px-3 text-xs font-medium transition-colors',
                 fb.romQuality === option.value
                   ? option.value === 'reduzida' ? 'border-amber-500/40 bg-amber-500/15 text-amber-500' : 'border-primary/40 bg-primary/15 text-primary'
+                  : 'border-border text-muted-foreground hover:border-primary/40'
+              )}
+            >
+              {option.label}
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-2">
+        <span className="w-16 shrink-0 text-[10px] uppercase tracking-wide text-muted-foreground">
+          Ajuda
+        </span>
+        <div className="flex gap-1">
+          {[
+            { value: false, label: 'Sem ajuda' },
+            { value: true, label: 'Com ajuda' },
+          ].map((option) => (
+            <button
+              key={String(option.value)}
+              type="button"
+              onClick={() => {
+                const value = fb.externalAssistance === option.value ? null : option.value
+                setFeedback(workoutExerciseId, { externalAssistance: value })
+                void persist({ externalAssistance: value })
+              }}
+              aria-pressed={fb.externalAssistance === option.value}
+              className={cn(
+                'min-h-11 rounded-lg border px-3 text-xs font-medium transition-colors',
+                fb.externalAssistance === option.value
+                  ? option.value
+                    ? 'border-amber-500/40 bg-amber-500/15 text-amber-500'
+                    : 'border-primary/40 bg-primary/15 text-primary'
                   : 'border-border text-muted-foreground hover:border-primary/40'
               )}
             >

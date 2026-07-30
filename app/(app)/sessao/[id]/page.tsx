@@ -6,6 +6,7 @@ import {
   getLastSessionSets,
   getExercisePR,
   getExerciseProgressHistory,
+  getPrescriptionExposureStreak,
 } from '@/lib/queries/exercises'
 import { suggestForExercise } from '@/lib/progression/progression'
 import { getLoadInputConfig } from '@/lib/training/load-input'
@@ -14,7 +15,11 @@ import type { ExecutionQuality, PainLevel } from '@/types/database'
 import { adjustProgressionForReadiness, type ReadinessStatus } from '@/lib/training/readiness'
 import { adjustTargetsForPhase, normalizeTrainingPhase, phaseAllowsTopSets } from '@/lib/training/phase'
 import { localDateISO } from '@/lib/utils/local-date'
-import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
+import {
+  ROUTINE_VERSION,
+  effectiveTargetsForProgramWeek,
+  progressionAllowedForProgramWeek,
+} from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import { getReferenceMaxes } from '@/lib/queries/dup-program'
 import {
   recommendGymTrackLoad,
@@ -70,22 +75,29 @@ export default async function SessaoPage(props: {
   ])
 
   const trainingPhase = normalizeTrainingPhase(profileRow.data?.training_phase)
-  const usesLockedPublicDup = workoutData.routine_version === ROUTINE_VERSION
+  const usesAdaptedDup = workoutData.routine_version === ROUTINE_VERSION
+  const programWeek = sessionData.block_week_number ?? 1
   const hasTopSetExercises = workoutData.workout_exercises.some((we) => we.top_set_enabled)
   const rirRaisedByPhase = workoutData.workout_exercises.some(
     (we) => adjustTargetsForPhase(we, trainingPhase, we.exercise.exercise_type).rir_min !== we.rir_min
   )
-  // Prescrição efetiva: em 'fundamentals' o top set vira série reta e o RIR
-  // ganha piso mais alto. A prescrição pública v5 e o banco não são alterados.
+  // A v6 aplica RIR por fase e reduz aproximadamente 40% das séries na
+  // semana 8 sem reescrever a prescrição-base nem o histórico.
+  const baseWorkoutExercises = [...workoutData.workout_exercises]
   workoutData.workout_exercises = workoutData.workout_exercises.map((we) => {
-    if (usesLockedPublicDup) return we
+    if (usesAdaptedDup) {
+      return {
+        ...we,
+        ...effectiveTargetsForProgramWeek(we, we.exercise.exercise_type, programWeek),
+      }
+    }
     const adjusted = adjustTargetsForPhase(we, trainingPhase, we.exercise.exercise_type)
     return phaseAllowsTopSets(trainingPhase) || !adjusted.top_set_enabled
       ? adjusted
       : { ...adjusted, top_set_enabled: false }
   })
 
-  const [previousResults, prWeights, exerciseHistories, readiness, referenceMaxes, deloadContext] = await Promise.all([
+  const [previousResults, prWeights, exerciseHistories, exposureStreaks, readiness, referenceMaxes, deloadContext] = await Promise.all([
     Promise.all(
       // `we` aqui já é o exercício com os alvos EFETIVOS da fase.
       workoutData.workout_exercises.map(async (we) => {
@@ -132,6 +144,13 @@ export default async function SessaoPage(props: {
         getExerciseProgressHistory(supabase, we.exercise_id, user.id, 8)
       )
     ),
+    usesAdaptedDup
+      ? Promise.all(
+          baseWorkoutExercises.map((we) =>
+            getPrescriptionExposureStreak(supabase, user.id, we)
+          )
+        )
+      : Promise.resolve(workoutData.workout_exercises.map(() => ({ streak: 0, weightKg: null }))),
     supabase
       .from('daily_readiness')
       .select('recommendation')
@@ -143,13 +162,16 @@ export default async function SessaoPage(props: {
   ])
 
   const readinessStatus = (readiness.data?.recommendation as ReadinessStatus | undefined) ?? 'ready'
-  const adjustedProgressions = previousResults.map(({ suggestion }) =>
-    adjustProgressionForReadiness(suggestion, readinessStatus)
-  )
+  const adjustedProgressions = usesAdaptedDup
+    ? previousResults.map(() => null)
+    : previousResults.map(({ suggestion }) =>
+        adjustProgressionForReadiness(suggestion, readinessStatus)
+      )
   const maxByExercise = new Map(referenceMaxes.map((item) => [item.exercise_id, item]))
   const recommendedLoads = workoutData.workout_exercises.map((we, index) => {
     const previous = previousResults[index]?.sets.filter((set) => !set.is_warmup) ?? []
     const last = previous[0]
+    const exposure = exposureStreaks[index]
     const max = maxByExercise.get(we.exercise_id)
     const config = getLoadInputConfig(we.exercise, we.notes)
     return recommendGymTrackLoad({
@@ -158,13 +180,24 @@ export default async function SessaoPage(props: {
       targetRir: we.rir_min ?? 1,
       incrementKg: we.exercise.min_increment_kg ?? config.incrementKg ?? 1,
       readiness: deloadContext.active ? 'low_recovery' : readinessStatus,
-      previousWeightKg: last?.weight_kg ?? null,
-      previousAttempt: (last?.attempt_result as AttemptResult | null | undefined) ?? null,
-      recentFailures: previous.filter((set) =>
-        set.attempt_result === 'technical_failure' || set.attempt_result === 'strength_failure'
-      ).length,
+      previousWeightKg: usesAdaptedDup ? exposure?.weightKg ?? null : last?.weight_kg ?? null,
+      previousAttempt: usesAdaptedDup
+        ? exposure?.streak
+          ? 'completed'
+          : null
+        : (last?.attempt_result as AttemptResult | null | undefined) ?? null,
+      progressionAllowed: !usesAdaptedDup || progressionAllowedForProgramWeek(programWeek),
+      requiredValidExposures: usesAdaptedDup ? 2 : 1,
+      validExposureStreak: usesAdaptedDup ? exposure?.streak ?? 0 : undefined,
+      recentFailures: usesAdaptedDup
+        ? 0
+        : previous.filter((set) =>
+            set.attempt_result === 'technical_failure' || set.attempt_result === 'strength_failure'
+          ).length,
       pain: previous.some((set) => set.pain_level === 'moderada' || set.pain_level === 'forte'),
-      executionQuality: (last?.execution_quality as ExecutionQuality | null | undefined) ?? null,
+      executionQuality: usesAdaptedDup
+        ? null
+        : (last?.execution_quality as ExecutionQuality | null | undefined) ?? null,
       prescriptionType: (we.prescription_type ?? 'fixed_reps') as 'fixed_reps' | 'rep_range' | 'rep_max_effort',
     })
   })
@@ -183,11 +216,11 @@ export default async function SessaoPage(props: {
       notificationsEnabled={preferences.data?.notifications_enabled ?? true}
       restTimerSound={preferences.data?.rest_timer_sound ?? true}
       restTimerVibrate={preferences.data?.rest_timer_vibrate ?? true}
-      straightSetsNotice={!phaseAllowsTopSets(trainingPhase) && (hasTopSetExercises || rirRaisedByPhase)}
+      straightSetsNotice={!usesAdaptedDup && !phaseAllowsTopSets(trainingPhase) && (hasTopSetExercises || rirRaisedByPhase)}
       blockChoices={Object.fromEntries(
         (savedChoices ?? []).map((choice) => [choice.workout_exercise_id, choice.selected_exercise_id])
       )}
-      isDeload={deloadContext.active != null}
+      isDeload={deloadContext.active != null || (usesAdaptedDup && programWeek === 8)}
     />
   )
 }

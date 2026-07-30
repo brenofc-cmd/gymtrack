@@ -22,11 +22,12 @@ import {
 import type { ProgressionSuggestion } from '@/lib/progression/progression'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 import { ExerciseActionsSheet } from './ExerciseActionsSheet'
+import { ExerciseFeedbackPanel } from './ExerciseFeedbackPanel'
 import { PreviousPerformanceSummary } from './PreviousPerformanceSummary'
 import { WarmupSetList } from './WarmupSetList'
 import { WorkingSetList } from './WorkingSetList'
 import type { SetDraft, SetSaveState } from './SetRow'
-import { prescriptionLabel } from '@/lib/routine/david-laid-public-dup-v5'
+import { prescriptionLabel } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 
 export interface PreviousExerciseSet {
@@ -130,6 +131,20 @@ export function CurrentExercisePanel({
     ) {
       throw new Error('Confirme as condições de segurança antes de validar a tentativa RM.')
     }
+    if (
+      !isWarmup &&
+      setNumber === workoutExercise.target_sets &&
+      (
+        currentFeedback?.executionQuality == null ||
+        currentFeedback.painLevel == null ||
+        currentFeedback.romQuality == null ||
+        currentFeedback.externalAssistance == null
+      )
+    ) {
+      throw new Error(
+        'Antes da última série, confirme execução, amplitude, dor e ajuda externa.'
+      )
+    }
     const id = completed?.id ?? crypto.randomUUID()
     const completedAt = completed?.completed_at ?? new Date().toISOString()
     const log: LocalSetLog = {
@@ -142,6 +157,7 @@ export function CurrentExercisePanel({
       set_role: setRole,
       attempt_result: draft.attemptResult ?? null,
       is_deload: isDeload,
+      external_assistance: currentFeedback?.externalAssistance ?? null,
       completed_at: completedAt,
     }
 
@@ -172,6 +188,7 @@ export function CurrentExercisePanel({
       execution_quality: currentFeedback?.executionQuality ?? null,
       pain_level: currentFeedback?.painLevel ?? null,
       rom_quality: currentFeedback?.romQuality ?? null,
+      external_assistance: currentFeedback?.externalAssistance ?? null,
       performed_exercise_id: selectedVariation,
       completed_at: completedAt,
     })
@@ -252,6 +269,12 @@ export function CurrentExercisePanel({
                 : `${workoutExercise.rir_min ?? '—'}–${workoutExercise.rir_max ?? '—'}`}
               {' · '}Descanso {Math.floor(workoutExercise.rest_seconds / 60)}:{String(workoutExercise.rest_seconds % 60).padStart(2, '0')}
             </p>
+            {workoutExercise.superset_group != null && (
+              <p className="mt-1 text-[10px] font-semibold text-primary">
+                Superset {workoutExercise.superset_group}: alterne com o exercício do mesmo grupo.
+                Aumente o descanso se a execução piorar.
+              </p>
+            )}
           </div>
           <button
             type="button"
@@ -301,7 +324,7 @@ export function CurrentExercisePanel({
 
         {isDeload && (
           <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] text-[#ffcf7a]">
-            Deload ativo: a prescrição pública continua intacta, mas esta série será identificada como recuperação temporária no histórico.
+            Semana de deload: aproximadamente 40% menos séries, RIR 3–4 e nenhuma recomendação de aumento de carga.
           </div>
         )}
 
@@ -320,6 +343,21 @@ export function CurrentExercisePanel({
           {recommendedLoad?.requiresManualConfirmation && (
             <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>
           )}
+        </div>
+
+        <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
+          <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
+            Validação da exposição
+          </p>
+          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+            Obrigatória antes da última série. Duas exposições válidas com a
+            mesma carga e variação liberam a sugestão do menor aumento.
+          </p>
+          <ExerciseFeedbackPanel
+            sessionId={sessionId}
+            workoutExerciseId={workoutExercise.id}
+            hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0}
+          />
         </div>
 
         {workoutExercise.prescription_type === 'rep_max_effort' && (
