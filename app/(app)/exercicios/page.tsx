@@ -14,11 +14,11 @@ export default async function ExerciciosPage() {
 
   const { data: exercises } = await supabase
     .from('exercises')
-    .select('id, name_pt, muscle_group, equipment, movement_pattern')
+    .select('id, name_pt, muscle_group, equipment, movement_pattern, gif_url')
     .order('muscle_group')
     .order('name_pt')
 
-  const groups = new Map<string, Pick<Exercise, 'id' | 'name_pt' | 'muscle_group' | 'equipment' | 'movement_pattern'>[]>()
+  const groups = new Map<string, Pick<Exercise, 'id' | 'name_pt' | 'muscle_group' | 'equipment' | 'movement_pattern' | 'gif_url'>[]>()
   for (const ex of exercises ?? []) {
     if (!groups.has(ex.muscle_group)) groups.set(ex.muscle_group, [])
     groups.get(ex.muscle_group)!.push(ex)
@@ -45,6 +45,7 @@ export default async function ExerciciosPage() {
                     name={ex.name_pt}
                     primaryMuscle={ex.muscle_group}
                     movementPattern={ex.movement_pattern}
+                    mediaUrl={ex.gif_url}
                     compact
                   />
                 </span>

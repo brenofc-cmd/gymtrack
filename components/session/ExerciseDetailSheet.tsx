@@ -27,7 +27,7 @@ const TABS = [
   { key: 'execution', label: 'Execução', icon: BookOpen },
   { key: 'errors', label: 'Erros', icon: AlertTriangle },
   { key: 'history', label: 'Histórico', icon: History },
-  { key: 'video', label: 'Vídeo', icon: Video },
+  { key: 'video', label: 'Mídia', icon: Video },
 ] as const
 
 type Tab = (typeof TABS)[number]['key']
@@ -60,6 +60,7 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
               name={exercise.name_pt}
               primaryMuscle={exercise.muscle_group}
               movementPattern={exercise.movement_pattern}
+              mediaUrl={exercise.gif_url}
             />
           </div>
           <ol className="space-y-2.5">
@@ -105,10 +106,11 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
               name={exercise.name_pt}
               primaryMuscle={exercise.muscle_group}
               movementPattern={exercise.movement_pattern}
+              mediaUrl={exercise.gif_url}
             />
           </div>
           <p className="mt-2 text-center text-xs text-muted-foreground">
-            Animação anatômica: o músculo principal aparece em vermelho.
+            Vídeo real quando disponível; caso contrário, posições inicial e final da execução.
           </p>
         </div>
       )}

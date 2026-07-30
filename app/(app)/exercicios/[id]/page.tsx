@@ -83,6 +83,7 @@ export default async function ExercicioPage(props: {
             name={exercise.name_pt}
             primaryMuscle={exercise.muscle_group}
             movementPattern={exercise.movement_pattern}
+            mediaUrl={exercise.gif_url}
           />
         </div>
 

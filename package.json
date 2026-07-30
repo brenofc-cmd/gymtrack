@@ -12,7 +12,8 @@
     "test:e2e": "next build && playwright test",
     "seed": "tsx scripts/seed.ts",
     "gen:rotina": "tsx scripts/generate-rotina-v2-sql.ts",
-    "sync:exercise-images": "node scripts/download-exercise-images.mjs"
+    "sync:exercise-images": "node scripts/download-exercise-images.mjs",
+    "sync:exercise-videos": "node scripts/download-exercise-videos.mjs"
   },
   "dependencies": {
     "@base-ui/react": "^1.4.1",

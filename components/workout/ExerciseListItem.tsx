@@ -38,6 +38,7 @@ export function ExerciseListItem({
           name={exercise.name_pt}
           primaryMuscle={exercise.muscle_group}
           movementPattern={exercise.movement_pattern}
+          mediaUrl={exercise.gif_url}
           compact
         />
       </div>

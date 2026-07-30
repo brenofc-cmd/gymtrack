@@ -21,6 +21,7 @@ export function OptionalTreadmillCard({
             name="Caminhada na esteira"
             primaryMuscle="full body"
             movementPattern="cardio"
+            mediaUrl="/exercises/Walking_Treadmill.jpg"
             compact
           />
         </div>

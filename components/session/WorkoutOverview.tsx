@@ -41,6 +41,7 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
                     name={item.exercise.name_pt}
                     primaryMuscle={item.exercise.muscle_group}
                     movementPattern={item.exercise.movement_pattern}
+                    mediaUrl={item.exercise.gif_url}
                     compact
                   />
                 </div>

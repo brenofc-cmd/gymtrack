@@ -234,6 +234,7 @@ export function CurrentExercisePanel({
             name={selectedExercise.name_pt}
             primaryMuscle={selectedExercise.muscle_group}
             movementPattern={selectedExercise.movement_pattern}
+            mediaUrl={selectedExercise.gif_url}
           />
         </div>
         <div className="mt-3 flex items-start gap-3">
