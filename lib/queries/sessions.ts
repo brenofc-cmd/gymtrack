@@ -9,6 +9,7 @@ import type {
 } from '@/types/database'
 import type { AttemptResult } from '@/lib/training/dup-progression'
 import { estimateOneRepMax } from '@/lib/training/dup-progression'
+import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -381,7 +382,7 @@ export async function getActiveSession(
   supabase: SupabaseDB,
   userId: string
 ): Promise<ActiveSession | null> {
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from('workout_sessions')
     .select('*, workout:workouts(*)')
     .eq('user_id', userId)
@@ -389,8 +390,9 @@ export async function getActiveSession(
     .is('cancelled_at', null)
     .order('started_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle()
 
+  if (error) throw error
   return (data as unknown as ActiveSession) ?? null
 }
 
@@ -411,11 +413,25 @@ export async function startOrResumeSession(
 ): Promise<StartOrResumeResult> {
   const active = await getActiveSession(supabase, userId)
   if (active) {
-    return {
-      kind: 'resumed',
-      sessionId: active.id,
-      workoutId: active.workout_id,
-      sameWorkout: active.workout_id === workoutId,
+    // Uma sessão antiga/arquivada não pode bloquear a ficha oficial atual.
+    // O cancelamento é lógico: histórico e séries permanecem intactos.
+    if (
+      !active.workout ||
+      active.workout.is_archived ||
+      active.workout.routine_version !== ROUTINE_VERSION
+    ) {
+      await cancelSessionLogically(
+        supabase,
+        active,
+        'Cancelada automaticamente ao iniciar a rotina oficial atual. Séries preservadas.'
+      )
+    } else {
+      return {
+        kind: 'resumed',
+        sessionId: active.id,
+        workoutId: active.workout_id,
+        sameWorkout: active.workout_id === workoutId,
+      }
     }
   }
 

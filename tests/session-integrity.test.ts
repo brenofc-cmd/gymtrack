@@ -17,6 +17,13 @@ const executableSql = migrationSql
   .split('\n')
   .filter((line) => !line.trim().startsWith('--'))
   .join('\n')
+const legacyIndexFixSql = readFileSync(
+  path.resolve(
+    __dirname,
+    '../supabase/migrations/20260730161430_drop_legacy_active_session_index.sql'
+  ),
+  'utf-8'
+)
 
 // ---------------------------------------------------------------------------
 // Mock mínimo do query builder do Supabase (encadeável e awaitable)
@@ -67,7 +74,7 @@ const activeRow = {
   started_at: '2026-07-29T12:00:00Z',
   finished_at: null,
   cancelled_at: null,
-  workout: { name: 'Push A' },
+  workout: { name: 'Push A', is_archived: false, routine_version: 5 },
 }
 
 // ---------------------------------------------------------------------------
@@ -99,6 +106,21 @@ describe('migration de integridade de sessões', () => {
     expect(migrationSql).toMatch(/Rollback seguro/)
   })
 
+  it('remove o índice legado que tratava sessões canceladas como ativas', () => {
+    expect(legacyIndexFixSql).toContain(
+      'drop index if exists public.uniq_active_session_per_user'
+    )
+    expect(legacyIndexFixSql).toMatch(
+      /where finished_at is null and cancelled_at is null/
+    )
+  })
+
+  it('cancela logicamente sessão ativa de ficha antiga sem apagar séries', () => {
+    expect(legacyIndexFixSql).toMatch(/workout\.is_archived = true/)
+    expect(legacyIndexFixSql).toMatch(/workout\.routine_version is distinct from 5/)
+    expect(legacyIndexFixSql).not.toMatch(/\b(delete|truncate)\b/i)
+  })
+
   it('RLS de workout_sessions já cobre o update do cancelamento (política do dono, for all)', () => {
     const schemaSql = readFileSync(
       path.resolve(__dirname, '../supabase/migrations/0001_initial.sql'),
@@ -117,7 +139,7 @@ describe('migration de integridade de sessões', () => {
 describe('startOrResumeSession — sessão única', () => {
   it('sem sessão ativa: cria uma nova e retorna started', async () => {
     const { client, chains } = mockSupabase([
-      { data: null, error: { code: 'PGRST116' } }, // getActiveSession: nada
+      { data: null, error: null }, // getActiveSession: nada
       { data: { id: 'nova-sessao' }, error: null }, // insert
     ])
     const result = await startOrResumeSession(client, 'u1', 'treino-a')
@@ -137,6 +159,22 @@ describe('startOrResumeSession — sessão única', () => {
     expect(chains).toHaveLength(1) // nenhum insert aconteceu
   })
 
+  it('cancela logicamente sessão de rotina arquivada e inicia a ficha atual', async () => {
+    const archivedActive = {
+      ...activeRow,
+      workout: { name: 'Ficha antiga', is_archived: true, routine_version: 1 },
+    }
+    const { client, chains } = mockSupabase([
+      { data: archivedActive, error: null },
+      { data: null, error: null },
+      { data: { id: 'sessao-v5' }, error: null },
+    ])
+    const result = await startOrResumeSession(client, 'u1', 'treino-v5')
+    expect(result).toEqual({ kind: 'started', sessionId: 'sessao-v5' })
+    expect(chains[1].calls.map(([method]) => method)).toContain('update')
+    expect(chains[2].calls.map(([method]) => method)).toContain('insert')
+  })
+
   it('sessão ativa de OUTRO treino: sinaliza sameWorkout=false para o diálogo', async () => {
     const { client } = mockSupabase([{ data: activeRow, error: null }])
     const result = await startOrResumeSession(client, 'u1', 'treino-b')
@@ -145,7 +183,7 @@ describe('startOrResumeSession — sessão única', () => {
 
   it('corrida simulada: insert viola o índice único (23505) e a sessão vencedora é reaberta', async () => {
     const { client } = mockSupabase([
-      { data: null, error: { code: 'PGRST116' } }, // getActiveSession: nada (ainda)
+      { data: null, error: null }, // getActiveSession: nada (ainda)
       { data: null, error: { code: '23505', message: 'duplicate key' } }, // insert perde a corrida
       { data: activeRow, error: null }, // releitura acha a vencedora
     ])
@@ -155,7 +193,7 @@ describe('startOrResumeSession — sessão única', () => {
 
   it('getActiveSession ignora sessões canceladas (filtro cancelled_at is null)', async () => {
     const { client, chains } = mockSupabase([
-      { data: null, error: { code: 'PGRST116' } },
+      { data: null, error: null },
       { data: { id: 'nova' }, error: null },
     ])
     await startOrResumeSession(client, 'u1', 'treino-a')
