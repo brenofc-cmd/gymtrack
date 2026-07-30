@@ -180,6 +180,9 @@ export default async function SessaoPage(props: {
       exerciseHistories={exerciseHistories}
       readinessStatus={readinessStatus}
       keepScreenAwake={preferences.data?.keep_screen_awake ?? true}
+      notificationsEnabled={preferences.data?.notifications_enabled ?? true}
+      restTimerSound={preferences.data?.rest_timer_sound ?? true}
+      restTimerVibrate={preferences.data?.rest_timer_vibrate ?? true}
       straightSetsNotice={!phaseAllowsTopSets(trainingPhase) && (hasTopSetExercises || rirRaisedByPhase)}
       blockChoices={Object.fromEntries(
         (savedChoices ?? []).map((choice) => [choice.workout_exercise_id, choice.selected_exercise_id])

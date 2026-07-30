@@ -149,6 +149,11 @@ export function CurrentExercisePanel({
     upsertSet(workoutExercise.id, log)
     setExerciseSkipped(workoutExercise.id, false)
     if (!isWarmup && !completed) {
+      // O pedido ocorre dentro do gesto de concluir série; navegadores móveis
+      // normalmente bloqueiam pedidos de permissão feitos fora desse contexto.
+      if ('Notification' in window && Notification.permission === 'default') {
+        void Notification.requestPermission()
+      }
       startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
       if ('vibrate' in navigator) navigator.vibrate(35)
     }

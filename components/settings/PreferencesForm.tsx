@@ -15,6 +15,7 @@ export function PreferencesForm({ userId, initial }: PreferencesFormProps) {
   const [saving, setSaving] = useState(false)
   const [sound, setSound] = useState(initial?.rest_timer_sound ?? true)
   const [vibrate, setVibrate] = useState(initial?.rest_timer_vibrate ?? true)
+  const [notifications, setNotifications] = useState(initial?.notifications_enabled ?? true)
   const [keepAwake, setKeepAwake] = useState(initial?.keep_screen_awake ?? true)
   const [weightUnit, setWeightUnit] = useState(initial?.weight_unit ?? 'kg')
   const [water, setWater] = useState(String(initial?.water_goal_ml ?? 3000))
@@ -27,6 +28,7 @@ export function PreferencesForm({ userId, initial }: PreferencesFormProps) {
       id: userId,
       rest_timer_sound: sound,
       rest_timer_vibrate: vibrate,
+      notifications_enabled: notifications,
       keep_screen_awake: keepAwake,
       weight_unit: weightUnit,
       water_goal_ml: Number(water) || 3000,
@@ -44,6 +46,7 @@ export function PreferencesForm({ userId, initial }: PreferencesFormProps) {
       <section className="surface-card divide-y divide-sidebar-border px-4">
         <PreferenceSwitch label="Som do cronômetro" description="Aviso ao terminar o descanso" checked={sound} onChange={setSound} />
         <PreferenceSwitch label="Vibração" description="Feedback tátil no celular" checked={vibrate} onChange={setVibrate} />
+        <PreferenceSwitch label="Notificação ao terminar descanso" description="Aviso do sistema quando o cronômetro zerar" checked={notifications} onChange={setNotifications} />
         <PreferenceSwitch label="Manter tela ligada" description="Durante as sessões de treino e abdômen (quando o aparelho suportar)" checked={keepAwake} onChange={setKeepAwake} />
       </section>
 

@@ -44,9 +44,18 @@ function playBeep() {
 interface RestTimerDockProps {
   exercises: WorkoutExerciseWithExercise[]
   currentExerciseId: string
+  notificationsEnabled?: boolean
+  soundEnabled?: boolean
+  vibrateEnabled?: boolean
 }
 
-export function RestTimerDock({ exercises, currentExerciseId }: RestTimerDockProps) {
+export function RestTimerDock({
+  exercises,
+  currentExerciseId,
+  notificationsEnabled = true,
+  soundEnabled = true,
+  vibrateEnabled = true,
+}: RestTimerDockProps) {
   const {
     restTimer,
     sets,
@@ -95,23 +104,33 @@ export function RestTimerDock({ exercises, currentExerciseId }: RestTimerDockPro
     if (!active || paused) return
     if (remaining <= 10 && remaining > 0 && !warnedTenSeconds.current) {
       warnedTenSeconds.current = true
-      if ('vibrate' in navigator) navigator.vibrate(150)
+      if (vibrateEnabled && 'vibrate' in navigator) navigator.vibrate(150)
     }
     if (remaining > 10) warnedTenSeconds.current = false
-  }, [active, paused, remaining])
+  }, [active, paused, remaining, vibrateEnabled])
 
   useEffect(() => {
     if (!active || paused) return
     if (remaining === 0 && !finishedNotified.current) {
       finishedNotified.current = true
       setAnnouncement('Descanso concluído. Próxima série pronta.')
-      if ('vibrate' in navigator) navigator.vibrate([350, 100, 350])
-      playBeep()
+      if (vibrateEnabled && 'vibrate' in navigator) navigator.vibrate([350, 100, 350])
+      if (soundEnabled) playBeep()
+      if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
+        const notification = new Notification('Descanso concluído', {
+          body: `${exercise?.exercise.name_pt ?? 'Próxima série'}: pronto para continuar.`,
+          tag: 'gymtrack-rest-timer',
+        })
+        notification.onclick = () => {
+          window.focus()
+          notification.close()
+        }
+      }
       toast('Descanso concluído', { description: 'A próxima série está pronta.' })
       skipRestTimer()
     }
     if (remaining > 0) finishedNotified.current = false
-  }, [active, paused, remaining, skipRestTimer])
+  }, [active, paused, remaining, skipRestTimer, exercise?.exercise.name_pt, notificationsEnabled, soundEnabled, vibrateEnabled])
 
   const progress = restTimer.totalSeconds > 0
     ? Math.max(0, Math.min(100, (remaining / restTimer.totalSeconds) * 100))

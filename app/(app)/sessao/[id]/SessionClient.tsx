@@ -37,6 +37,9 @@ interface SessionClientProps {
   exerciseHistories: Array<Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>>
   readinessStatus: ReadinessStatus
   keepScreenAwake?: boolean
+  notificationsEnabled?: boolean
+  restTimerSound?: boolean
+  restTimerVibrate?: boolean
   /** Fase fundamentos: top set/back-off exibido como séries retas conservadoras */
   straightSetsNotice?: boolean
   blockChoices?: Record<string, string | null>
@@ -59,6 +62,9 @@ export function SessionClient({
   exerciseHistories,
   readinessStatus,
   keepScreenAwake = true,
+  notificationsEnabled = true,
+  restTimerSound = true,
+  restTimerVibrate = true,
   straightSetsNotice = false,
   blockChoices = {},
   isDeload = false,
@@ -262,7 +268,13 @@ export function SessionClient({
         />
       </main>
 
-      <RestTimerDock exercises={orderedExercises} currentExerciseId={current.id} />
+      <RestTimerDock
+        exercises={orderedExercises}
+        currentExerciseId={current.id}
+        notificationsEnabled={notificationsEnabled}
+        soundEnabled={restTimerSound}
+        vibrateEnabled={restTimerVibrate}
+      />
       <SessionExitSheet
         open={exitOpen}
         onOpenChange={setExitOpen}
