@@ -28,6 +28,7 @@ import { getLoadInputConfig } from '@/lib/training/load-input'
 import { calcVolume, formatVolume } from '@/lib/utils/volume'
 import { formatDurationLong } from '@/lib/utils/time'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
+import { maybeAdvanceActiveDupBlockWeek } from '@/lib/queries/dup-program'
 
 interface FinishWorkoutSheetProps {
   open: boolean
@@ -125,6 +126,8 @@ export function FinishWorkoutSheet({
       setLoading(false)
       return
     }
+
+    await maybeAdvanceActiveDupBlockWeek(supabase).catch(() => null)
 
     skipRestTimer()
     resetSession(sessionId)

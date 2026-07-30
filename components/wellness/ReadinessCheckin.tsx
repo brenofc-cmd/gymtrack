@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
 import { createClient } from '@/lib/supabase/client'
+import { localDateISO } from '@/lib/utils/local-date'
 import { assessReadiness, type JointPain, type ReadinessRecommendation } from '@/lib/training/readiness'
 
 function Scale({ label, value, onChange }: { label: string; value: number; onChange: (value: number) => void }) {
@@ -39,7 +40,7 @@ export function ReadinessCheckin({ userId }: { userId: string }) {
     const recommendation = assessReadiness({ sleepQuality, energy, muscleSoreness, jointPain, stress, motivation, recoveryFeeling })
     setResult(recommendation)
     setSaving(true)
-    const today = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date())
+    const today = localDateISO()
     const { error } = await createClient().from('daily_readiness').upsert({
       user_id: userId, readiness_date: today, sleep_quality: sleepQuality, energy,
       muscle_soreness: muscleSoreness, joint_pain: jointPain, stress, motivation,

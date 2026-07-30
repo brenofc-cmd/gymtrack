@@ -66,16 +66,13 @@ describe('fase de treinamento — prescrição efetiva', () => {
     }
   })
 
-  it('a rotina v4 permanece intocada (exercícios com top set continuam marcados na fonte)', async () => {
+  it('a rotina DUP bloqueada não reutiliza top set/back-off da rotina anterior', async () => {
 
-    const { POWERBUILDING_V4 } = await import('@/lib/routine/powerbuilding-v4')
-    const topSetExercises = POWERBUILDING_V4.flatMap((day) => day.exercises).filter(
+    const { DAVID_LAID_PUBLIC_DUP_V5 } = await import('@/lib/routine/david-laid-public-dup-v5')
+    const topSetExercises = DAVID_LAID_PUBLIC_DUP_V5.flatMap((day) => day.exercises).filter(
       (exercise) => exercise.topSetEnabled
     )
-    expect(topSetExercises.map((exercise) => exercise.name)).toEqual([
-      'Supino inclinado com halteres',
-      'Hack squat',
-    ])
+    expect(topSetExercises).toEqual([])
   })
 })
 

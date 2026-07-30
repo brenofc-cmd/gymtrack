@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
-import { ROUTINE_VERSION } from '@/lib/routine/powerbuilding-v4'
+import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
 import {
   ChevronRight,
   HeartPulse,

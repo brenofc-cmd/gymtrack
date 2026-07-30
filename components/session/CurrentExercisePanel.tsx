@@ -27,6 +27,8 @@ import { PreviousPerformanceSummary } from './PreviousPerformanceSummary'
 import { WarmupSetList } from './WarmupSetList'
 import { WorkingSetList } from './WorkingSetList'
 import type { SetDraft, SetSaveState } from './SetRow'
+import { prescriptionLabel } from '@/lib/routine/david-laid-public-dup-v5'
+import type { LoadRecommendation } from '@/lib/training/dup-progression'
 
 export interface PreviousExerciseSet {
   set_number: number
@@ -47,6 +49,10 @@ interface CurrentExercisePanelProps {
   previousSets: PreviousExerciseSet[]
   bestWeight: number | null
   progression: ProgressionSuggestion | null
+  recommendedLoad?: LoadRecommendation | null
+  userId?: string
+  programBlockId?: string | null
+  isDeload?: boolean
   history: Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>
   showWarmupPlan: boolean
   canMoveEarlier: boolean
@@ -66,6 +72,10 @@ export function CurrentExercisePanel({
   previousSets,
   bestWeight,
   progression,
+  recommendedLoad = null,
+  userId,
+  programBlockId,
+  isDeload = false,
   history,
   showWarmupPlan,
   canMoveEarlier,
@@ -77,6 +87,7 @@ export function CurrentExercisePanel({
   hasNextExercise,
 }: CurrentExercisePanelProps) {
   const [actionsOpen, setActionsOpen] = useState(false)
+  const [rmSafetyConfirmed, setRmSafetyConfirmed] = useState(false)
   const {
     sets: storeSets,
     feedback,
@@ -110,9 +121,16 @@ export function CurrentExercisePanel({
     setNumber: number,
     draft: SetDraft,
     isWarmup: boolean,
-    setRole: 'warmup' | 'top' | 'backoff' | 'standard',
+    setRole: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort',
     completed: LocalSetLog | null
   ): Promise<SetSaveState> {
+    if (
+      setRole === 'rm_effort' &&
+      (draft.attemptResult === 'completed' || draft.attemptResult === 'personal_record') &&
+      !rmSafetyConfirmed
+    ) {
+      throw new Error('Confirme as condições de segurança antes de validar a tentativa RM.')
+    }
     const id = completed?.id ?? crypto.randomUUID()
     const completedAt = completed?.completed_at ?? new Date().toISOString()
     const log: LocalSetLog = {
@@ -123,6 +141,8 @@ export function CurrentExercisePanel({
       rir: isWarmup ? null : draft.rir,
       is_warmup: isWarmup,
       set_role: setRole,
+      attempt_result: draft.attemptResult ?? null,
+      is_deload: isDeload,
       completed_at: completedAt,
     }
 
@@ -143,6 +163,8 @@ export function CurrentExercisePanel({
       rir: isWarmup ? null : draft.rir,
       is_warmup: isWarmup,
       set_role: setRole,
+      attempt_result: draft.attemptResult ?? null,
+      is_deload: isDeload,
       execution_quality: currentFeedback?.executionQuality ?? null,
       pain_level: currentFeedback?.painLevel ?? null,
       rom_quality: currentFeedback?.romQuality ?? null,
@@ -162,7 +184,10 @@ export function CurrentExercisePanel({
     const previousEquivalent = previousWorkSets.find((set) => set.set_number === setIndex + 1)
     const topSet = completedSets.find((set) => set.set_number === 1)
     const isBackoff = workoutExercise.top_set_enabled && setIndex > 0
-    const sourceWeight = previousCurrentSet?.weight_kg ?? previousEquivalent?.weight_kg ?? previousWeight
+    const sourceWeight = previousCurrentSet?.weight_kg
+      ?? recommendedLoad?.suggestedKg
+      ?? previousEquivalent?.weight_kg
+      ?? previousWeight
     const sourceReps = previousCurrentSet?.reps ?? previousEquivalent?.reps
 
     if (isBackoff && (topSet?.weight_kg ?? sourceWeight) != null) {
@@ -212,7 +237,7 @@ export function CurrentExercisePanel({
             {selectedExercise.name_pt}
           </h1>
           <p className="mt-1 text-[11px] text-muted-foreground">
-            {workoutExercise.target_sets} × {workoutExercise.target_reps_min}–{workoutExercise.target_reps_max}
+            Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
             {' · '}RIR {workoutExercise.rir_min === workoutExercise.rir_max
               ? workoutExercise.rir_min
               : `${workoutExercise.rir_min ?? '—'}–${workoutExercise.rir_max ?? '—'}`}
@@ -264,8 +289,47 @@ export function CurrentExercisePanel({
           loadConfig={loadConfig}
         />
 
+        {isDeload && (
+          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] text-[#ffcf7a]">
+            Deload ativo: a prescrição pública continua intacta, mas esta série será identificada como recuperação temporária no histórico.
+          </div>
+        )}
+
+        <div className={cn(
+          'rounded-xl border px-3 py-2 text-[11px] leading-relaxed',
+          recommendedLoad?.action === 'stop'
+            ? 'border-destructive/30 bg-destructive/10 text-destructive'
+            : 'border-primary/20 bg-primary/[0.06] text-muted-foreground'
+        )}>
+          <p className="font-bold text-foreground">Progressão individual calculada pelo GymTrack</p>
+          <p className="mt-0.5">
+            {recommendedLoad?.suggestedKg != null
+              ? `Carga sugerida: ${recommendedLoad.suggestedKg} kg. ${recommendedLoad.reason}`
+              : recommendedLoad?.reason ?? 'Sem histórico ou máxima de referência: escolha a carga manualmente.'}
+          </p>
+          {recommendedLoad?.requiresManualConfirmation && (
+            <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>
+          )}
+        </div>
+
+        {workoutExercise.prescription_type === 'rep_max_effort' && (
+          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
+            <p>Esforço RM do GymTrack: aqueça progressivamente, confirme a carga manualmente e classifique o resultado. Não é obrigatório buscar um recorde; você pode pular por dor ou segurança.</p>
+            <p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>
+            <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground">
+              <input
+                type="checkbox"
+                checked={rmSafetyConfirmed}
+                onChange={(event) => setRmSafetyConfirmed(event.target.checked)}
+                className="mt-0.5 size-4"
+              />
+              Confirmei travas, espaço seguro e spotter quando aplicável.
+            </label>
+          </div>
+        )}
+
         <WarmupSetList
-          workingWeightKg={previousWeight}
+          workingWeightKg={recommendedLoad?.suggestedKg ?? previousWeight}
           loadConfig={loadConfig}
           completedSets={warmupSets}
           enabled={showWarmupPlan}
@@ -278,6 +342,8 @@ export function CurrentExercisePanel({
         <WorkingSetList
           totalSets={workoutExercise.target_sets}
           topSetEnabled={workoutExercise.top_set_enabled}
+          prescriptionType={workoutExercise.prescription_type}
+          defaultSetRole={workoutExercise.default_set_role}
           loadConfig={loadConfig}
           targetRirMin={workoutExercise.rir_min}
           targetRirMax={workoutExercise.rir_max}
@@ -322,7 +388,18 @@ export function CurrentExercisePanel({
         sessionId={sessionId}
         workoutExercise={workoutExercise}
         selectedVariation={selectedVariation}
-        onSelectVariation={(exerciseId) => setVariation(workoutExercise.id, exerciseId)}
+        onSelectVariation={(exerciseId) => {
+          setVariation(workoutExercise.id, exerciseId)
+          if (userId && programBlockId) {
+            void createClient().from('block_exercise_choices').upsert({
+              user_id: userId,
+              block_id: programBlockId,
+              workout_exercise_id: workoutExercise.id,
+              selected_exercise_id: exerciseId,
+              updated_at: new Date().toISOString(),
+            }, { onConflict: 'block_id,workout_exercise_id' })
+          }
+        }}
         history={history}
         progression={progression}
         guidance={guidance}

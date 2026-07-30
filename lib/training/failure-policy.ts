@@ -10,7 +10,7 @@
  * de controle de intensidade.
  */
 import type { PainLevel } from '@/types/database'
-import type { FailureRiskLevel } from '@/lib/routine/powerbuilding-v4'
+import type { FailureRiskLevel } from '@/lib/routine/david-laid-public-dup-v5'
 import type { TrainingPhase } from '@/lib/training/phase'
 
 export interface FailureContext {

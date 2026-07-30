@@ -16,6 +16,7 @@ import type { WorkoutWithExercises } from '@/types/database'
 import { readinessGuidance, type ReadinessStatus } from '@/lib/training/readiness'
 import { useWakeLock } from '@/lib/hooks/useWakeLock'
 import { classifyDay } from '@/components/workout/WorkoutFocusBadge'
+import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { ActiveWorkoutHeader } from '@/components/session/ActiveWorkoutHeader'
 import {
   CurrentExercisePanel,
@@ -32,15 +33,18 @@ interface SessionClientProps {
   previousSets: PreviousExerciseSet[][]
   prWeights: Array<number | null>
   progressions: Array<ProgressionSuggestion | null>
+  recommendedLoads: LoadRecommendation[]
   exerciseHistories: Array<Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>>
   readinessStatus: ReadinessStatus
   keepScreenAwake?: boolean
   /** Fase fundamentos: top set/back-off exibido como séries retas conservadoras */
   straightSetsNotice?: boolean
+  blockChoices?: Record<string, string | null>
+  isDeload?: boolean
 }
 
 function normalizeSetRole(value: string): LocalSetLog['set_role'] {
-  return value === 'warmup' || value === 'top' || value === 'backoff'
+  return value === 'warmup' || value === 'top' || value === 'backoff' || value === 'rm_effort'
     ? value
     : 'standard'
 }
@@ -51,10 +55,13 @@ export function SessionClient({
   previousSets,
   prWeights,
   progressions,
+  recommendedLoads,
   exerciseHistories,
   readinessStatus,
   keepScreenAwake = true,
   straightSetsNotice = false,
+  blockChoices = {},
+  isDeload = false,
 }: SessionClientProps) {
   useWakeLock(keepScreenAwake)
   const router = useRouter()
@@ -88,7 +95,7 @@ export function SessionClient({
   useEffect(() => {
     const serverSets: Record<string, LocalSetLog[]> = {}
     const serverFeedback: Record<string, ExerciseFeedback> = {}
-    const serverVariation: Record<string, string | null> = {}
+    const serverVariation: Record<string, string | null> = { ...blockChoices }
 
     const orderedLogs = [...session.set_logs].sort((a, b) =>
       new Date(a.completed_at ?? 0).getTime() - new Date(b.completed_at ?? 0).getTime()
@@ -103,6 +110,8 @@ export function SessionClient({
         rir: log.rir,
         is_warmup: log.is_warmup,
         set_role: normalizeSetRole(log.set_role),
+        attempt_result: (log.attempt_result as LocalSetLog['attempt_result']) ?? null,
+        is_deload: log.is_deload,
         completed_at: log.completed_at ?? session.started_at,
       }
       serverSets[exerciseId] = [...(serverSets[exerciseId] ?? []), local]
@@ -123,7 +132,7 @@ export function SessionClient({
       serverFeedback,
       serverVariation
     )
-  }, [hydrateSession, session.id, session.set_logs, session.started_at, session.workout_id])
+  }, [blockChoices, hydrateSession, session.id, session.set_logs, session.started_at, session.workout_id])
 
   const originalIndexById = useMemo(
     () => new Map(workout.workout_exercises.map((exercise, index) => [exercise.id, index])),
@@ -194,6 +203,7 @@ export function SessionClient({
         )}
         completedSets={completedSetCount}
         totalSets={totalSetCount}
+        blockWeekNumber={session.block_week_number}
         onExit={() => setExitOpen(true)}
         onFinish={() => setFinishOpen(true)}
       />
@@ -233,6 +243,10 @@ export function SessionClient({
           previousSets={previousSets[originalIndex] ?? []}
           bestWeight={prWeights[originalIndex] ?? null}
           progression={progressions[originalIndex] ?? null}
+          recommendedLoad={recommendedLoads[originalIndex] ?? null}
+          userId={session.user_id}
+          programBlockId={session.program_block_id}
+          isDeload={isDeload}
           history={exerciseHistories[originalIndex] ?? []}
           showWarmupPlan={current.id === firstCompoundId}
           canMoveEarlier={currentIndex > 0}

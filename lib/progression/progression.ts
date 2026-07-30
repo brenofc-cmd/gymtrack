@@ -29,6 +29,7 @@ export interface ProgressionTarget {
   kind: ExerciseType | null
   movementPattern?: MovementPattern | null
   loadDirection?: 'higher_is_harder' | 'lower_is_harder'
+  prescriptionType?: 'fixed_reps' | 'rep_range' | 'rep_max_effort' | string | null
 }
 
 export type ProgressionAction = 'aumentar' | 'manter' | 'revisar' | 'bloquear_por_dor'
@@ -86,6 +87,15 @@ export function suggestProgression(
 ): ProgressionSuggestion | null {
   const sets = workingSets(lastSessionSets)
   if (sets.length === 0) return null
+
+  // Esforço RM é uma referência pesada, não uma ordem para perseguir recorde.
+  // A UI apresenta a carga apenas como sugestão e exige confirmação manual.
+  if (target.prescriptionType === 'rep_max_effort') {
+    if (hasBlockingPain(sets) || hasBadExecution(sets)) {
+      return { action: 'revisar', reason: 'O último esforço RM teve dor ou execução inadequada. Não aumente a carga; revise antes de repetir.' }
+    }
+    return { action: 'manter', reason: 'Esforço RM: use o último resultado e a máxima estimada apenas como referência. Confirme manualmente qualquer carga; não é necessário buscar recorde.' }
+  }
 
   // Dor bloqueia progressão sempre
   if (hasBlockingPain(sets)) {

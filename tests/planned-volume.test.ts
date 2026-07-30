@@ -6,7 +6,7 @@ import {
   aggregatePlannedIndirect,
   type PlannedExerciseRow,
 } from '@/lib/training/planned-volume'
-import { POWERBUILDING_V4 } from '@/lib/routine/powerbuilding-v4'
+import { DAVID_LAID_PUBLIC_DUP_V5 } from '@/lib/routine/david-laid-public-dup-v5'
 
 function row(overrides: Partial<PlannedExerciseRow>): PlannedExerciseRow {
   return {
@@ -28,14 +28,13 @@ describe('volume planejado a partir da ficha ativa (banco)', () => {
     expect(result).toEqual({ peito: 5, costas: 4 })
   })
 
-  it('cenário exato da auditoria: abdominais ocultados pela reconciliação NÃO contam', () => {
-    // A rotina v4 estática planeja 11 séries de abdômen…
-    const staticAbSets = POWERBUILDING_V4.flatMap((day) => day.exercises)
+  it('a rotina DUP não inclui abdômen e o módulo independente não conta no volume', () => {
+    const staticAbSets = DAVID_LAID_PUBLIC_DUP_V5.flatMap((day) => day.exercises)
       .filter((exercise) => exercise.primaryMuscle === 'abdômen')
       .reduce((total, exercise) => total + exercise.sets, 0)
-    expect(staticAbSets).toBe(11)
+    expect(staticAbSets).toBe(0)
 
-    // …mas no banco esses exercícios estão is_hidden = true (Abdômen Diário).
+    // Qualquer registro do módulo Abdômen Diário continua oculto na rotina principal.
     const activeRows: PlannedExerciseRow[] = [
       row({ muscle_group: 'peito', target_sets: 3 }),
       row({ muscle_group: 'abdômen', target_sets: 3, is_hidden: true }),

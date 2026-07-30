@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { Loader2, Plus, Ruler } from 'lucide-react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
+import { localDateISO } from '@/lib/utils/local-date'
 import type { Tables } from '@/types/database'
 
 interface MeasurementsPanelProps {
@@ -38,7 +39,9 @@ export function MeasurementsPanel({ userId, initialMeasurements }: MeasurementsP
 
     setSaving(true)
     const supabase = createClient()
-    const logged_on = new Intl.DateTimeFormat('en-CA').format(new Date())
+    // BUG corrigido: sem timeZone, o Intl usava o fuso do aparelho — a medida
+    // podia ser gravada no dia errado. Agora usa o helper central (São Paulo).
+    const logged_on = localDateISO()
     const { data, error } = await supabase
       .from('body_measurements')
       .upsert({ user_id: userId, logged_on, ...payload }, { onConflict: 'user_id,logged_on' })

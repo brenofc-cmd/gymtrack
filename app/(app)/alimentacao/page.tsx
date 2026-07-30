@@ -2,6 +2,7 @@ import Link from 'next/link'
 import { redirect } from 'next/navigation'
 import { Plus, Utensils } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
+import { NutritionGoalsForm } from '@/components/nutrition/NutritionGoalsForm'
 
 function todayISO(): string {
   return new Intl.DateTimeFormat('en-CA', {
@@ -85,6 +86,8 @@ export default async function AlimentacaoPage() {
           })}
         </div>
       </section>
+
+      <NutritionGoalsForm userId={user.id} goal={goal} />
 
       <section className="surface-card mt-3 overflow-hidden px-4">
         {meals.length === 0 ? (

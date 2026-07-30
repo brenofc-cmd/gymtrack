@@ -53,6 +53,7 @@ export async function getExerciseProgressSummaries(
     `)
     .in('session_id', sessions.map((session) => session.id))
     .eq('is_warmup', false)
+    .eq('is_deload', false)
     .order('completed_at', { ascending: true })
 
   if (error) throw error

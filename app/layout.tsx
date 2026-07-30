@@ -27,6 +27,10 @@ export const metadata: Metadata = {
     capable: true,
     statusBarStyle: 'black-translucent',
     title: 'GymTrack',
+    startupImage: [],
+  },
+  icons: {
+    apple: '/icons/apple-touch-icon.png',
   },
 }
 

@@ -7,6 +7,8 @@ import type {
   Exercise,
   SetLog,
 } from '@/types/database'
+import type { AttemptResult } from '@/lib/training/dup-progression'
+import { estimateOneRepMax } from '@/lib/training/dup-progression'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -21,7 +23,9 @@ export async function saveSetLog(
     reps: number
     rir?: number | null
     is_warmup?: boolean
-    set_role?: 'warmup' | 'top' | 'backoff' | 'standard'
+    set_role?: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
+    attempt_result?: AttemptResult | null
+    is_deload?: boolean
     execution_quality?: 'boa' | 'aceitavel' | 'ruim' | null
     pain_level?: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
     rom_quality?: 'completa' | 'adequada' | 'reduzida' | null
@@ -39,6 +43,12 @@ export async function saveSetLog(
     rir: log.rir ?? null,
     is_warmup: log.is_warmup ?? false,
     set_role: log.set_role ?? (log.is_warmup ? 'warmup' : 'standard'),
+    attempt_result: log.attempt_result ?? null,
+    client_operation_id: log.id ?? null,
+    estimated_1rm: log.is_warmup || log.weight_kg == null
+      ? null
+      : estimateOneRepMax(log.weight_kg, log.reps),
+    is_deload: log.is_deload ?? false,
     execution_quality: log.execution_quality ?? null,
     pain_level: log.pain_level ?? null,
     rom_quality: log.rom_quality ?? null,
@@ -106,11 +116,19 @@ export async function finishSession(
       duration_seconds: durationSeconds,
     })
     .eq('id', sessionId)
+    .is('finished_at', null)
     .select()
-    .single()
+    .maybeSingle()
 
   if (error) throw error
-  return data as WorkoutSession
+  if (data) return data as WorkoutSession
+  const { data: existing, error: existingError } = await supabase
+    .from('workout_sessions')
+    .select('*')
+    .eq('id', sessionId)
+    .single()
+  if (existingError) throw existingError
+  return existing as WorkoutSession
 }
 
 export type SessionWithWorkoutRow = WorkoutSession & {
@@ -224,6 +242,7 @@ export async function getMuscleGroupDistribution(
     .select('workout_exercise:workout_exercises(exercise:exercises(muscle_group))')
     .in('session_id', sessionIds)
     .eq('is_warmup', false)
+    .eq('is_deload', false)
 
   if (!logs || logs.length === 0) return []
 
@@ -300,6 +319,7 @@ export async function getPreviousSessionVolume(
     .select('weight_kg, reps')
     .eq('session_id', (prevSession as { id: string }).id)
     .eq('is_warmup', false)
+    .eq('is_deload', false)
 
   if (!logs || logs.length === 0) return null
 
@@ -335,6 +355,7 @@ export async function getWorkoutVolumeHistory(
     .select('session_id, weight_kg, reps')
     .in('session_id', sessions.map((s) => s.id))
     .eq('is_warmup', false)
+    .eq('is_deload', false)
 
   const volumeBySession = new Map<string, number>()
   for (const log of (logs ?? []) as Array<{
@@ -398,14 +419,14 @@ export async function startOrResumeSession(
     }
   }
 
-  const { data, error } = await supabase
+  const { data: session, error: insertError } = await supabase
     .from('workout_sessions')
     .insert({ user_id: userId, workout_id: workoutId })
     .select()
     .single()
 
-  if (error) {
-    if (error.code === '23505') {
+  if (insertError) {
+    if (insertError.code === '23505') {
       const winner = await getActiveSession(supabase, userId)
       if (winner) {
         return {
@@ -416,10 +437,10 @@ export async function startOrResumeSession(
         }
       }
     }
-    throw error
+    throw insertError
   }
 
-  return { kind: 'started', sessionId: (data as { id: string }).id }
+  return { kind: 'started', sessionId: (session as { id: string }).id }
 }
 
 /**
@@ -502,6 +523,7 @@ export async function getWeekStats(
     .select('weight_kg, reps')
     .in('session_id', sessionIds)
     .eq('is_warmup', false)
+    .eq('is_deload', false)
 
   const totalVolumeKg = (
     (setLogs ?? []) as Array<{ weight_kg: number | null; reps: number }>

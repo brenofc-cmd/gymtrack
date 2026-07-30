@@ -14,6 +14,8 @@ interface PreviousSet {
 interface WorkingSetListProps {
   totalSets: number
   topSetEnabled: boolean
+  prescriptionType?: string | null
+  defaultSetRole?: string | null
   loadConfig: LoadInputConfig
   targetRirMin: number | null
   targetRirMax: number | null
@@ -22,7 +24,7 @@ interface WorkingSetListProps {
   getDefault: (setIndex: number) => { weight: number | null; reps: number }
   onSave: (
     setNumber: number,
-    setRole: 'top' | 'backoff' | 'standard',
+    setRole: 'top' | 'backoff' | 'standard' | 'rm_effort',
     draft: SetDraft,
     completed: LocalSetLog | null
   ) => Promise<SetSaveState>
@@ -31,6 +33,8 @@ interface WorkingSetListProps {
 export function WorkingSetList({
   totalSets,
   topSetEnabled,
+  prescriptionType,
+  defaultSetRole,
   loadConfig,
   targetRirMin,
   targetRirMax,
@@ -62,7 +66,11 @@ export function WorkingSetList({
           const completed = completedSets.find((set) => set.set_number === setNumber) ?? null
           const previous = previousSets.find((set) => set.set_number === setNumber) ?? null
           const defaults = getDefault(index)
-          const setRole = topSetEnabled
+          const setRole = prescriptionType === 'rep_max_effort'
+            ? 'rm_effort'
+            : defaultSetRole === 'backoff'
+              ? 'backoff'
+              : topSetEnabled
             ? index === 0 ? 'top' : 'backoff'
             : 'standard'
           return (

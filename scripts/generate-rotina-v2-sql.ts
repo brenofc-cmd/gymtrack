@@ -1,6 +1,6 @@
 /**
  * Gera um rascunho de próxima migration a partir de
- * lib/routine/powerbuilding-v4.ts (fonte única da verdade ativa).
+ * lib/routine/david-laid-public-dup-v5.ts (fonte única da verdade ativa).
  *
  * Uso: npx tsx scripts/generate-rotina-v2-sql.ts
  *
@@ -17,8 +17,8 @@
 
 import { writeFileSync } from 'fs'
 import path from 'path'
-import { POWERBUILDING_V4, ROUTINE_VERSION } from '../lib/routine/powerbuilding-v4'
-import type { RoutineExerciseDef } from '../lib/routine/powerbuilding-v4'
+import { DAVID_LAID_PUBLIC_DUP_V5, ROUTINE_VERSION } from '../lib/routine/david-laid-public-dup-v5'
+import type { RoutineExerciseDef } from '../lib/routine/david-laid-public-dup-v5'
 
 function q(s: string): string {
   return `'${s.replace(/'/g, "''")}'`
@@ -117,7 +117,7 @@ const SUB_CATALOG: Record<
 }
 
 const ROUTINE_CATALOG = Object.fromEntries(
-  POWERBUILDING_V4.flatMap((day) => day.exercises).map((exercise) => [
+  DAVID_LAID_PUBLIC_DUP_V5.flatMap((day) => day.exercises).map((exercise) => [
     exercise.name,
     {
       muscle: exercise.primaryMuscle,
@@ -208,7 +208,7 @@ ${subs}`
 }
 
 function generate(): string {
-  const days = POWERBUILDING_V4.map((day) => {
+  const days = DAVID_LAID_PUBLIC_DUP_V5.map((day) => {
     const exercises = day.exercises
       .map((ex, i) => insertWorkoutExercise(ex, i))
       .join('\n')
@@ -223,7 +223,7 @@ ${exercises}`
   }).join('\n')
 
   return `-- Migration Powerbuilding v${ROUTINE_VERSION} (PPL 6 dias) — GERADA por scripts/generate-rotina-v2-sql.ts
--- NÃO EDITE MANUALMENTE: altere lib/routine/powerbuilding-v4.ts e regenere.
+-- NÃO EDITE MANUALMENTE: altere lib/routine/david-laid-public-dup-v5.ts e regenere.
 --
 -- Para cada usuário com rotina anterior ativa (Push A..Legs B não arquivados):
 --   1. backup jsonb em routine_backups

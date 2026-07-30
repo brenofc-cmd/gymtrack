@@ -9,6 +9,7 @@ import {
   type LoadInputConfig,
 } from '@/lib/training/load-input'
 import type { LocalSetLog } from '@/lib/store/sessionStore'
+import type { AttemptResult } from '@/lib/training/dup-progression'
 import { RIRPickerSheet } from './RIRPickerSheet'
 
 export type SetSaveState = 'saved' | 'queued'
@@ -17,6 +18,7 @@ export interface SetDraft {
   weight: number | null
   reps: number
   rir: number | null
+  attemptResult?: AttemptResult | null
 }
 
 interface PreviousSet {
@@ -28,7 +30,7 @@ interface PreviousSet {
 interface SetRowProps {
   setNumber: number
   isWarmup?: boolean
-  setRole?: 'warmup' | 'top' | 'backoff' | 'standard'
+  setRole?: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort'
   loadConfig: LoadInputConfig
   defaultWeight: number | null
   defaultReps: number | null
@@ -67,6 +69,9 @@ export function SetRow({
   const [weightInput, setWeightInput] = useState<string | null>(null)
   const [repsInput, setRepsInput] = useState<string | null>(null)
   const [rir, setRir] = useState<number | null>(completed?.rir ?? null)
+  const [attemptResult, setAttemptResult] = useState<AttemptResult | null>(
+    completed?.attempt_result ?? null
+  )
   const [editing, setEditing] = useState(completed == null)
   const [saving, setSaving] = useState(false)
   const [rirOpen, setRirOpen] = useState(false)
@@ -93,8 +98,18 @@ export function SetRow({
       setError(`Informe ${loadConfig.loadLabel.toLowerCase()} entre 0 e 9999.`)
       return null
     }
+    if (setRole === 'rm_effort' && attemptResult == null) {
+      setError('Classifique o resultado desta tentativa RM.')
+      return null
+    }
     setError(null)
-    return { weight: parsedWeight, reps: parsedReps, rir: isWarmup ? null : rir }
+    const result: SetDraft = {
+      weight: parsedWeight,
+      reps: parsedReps,
+      rir: isWarmup ? null : rir,
+    }
+    if (setRole === 'rm_effort') result.attemptResult = attemptResult
+    return result
   }
 
   async function save(next: SetDraft) {
@@ -104,6 +119,7 @@ export function SetRow({
       const state = await onSave(next)
       setSaveState(state)
       setRir(next.rir)
+      setAttemptResult(next.attemptResult ?? null)
       setEditing(false)
       setWeightInput(inputValue(next.weight))
       setRepsInput(inputValue(next.reps))
@@ -326,6 +342,7 @@ export function SetRow({
               setWeightInput(null)
               setRepsInput(null)
               setRir(completed?.rir ?? null)
+              setAttemptResult(completed?.attempt_result ?? null)
               setError(null)
             }}
             className="ml-auto inline-flex min-h-7 items-center gap-1 px-1 text-muted-foreground"
@@ -343,6 +360,32 @@ export function SetRow({
           </button>
         )}
       </div>
+
+      {!isWarmup && setRole === 'rm_effort' && (
+        <div className="mt-2 pl-9 sm:pl-12">
+          <label htmlFor={`${id}-attempt`} className="mb-1 block text-[10px] font-bold uppercase tracking-wide text-muted-foreground">
+            Resultado da tentativa
+          </label>
+          <select
+            id={`${id}-attempt`}
+            value={attemptResult ?? ''}
+            disabled={isDone || saving}
+            onChange={(event) => {
+              setAttemptResult((event.target.value || null) as AttemptResult | null)
+              setError(null)
+            }}
+            className="min-h-11 w-full rounded-xl border border-input bg-background px-3 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/25 disabled:opacity-70"
+          >
+            <option value="">Selecione o resultado</option>
+            <option value="completed">Concluída</option>
+            <option value="personal_record">Recorde pessoal</option>
+            <option value="technical_failure">Falha técnica</option>
+            <option value="strength_failure">Falha de força</option>
+            <option value="skipped">Pulada por segurança</option>
+            <option value="pain">Dor</option>
+          </select>
+        </div>
+      )}
 
       {error && (
         <p id={`${id}-error`} role="alert" className="mt-1 pl-9 text-xs text-destructive sm:pl-12">

@@ -1,47 +1,36 @@
 import { describe, expect, it } from 'vitest'
 import {
-  POWERBUILDING_V4,
+  DAVID_LAID_PUBLIC_DUP_V5,
   ROUTINE_VERSION,
-  directVolumeByMuscle,
-  secondaryVolumeByMuscle,
-} from '@/lib/routine/powerbuilding-v4'
+} from '@/lib/routine/david-laid-public-dup-v5'
 import { backoffWeight, estimated1RM, isValidPRSet } from '@/lib/training/strength'
 import { adjustProgressionForReadiness, assessReadiness, readinessAdjustment } from '@/lib/training/readiness'
 import { canApproachFailure } from '@/lib/training/failure-policy'
 import { nextRotatingWorkout, rotatingCycle } from '@/lib/training/schedule'
 
-describe('Powerbuilding v4', () => {
-  it('mantém PPL A/B de segunda a sábado e diferencia os focos', () => {
-    expect(ROUTINE_VERSION).toBe(4)
-    expect(POWERBUILDING_V4.map((day) => day.letter)).toEqual(['A', 'B', 'C', 'D', 'E', 'F'])
-    expect(POWERBUILDING_V4.map((day) => day.dayOfWeek)).toEqual([1, 2, 3, 4, 5, 6])
-    expect(POWERBUILDING_V4.slice(0, 3).every((day) => day.focus === 'strength_technique')).toBe(true)
-    expect(POWERBUILDING_V4.slice(3).every((day) => day.focus === 'hypertrophy')).toBe(true)
+describe('DUP público David Laid v5', () => {
+  it('mantém exatamente Legs, Push, Pull, Legs, Push, Pull de segunda a sábado', () => {
+    expect(ROUTINE_VERSION).toBe(5)
+    expect(DAVID_LAID_PUBLIC_DUP_V5.map((day) => day.letter)).toEqual(['A', 'B', 'C', 'D', 'E', 'F'])
+    expect(DAVID_LAID_PUBLIC_DUP_V5.map((day) => day.dayOfWeek)).toEqual([1, 2, 3, 4, 5, 6])
+    expect(DAVID_LAID_PUBLIC_DUP_V5.map((day) => day.name)).toEqual(['Legs 1', 'Push 1', 'Pull 1', 'Legs 2', 'Push 2', 'Pull 2'])
+    expect(DAVID_LAID_PUBLIC_DUP_V5.map((day) => day.focus)).toEqual([
+      'strength_hypertrophy',
+      'max_strength_hypertrophy',
+      'strength_hypertrophy',
+      'strength_hypertrophy',
+      'strength_hypertrophy',
+      'max_strength_hypertrophy',
+    ])
   })
 
-  it('limita top set/back-off a um composto por sessão', () => {
-    for (const day of POWERBUILDING_V4) {
-      expect(day.exercises.filter((exercise) => exercise.topSetEnabled)).toHaveLength(
-        day.letter === 'A' || day.letter === 'C' ? 1 : 0
-      )
-    }
-  })
-
-  it('treina abdômen em três dias com estímulos complementares', () => {
-    const days = POWERBUILDING_V4.filter((day) => day.exercises.some((exercise) => exercise.kind === 'abdominal'))
-    expect(days.map((day) => day.letter)).toEqual(['A', 'C', 'F'])
-    expect(new Set(days.flatMap((day) => day.exercises.filter((exercise) => exercise.kind === 'abdominal').map((exercise) => exercise.movementPattern))))
-      .toEqual(new Set(['trunk_flexion', 'pelvic_curl', 'anti_extension', 'anti_rotation']))
-  })
-
-  it('calcula volume direto e contribuição secundária separadamente', () => {
-    const direct = directVolumeByMuscle()
-    const secondary = secondaryVolumeByMuscle()
-    expect(direct.peito).toBe(13)
-    expect(direct.costas).toBe(15)
-    expect(direct['abdômen']).toBe(11)
-    expect(secondary['tríceps']).toBeGreaterThan(0)
-    expect(secondary['bíceps']).toBeGreaterThan(0)
+  it('bloqueia todas as prescrições e representa RM, faixa e repetições fixas', () => {
+    const exercises = DAVID_LAID_PUBLIC_DUP_V5.flatMap((day) => day.exercises)
+    expect(exercises.every((exercise) => exercise.prescriptionLocked)).toBe(true)
+    expect(exercises.filter((exercise) => exercise.prescriptionType === 'rep_range')).toHaveLength(2)
+    expect(exercises.filter((exercise) => exercise.prescriptionType === 'rep_range').every((exercise) => exercise.name === 'Barra fixa' && exercise.repsMin === 8 && exercise.repsMax === 10)).toBe(true)
+    expect(exercises.filter((exercise) => exercise.prescriptionType === 'rep_max_effort').map((exercise) => exercise.repMaxTarget)).toEqual([5, 1, 3, 3, 5, 1])
+    expect(exercises.some((exercise) => exercise.kind === 'abdominal')).toBe(false)
   })
 })
 

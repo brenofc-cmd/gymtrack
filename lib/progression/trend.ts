@@ -66,7 +66,7 @@ export const TREND_LABEL: Record<TrendState, string> = {
 }
 
 const MIN_SESSIONS_FOR_TREND = 3
-/** Frequência da rotina v4: cada exercício aparece ~1×/semana no seu treino */
+/** Frequência típica do ciclo: cada prescrição aparece ~1×/semana. */
 const EXPECTED_SESSIONS_PER_WEEK = 1
 const MEANINGFUL_WEIGHT_CHANGE = 0.025
 const POOR_EXECUTION_RATIO = 0.4

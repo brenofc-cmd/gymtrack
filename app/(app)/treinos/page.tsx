@@ -4,7 +4,7 @@ import { CheckCircle2, ChevronRight, Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getWorkouts, getSuggestedWorkout } from '@/lib/queries/workouts'
 import { getLastSessionsPerWorkout } from '@/lib/queries/sessions'
-import { DIA_LABEL } from '@/lib/routine/powerbuilding-v4'
+import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 
 export default async function TreinosPage() {
   const supabase = await createClient()

@@ -5,9 +5,15 @@ export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url)
   const code = searchParams.get('code')
   const next = searchParams.get('next')
+  const forwardedHost = request.headers.get('x-forwarded-host')
+  const forwardedProto = request.headers.get('x-forwarded-proto')
+  const baseUrl = process.env.NODE_ENV === 'development'
+    ? origin
+    : `${forwardedProto ?? 'https'}://${forwardedHost ?? new URL(origin).host}`
+  const safeNext = next?.startsWith('/') && !next.startsWith('//') ? next : null
 
   if (code) {
-    const response = NextResponse.redirect(`${origin}/`)
+    const response = NextResponse.redirect(`${baseUrl}/`)
 
     const supabase = createServerClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -31,8 +37,8 @@ export async function GET(request: NextRequest) {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      let destination = next ?? '/'
-      if (!next && user) {
+      let destination = safeNext ?? '/'
+      if (!safeNext && user) {
         const { data: preferences } = await supabase
           .from('user_preferences')
           .select('onboarding_done')
@@ -40,10 +46,10 @@ export async function GET(request: NextRequest) {
           .maybeSingle()
         destination = preferences?.onboarding_done ? '/' : '/onboarding'
       }
-      response.headers.set('location', `${origin}${destination}`)
+      response.headers.set('location', `${baseUrl}${destination}`)
       return response
     }
   }
 
-  return NextResponse.redirect(`${origin}/login?error=auth`)
+  return NextResponse.redirect(`${baseUrl}/login?error=oauth_callback`)
 }

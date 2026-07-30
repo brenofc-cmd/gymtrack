@@ -109,13 +109,14 @@ async function buildExerciseHistory(
   const { data: logs } = await supabase
     .from('set_logs')
     .select(
-      'session_id, is_warmup, pain_level, weight_kg, estimated_1rm, performed_exercise_id, workout_exercise_id'
+      'session_id, is_warmup, is_deload, pain_level, weight_kg, estimated_1rm, performed_exercise_id, workout_exercise_id'
     )
     .in('session_id', sessionRows.map((s) => s.id))
 
   const logRows = (logs ?? []) as Array<{
     session_id: string
     is_warmup: boolean
+    is_deload: boolean
     pain_level: string | null
     weight_kg: number | null
     estimated_1rm: number | null
@@ -170,7 +171,7 @@ async function buildExerciseHistory(
     if (!exerciseId) continue
     const info = exerciseInfo.get(exerciseId)
     if (!info || info.exercise_type !== 'composto') continue
-    if (log.is_warmup) continue
+    if (log.is_warmup || log.is_deload) continue
 
     const weekIndex = weekIndexBySession.get(log.session_id)
     if (weekIndex == null) continue

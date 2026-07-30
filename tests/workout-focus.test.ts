@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { readFileSync, readdirSync, statSync } from 'fs'
 import path from 'path'
 import { classifyDay, DAY_CLASSIFICATION_LABEL } from '@/components/workout/WorkoutFocusBadge'
-import { POWERBUILDING_V4 } from '@/lib/routine/powerbuilding-v4'
+import { DAVID_LAID_PUBLIC_DUP_V5 } from '@/lib/routine/david-laid-public-dup-v5'
 
 const compound = { exercise_type: 'composto' }
 const isolator = { exercise_type: 'isolador' }
@@ -42,17 +42,13 @@ describe('classificação do dia (DUP)', () => {
     expect(DAY_CLASSIFICATION_LABEL.mixed).toBe('Misto')
   })
 
-  it('aplicada à rotina v4 real, os dias A–C classificam como força técnica ou misto e D–F como hipertrofia', () => {
-    for (const day of POWERBUILDING_V4) {
+  it('aplicada à rotina pública, mantém os focos declarados sem reclassificar dias mistos', () => {
+    for (const day of DAVID_LAID_PUBLIC_DUP_V5) {
       const classification = classifyDay(
         day.focus,
         day.exercises.map((exercise) => ({ exercise_type: exercise.kind }))
       )
-      if (day.focus === 'strength_technique') {
-        expect(['strength_technique', 'mixed']).toContain(classification)
-      } else {
-        expect(classification).toBe('hypertrophy')
-      }
+      expect(classification).toBe(day.focus)
     }
   })
 })
@@ -90,12 +86,12 @@ describe('nomenclatura do produto (item 15.12)', () => {
     return out
   }
 
-  it('nenhuma tela cita David Laid nem chama a rotina de "treino oficial"', () => {
+  it('a tela não chama a rotina de programa oficial ou pago', () => {
     const offenders: string[] = []
     for (const root of ['app', 'components'].map((d) => path.resolve(__dirname, '..', d))) {
       for (const file of listSources(root)) {
         const source = readFileSync(file, 'utf-8')
-        if (/david\s*laid/i.test(source) || /treino (oficial|do david)/i.test(source)) {
+        if (/treino oficial|programa pago|cópia do programa/i.test(source)) {
           offenders.push(path.relative(path.resolve(__dirname, '..'), file))
         }
       }

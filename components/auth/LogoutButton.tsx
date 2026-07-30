@@ -3,6 +3,7 @@
 import { LogOut } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { createClient } from '@/lib/supabase/client'
+import { clearPrivateState } from '@/lib/offline/clearPrivateState'
 
 export function LogoutButton() {
   const router = useRouter()
@@ -10,6 +11,9 @@ export function LogoutButton() {
   async function handleLogout() {
     const supabase = createClient()
     await supabase.auth.signOut()
+    // Descarta cache de navegação e estado local antes de liberar o aparelho:
+    // sem isso, dados privados sobreviveriam ao logout.
+    await clearPrivateState()
     router.push('/login')
     router.refresh()
   }

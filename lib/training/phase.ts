@@ -1,7 +1,7 @@
 /**
  * Fase de treinamento (user_profiles.training_phase) — P0.3 da auditoria.
  *
- * A fase NÃO altera a rotina v4 (exercícios, séries, faixas, RIR) nem a
+ * A fase NÃO altera a prescrição pública v5 (exercícios, séries e faixas) nem a
  * lógica de progressão. Ela controla apenas a APRESENTAÇÃO do top set/
  * back-off na sessão:
  *
@@ -66,7 +66,7 @@ export const INTRO_POWERBUILDING_CRITERIA = [
  * conservadora que a rotina: compostos em RIR 3 e isoladores em RIR 2–3,
  * priorizando execução e consistência sobre proximidade da falha.
  *
- * IMPORTANTE: isto NÃO altera `lib/routine/powerbuilding-v4.ts` nem o banco.
+ * IMPORTANTE: isto NÃO altera a fonte canônica v5 nem o banco.
  * É uma camada de prescrição aplicada na leitura da sessão — a mesma
  * estratégia usada para o top set. Só ELEVA o RIR (nunca reduz), então nunca
  * torna a sessão mais agressiva do que a rotina previu.

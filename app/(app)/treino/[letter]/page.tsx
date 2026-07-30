@@ -8,7 +8,7 @@ import { getActiveSession } from '@/lib/queries/sessions'
 import { ExerciseListItem } from '@/components/workout/ExerciseListItem'
 import { StartWorkoutButton } from '@/components/workout/StartWorkoutButton'
 import { WorkoutNotes } from '@/components/workout/WorkoutNotes'
-import { DIA_LABEL } from '@/lib/routine/powerbuilding-v4'
+import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import type { WorkoutLetter } from '@/types/database'
 
@@ -87,6 +87,7 @@ export default async function TreinoPage(props: {
           {workout.objective && (
             <p className="mt-2 text-sm text-muted-foreground">{workout.objective}</p>
           )}
+          <p className="mt-2 text-xs text-muted-foreground">Divisão DUP pública associada a David Laid, conforme publicada pela Gymshark.</p>
         </div>
 
         {/* Notas */}

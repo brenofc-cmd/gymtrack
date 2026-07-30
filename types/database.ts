@@ -187,6 +187,47 @@ export type DailyCoreConflictRow = {
   created_at: string
 }
 
+export type ExerciseReferenceMaxRow = {
+  user_id: string
+  exercise_id: string
+  tested_1rm: number | null
+  estimated_1rm: number | null
+  training_max: number | null
+  source: 'manual_test' | 'estimated_from_set' | 'imported'
+  tested_at: string | null
+  updated_at: string
+}
+
+export type ExerciseReferenceMaxHistoryRow = ExerciseReferenceMaxRow & {
+  id: string
+  block_id: string | null
+  reason: string
+  recorded_at: string
+}
+
+export type TrainingProgramBlockRow = {
+  id: string
+  user_id: string
+  program_block_id: string
+  routine_version: number
+  week_number: number
+  total_weeks: number
+  cycle_number: number
+  started_at: string
+  completed_at: string | null
+  paused_at: string | null
+  status: 'active' | 'completed' | 'cancelled' | 'paused'
+  next_block_suggested: boolean
+}
+
+export type BlockExerciseChoiceRow = {
+  user_id: string
+  block_id: string
+  workout_exercise_id: string
+  selected_exercise_id: string | null
+  updated_at: string
+}
+
 type DbTable<Row, Insert, Update = Partial<Insert>> = {
   Row: Row
   Insert: Insert
@@ -344,6 +385,7 @@ export type Database = {
       exercises: {
         Row: {
           created_at: string | null
+          default_rest_seconds: number | null
           difficulty_level: string
           equipment: string | null
           exercise_type: string | null
@@ -351,17 +393,23 @@ export type Database = {
           gif_url: string | null
           id: string
           instructions: string[] | null
+          is_unilateral: boolean
+          load_unit: string | null
           load_guidance: string | null
+          min_increment_kg: number | null
           movement_pattern: string | null
           muscle_group: string
           name_en: string | null
           name_pt: string
           secondary_muscles: string[] | null
           risk_level: string
+          slug: string | null
+          technical_warnings: string[]
           training_objective: string | null
         }
         Insert: {
           created_at?: string | null
+          default_rest_seconds?: number | null
           difficulty_level?: string
           equipment?: string | null
           exercise_type?: string | null
@@ -369,17 +417,23 @@ export type Database = {
           gif_url?: string | null
           id?: string
           instructions?: string[] | null
+          is_unilateral?: boolean
+          load_unit?: string | null
           load_guidance?: string | null
+          min_increment_kg?: number | null
           movement_pattern?: string | null
           muscle_group: string
           name_en?: string | null
           name_pt: string
           secondary_muscles?: string[] | null
           risk_level?: string
+          slug?: string | null
+          technical_warnings?: string[]
           training_objective?: string | null
         }
         Update: {
           created_at?: string | null
+          default_rest_seconds?: number | null
           difficulty_level?: string
           equipment?: string | null
           exercise_type?: string | null
@@ -387,13 +441,18 @@ export type Database = {
           gif_url?: string | null
           id?: string
           instructions?: string[] | null
+          is_unilateral?: boolean
+          load_unit?: string | null
           load_guidance?: string | null
+          min_increment_kg?: number | null
           movement_pattern?: string | null
           muscle_group?: string
           name_en?: string | null
           name_pt?: string
           secondary_muscles?: string[] | null
           risk_level?: string
+          slug?: string | null
+          technical_warnings?: string[]
           training_objective?: string | null
         }
         Relationships: []
@@ -796,13 +855,32 @@ export type Database = {
         }
         Relationships: []
       }
+      exercise_reference_maxes: DbTable<
+        ExerciseReferenceMaxRow,
+        Pick<ExerciseReferenceMaxRow, 'user_id' | 'exercise_id' | 'source'> & Partial<Omit<ExerciseReferenceMaxRow, 'user_id' | 'exercise_id' | 'source'>>
+      >
+      exercise_reference_max_history: DbTable<
+        ExerciseReferenceMaxHistoryRow,
+        Pick<ExerciseReferenceMaxHistoryRow, 'user_id' | 'exercise_id' | 'source' | 'reason'> & Partial<Omit<ExerciseReferenceMaxHistoryRow, 'user_id' | 'exercise_id' | 'source' | 'reason'>>
+      >
+      training_program_blocks: DbTable<
+        TrainingProgramBlockRow,
+        Pick<TrainingProgramBlockRow, 'user_id' | 'program_block_id'> & Partial<Omit<TrainingProgramBlockRow, 'user_id' | 'program_block_id'>>
+      >
+      block_exercise_choices: DbTable<
+        BlockExerciseChoiceRow,
+        Omit<BlockExerciseChoiceRow, 'updated_at'> & Partial<Pick<BlockExerciseChoiceRow, 'updated_at'>>
+      >
       set_logs: {
         Row: {
+          attempt_result: string | null
+          client_operation_id: string | null
           completed_at: string | null
           estimated_1rm: number | null
           execution_quality: string | null
           id: string
           is_warmup: boolean
+          is_deload: boolean
           notes: string | null
           pain_level: string | null
           performed_exercise_id: string | null
@@ -817,11 +895,14 @@ export type Database = {
           workout_exercise_id: string
         }
         Insert: {
+          attempt_result?: string | null
+          client_operation_id?: string | null
           completed_at?: string | null
           estimated_1rm?: number | null
           execution_quality?: string | null
           id?: string
           is_warmup?: boolean
+          is_deload?: boolean
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
@@ -836,11 +917,14 @@ export type Database = {
           workout_exercise_id: string
         }
         Update: {
+          attempt_result?: string | null
+          client_operation_id?: string | null
           completed_at?: string | null
           estimated_1rm?: number | null
           execution_quality?: string | null
           id?: string
           is_warmup?: boolean
+          is_deload?: boolean
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
@@ -990,13 +1074,19 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          barbell_increment_kg: number
           created_at: string | null
           extra: Json | null
           id: string
           keep_screen_awake: boolean
+          dumbbell_increment_kg: number
+          heavy_attempt_risk_acknowledged: boolean
+          machine_increment_kg: number
+          notifications_enabled: boolean
           onboarding_done: boolean
           rest_timer_sound: boolean
           rest_timer_vibrate: boolean
+          routine_provisioned_version: number | null
           sleep_goal_minutes: number | null
           theme: string | null
           updated_at: string | null
@@ -1004,13 +1094,19 @@ export type Database = {
           weight_unit: string | null
         }
         Insert: {
+          barbell_increment_kg?: number
           created_at?: string | null
           extra?: Json | null
           id: string
           keep_screen_awake?: boolean
+          dumbbell_increment_kg?: number
+          heavy_attempt_risk_acknowledged?: boolean
+          machine_increment_kg?: number
+          notifications_enabled?: boolean
           onboarding_done?: boolean
           rest_timer_sound?: boolean
           rest_timer_vibrate?: boolean
+          routine_provisioned_version?: number | null
           sleep_goal_minutes?: number | null
           theme?: string | null
           updated_at?: string | null
@@ -1018,13 +1114,19 @@ export type Database = {
           weight_unit?: string | null
         }
         Update: {
+          barbell_increment_kg?: number
           created_at?: string | null
           extra?: Json | null
           id?: string
           keep_screen_awake?: boolean
+          dumbbell_increment_kg?: number
+          heavy_attempt_risk_acknowledged?: boolean
+          machine_increment_kg?: number
+          notifications_enabled?: boolean
           onboarding_done?: boolean
           rest_timer_sound?: boolean
           rest_timer_vibrate?: boolean
+          routine_provisioned_version?: number | null
           sleep_goal_minutes?: number | null
           theme?: string | null
           updated_at?: string | null
@@ -1035,37 +1137,49 @@ export type Database = {
       }
       user_profiles: {
         Row: {
+          available_days: number[]
           birth_date: string | null
+          display_name: string | null
           goal: string | null
           height_cm: number | null
           id: string
+          relevant_pain_history: string | null
           program_start_date: string | null
           sex: string | null
           training_phase: string
+          training_experience: string | null
           updated_at: string | null
           weekly_goal: number | null
           weight_kg: number | null
         }
         Insert: {
+          available_days?: number[]
           birth_date?: string | null
+          display_name?: string | null
           goal?: string | null
           height_cm?: number | null
           id: string
+          relevant_pain_history?: string | null
           program_start_date?: string | null
           sex?: string | null
           training_phase?: string
+          training_experience?: string | null
           updated_at?: string | null
           weekly_goal?: number | null
           weight_kg?: number | null
         }
         Update: {
+          available_days?: number[]
           birth_date?: string | null
+          display_name?: string | null
           goal?: string | null
           height_cm?: number | null
           id?: string
+          relevant_pain_history?: string | null
           program_start_date?: string | null
           sex?: string | null
           training_phase?: string
+          training_experience?: string | null
           updated_at?: string | null
           weekly_goal?: number | null
           weight_kg?: number | null
@@ -1119,6 +1233,8 @@ export type Database = {
           exercise_id: string
           failure_allowed: boolean
           failure_risk_level: string
+          default_set_role: string
+          fixed_reps: number | null
           id: string
           is_hidden: boolean
           is_priority: boolean
@@ -1126,6 +1242,9 @@ export type Database = {
           notes: string | null
           order_index: number
           progression_type: string
+          prescription_locked: boolean
+          prescription_type: string
+          rep_max_target: number | null
           rest_seconds: number
           rir_max: number | null
           rir_min: number | null
@@ -1145,6 +1264,8 @@ export type Database = {
           exercise_id: string
           failure_allowed?: boolean
           failure_risk_level?: string
+          default_set_role?: string
+          fixed_reps?: number | null
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
@@ -1152,6 +1273,9 @@ export type Database = {
           notes?: string | null
           order_index: number
           progression_type?: string
+          prescription_locked?: boolean
+          prescription_type?: string
+          rep_max_target?: number | null
           rest_seconds: number
           rir_max?: number | null
           rir_min?: number | null
@@ -1171,6 +1295,8 @@ export type Database = {
           exercise_id?: string
           failure_allowed?: boolean
           failure_risk_level?: string
+          default_set_role?: string
+          fixed_reps?: number | null
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
@@ -1178,6 +1304,9 @@ export type Database = {
           notes?: string | null
           order_index?: number
           progression_type?: string
+          prescription_locked?: boolean
+          prescription_type?: string
+          rep_max_target?: number | null
           rest_seconds?: number
           rir_max?: number | null
           rir_min?: number | null
@@ -1209,6 +1338,7 @@ export type Database = {
       }
       workout_sessions: {
         Row: {
+          block_week_number: number | null
           cancel_reason: string | null
           cancelled_at: string | null
           created_at: string | null
@@ -1216,11 +1346,13 @@ export type Database = {
           finished_at: string | null
           id: string
           notes: string | null
+          program_block_id: string | null
           started_at: string
           user_id: string
           workout_id: string
         }
         Insert: {
+          block_week_number?: number | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           created_at?: string | null
@@ -1228,11 +1360,13 @@ export type Database = {
           finished_at?: string | null
           id?: string
           notes?: string | null
+          program_block_id?: string | null
           started_at?: string
           user_id: string
           workout_id: string
         }
         Update: {
+          block_week_number?: number | null
           cancel_reason?: string | null
           cancelled_at?: string | null
           created_at?: string | null
@@ -1240,6 +1374,7 @@ export type Database = {
           finished_at?: string | null
           id?: string
           notes?: string | null
+          program_block_id?: string | null
           started_at?: string
           user_id?: string
           workout_id?: string
@@ -1310,6 +1445,18 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      advance_active_dup_block_week: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      ensure_active_david_laid_routine_v5: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
+      provision_david_laid_public_dup_v5: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
       swap_workout_exercise: {
         Args: {
           p_replacement_exercise_id: string

@@ -3,6 +3,7 @@
 import type { SupabaseClient } from '@supabase/supabase-js'
 import type { Database } from '@/types/database'
 import { saveExerciseFeedback, saveSetLog } from '@/lib/queries/sessions'
+import type { AttemptResult } from '@/lib/training/dup-progression'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -15,7 +16,9 @@ export type SetLogPayload = {
   reps: number
   rir: number | null
   is_warmup: boolean
-  set_role: 'warmup' | 'top' | 'backoff' | 'standard'
+  set_role: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
+  attempt_result?: AttemptResult | null
+  is_deload?: boolean
   execution_quality: 'boa' | 'aceitavel' | 'ruim' | null
   pain_level: 'nenhuma' | 'leve' | 'moderada' | 'forte' | null
   rom_quality: 'completa' | 'adequada' | 'reduzida' | null
@@ -96,6 +99,8 @@ async function send(supabase: SupabaseDB, payload: SetLogPayload) {
     rir: payload.rir,
     is_warmup: payload.is_warmup,
     set_role: payload.set_role,
+    attempt_result: payload.attempt_result ?? null,
+    is_deload: payload.is_deload ?? false,
     execution_quality: payload.execution_quality,
     pain_level: payload.pain_level,
     rom_quality: payload.rom_quality,

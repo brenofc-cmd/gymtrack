@@ -19,6 +19,7 @@ interface ActiveWorkoutHeaderProps {
   classification?: DayClassification
   completedSets: number
   totalSets: number
+  blockWeekNumber?: number | null
   onExit: () => void
   onFinish: () => void
 }
@@ -30,6 +31,7 @@ export function ActiveWorkoutHeader({
   classification,
   completedSets,
   totalSets,
+  blockWeekNumber,
   onExit,
   onFinish,
 }: ActiveWorkoutHeaderProps) {
@@ -70,6 +72,11 @@ export function ActiveWorkoutHeader({
                 />
               )}
             </p>
+            {blockWeekNumber != null && (
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+                Bloco DUP · semana {blockWeekNumber}/9
+              </p>
+            )}
             <button
               type="button"
               onClick={() => setClockOpen(true)}

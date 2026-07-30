@@ -11,7 +11,7 @@ import {
   UserRound,
   BookOpenText,
 } from 'lucide-react'
-import { AVISO_GERAL } from '@/lib/routine/powerbuilding-v4'
+import { AVISO_GERAL } from '@/lib/routine/david-laid-public-dup-v5'
 
 const items = [
   { href: '/abdomen', label: 'Abdômen Diário', description: 'Rotina matinal independente', icon: Activity },

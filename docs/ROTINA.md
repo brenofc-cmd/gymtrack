@@ -1,82 +1,84 @@
-# Powerbuilding v4 — força técnica + hipertrofia
+# DUP público David Laid v5
 
-Fonte da verdade: [`lib/routine/powerbuilding-v4.ts`](../lib/routine/powerbuilding-v4.ts). A rotina é uma adaptação neutra para iniciante baseada em princípios públicos de powerbuilding; não é um programa oficial de atleta, não copia produto pago e não usa marca ou imagem de terceiros.
+Fonte canônica: [`lib/routine/david-laid-public-dup-v5.ts`](../lib/routine/david-laid-public-dup-v5.ts).
+
+O GymTrack separa duas coisas:
+
+- **prescrição pública bloqueada:** exercícios, ordem, séries, repetições e esforços RM;
+- **camada individual do GymTrack:** máximas de referência, training max, RIR, descanso, readiness, sugestões de carga, deload e bloco de nove semanas.
+
+Os cálculos do app não são apresentados como percentuais oficiais de David Laid.
 
 ## Rotina ativa
 
-| Dia | Sessão | Foco | Núcleo |
-| --- | --- | --- | --- |
-| Segunda | Push A | Força técnica | Supino inclinado top set/back-off, peito superior, ombros, tríceps, cable crunch |
-| Terça | Pull A | Força técnica | Puxada, remada apoiada, deltoide posterior e bíceps |
-| Quarta | Legs A | Força técnica | Hack top set/back-off, leg press, RDL, flexora, panturrilha, reverse crunch |
-| Quinta | Push B | Hipertrofia | Peito, deltoide lateral e tríceps |
-| Sexta | Pull B | Hipertrofia | Largura/espessura de costas, ombro posterior e bíceps |
-| Sábado | Legs B | Hipertrofia | Unilateral, glúteos, pernas, panturrilha, anti-extensão e anti-rotação |
-| Domingo | — | Descanso | A sequência continua no próximo dia útil se uma sessão for perdida |
+| Dia | Sessão | Prescrição |
+| --- | --- | --- |
+| A · Legs 1 | Segunda | Agachamento 5RM + 4×12; RDL 3×10; afundo caminhando 3×10/lado; glute-ham raise 3×10 |
+| B · Push 1 | Terça | Supino 1RM + 4×4; push press 3×4; paralelas 3×10; crucifixo, lateral, tríceps testa e extensão 3×10 |
+| C · Pull 1 | Quarta | Terra 3RM + 4×6; stiff-leg 3×10; barra fixa 3×8–10; Yates row, encolhimento, rosca direta e martelo 3×10 |
+| D · Legs 2 | Quinta | Agachamento 3RM + 4×8; RDL 3×10; afundo 3×10/lado; glute-ham raise 3×10 |
+| E · Push 2 | Sexta | Desenvolvimento 5RM + 4×12; supino inclinado 3×12; lateral, paralelas e dois exercícios de tríceps 3×10 |
+| F · Pull 2 | Sábado | Terra 1RM + 4×2; stiff-leg em déficit de 5–7,5 cm 3×10; barra fixa 3×8–10; Yates row, encolhimento e roscas 3×10 |
 
-O modo principal usa seis dias. O fallback de cinco dias mantém os treinos A–F intactos e rotativos entre semanas, sem amontoar duas sessões ou remover volume do ciclo.
+Alternativas permitidas pela ficha: reverse hyper no lugar do glute-ham raise e peck deck no lugar do crucifixo. A escolha não altera séries ou repetições. O stiff-leg em déficit é um exercício próprio no catálogo.
+
+## Provisionamento
+
+`provision_david_laid_public_dup_v5(uuid)` cria exatamente seis treinos e 41 entradas. A função:
+
+- exige o usuário autenticado;
+- é idempotente;
+- falha claramente se um item do catálogo estiver ausente;
+- arquiva fichas anteriores e cria backup JSON sem apagar sessões ou séries;
+- usa IDs separados para treino, entrada e substituição;
+- é chamada pelo onboarding e, como recuperação, pelo dashboard.
+
+`ensure_active_david_laid_routine_v5()` também garante um bloco ativo de nove semanas. Novas sessões recebem bloco e semana por trigger.
+
+## Máximas e sugestão de carga
+
+As quatro referências principais são agachamento, supino, terra e desenvolvimento:
+
+- `tested_1rm`: valor testado e informado;
+- `estimated_1rm`: estimativa Epley de uma série válida;
+- `training_max`: por padrão, 90% da máxima testada ou estimada;
+- ausência de dados: nenhuma carga é inventada.
+
+Toda carga exibida é rotulada como **“Progressão individual calculada pelo GymTrack”**. Tentativas RM exigem confirmação manual e resultado explícito: concluída, recorde, falha técnica, falha de força, pulada ou dor. O app nunca aumenta uma tentativa RM automaticamente.
 
 ## Progressão e segurança
 
-- Progressão dupla: aumentar somente quando todas as séries atingirem o topo da faixa, com RIR alvo, execução boa e sem dor relevante.
-- Top set/back-off: no máximo um composto por sessão; primeira série submáxima e back-offs 5–10% mais leves. Nunca é teste máximo.
-- Falha: bloqueada em compostos de alto risco. Em isoladores seguros, é opcional apenas na última série, após adaptação, sem dor e com prontidão boa.
-- Dor moderada/forte bloqueia aumento e orienta interrupção ou substituição indolor. O app não diagnostica lesões.
-- Aquecimentos progressivos usam `set_role = warmup` e não entram no volume, PR ou progressão.
+- séries de 8–10 usam progressão por repetições antes da carga;
+- acessórios só sobem após todas as séries, técnica boa, RIR adequado e ausência de dor;
+- duas falhas recentes, técnica ruim ou baixa recuperação reduzem conservadoramente a sugestão;
+- dor moderada/forte bloqueia progressão e orienta interrupção;
+- barra fixa diferencia peso corporal, assistência e carga adicional;
+- halteres são registrados por halter;
+- exercícios unilaterais registram repetições por lado e o volume multiplica os dois lados;
+- aquecimentos usam `set_role = warmup` e não entram no volume principal.
 
-## e1RM e recordes
+O readiness do dia pode manter, moderar ou bloquear a recomendação. O deload continua opcional e explícito; não reescreve a rotina pública.
 
-`lib/training/strength.ts` usa Epley: `peso × (1 + reps / 30)`. O e1RM só existe para séries de 3–10 repetições, execução boa, sem dor e sem amplitude reduzida. É uma estimativa, não recomendação para tentar 1RM.
+## Bloco de nove semanas
 
-PRs de carga e repetições ignoram aquecimento, dor moderada/forte, execução ruim e amplitude reduzida. Exercícios substitutos usam `performed_exercise_id`, portanto mantêm histórico e PR separados.
-
-## Prontidão e fases
-
-O check-in diário registra sono, energia, dor muscular/articular, estresse, motivação e sensação de recuperação:
-
-- `ready`: mantém o plano;
-- `attention`: +1 RIR e retirada opcional de uma série acessória;
-- `low_recovery`: -5–10% de carga estimada, RIR 3–4 e menos acessórios;
-- `stop_for_pain`: não executar o movimento afetado.
-
-A fase padrão é `fundamentals`. `intro_powerbuilding` depende de histórico, aderência, boa técnica, ausência de dor relevante, recuperação e confirmação explícita. `advanced_powerbuilding` nunca é ativada automaticamente.
-
-## Deload
-
-A prontidão reage dia a dia; o motor de deload (`lib/progression/deload.ts`) olha a janela de 2–3 semanas. Gatilhos (qualquer um):
-
-- **estagnação**: 3 semanas consecutivas sem progressão de carga em ≥2 compostos com sessões completas;
-- **baixa recuperação**: ≥4 check-ins `low_recovery` em 7 dias;
-- **queda de e1RM**: queda >10% em um composto por 2 sessões seguidas, sem dor aguda registrada (com dor, o caminho é a substituição segura/avaliação, não deload).
-
-Prescrição sugerida: 1 semana com −40% das séries dos acessórios e RIR 3–4 nos compostos, mantendo as cargas. **Nunca é automático**: a recomendação nasce com status `sugerido` em `deload_recommendations` (migration `20260729130000`) e só muda com decisão explícita no card do dashboard (`aceito`/`recusado`; `concluido` encerra a semana). Um índice único parcial garante no banco no máximo uma sugestão pendente por usuário.
-
-## Abdômen e volume
-
-O Abdômen Diário substitui o volume abdominal da ficha principal por sessões matinais independentes. A migration `20260717010046_daily_core.sql` preserva os exercícios antigos no histórico e os oculta em qualquer rotina ativa para evitar duplicidade; consulte [`ABDOMEN_DIARIO.md`](./ABDOMEN_DIARIO.md).
-
-Definição visual também depende de gordura corporal, alimentação, genética, sono e consistência; não existe redução localizada.
-
-`directVolumeByMuscle` conta séries diretas. `secondaryVolumeByMuscle` mostra separadamente contribuição estimada de compostos (0,5 por série), sem fingir precisão absoluta.
+A semana só avança depois de sessões concluídas A–F no mesmo bloco e na mesma semana. A checagem é transacional e idempotente no banco. Ao concluir a semana 9, o bloco termina e o próximo ciclo é apenas sugerido.
 
 ## Banco e rollback
 
-- `20260714105546_powerbuilding_schema.sql`: metadados de foco/progressão/top-back-off, função estética, risco, fase, papel da série, ROM, e1RM, `daily_readiness`, `content_sources`, RLS e grants explícitos.
-- `20260714105553_powerbuilding_routine_v4.sql`: backup JSON da ficha, arquivamento não destrutivo, seis treinos v4, catálogo/substituições e fontes com proveniência.
+- `20260730090000_david_laid_public_dup_v5.sql`: catálogo, prescrição, função de provisionamento, backup e índice de unicidade;
+- `20260730110000_dup_progression_blocks.sql`: referências, histórico, blocos, resultado RM, operação offline idempotente, RLS e avanço semanal.
 
-O rollback está documentado ao fim das migrations. Ele só remove registros v4 ainda sem histórico e restaura a ficha anterior pelo `routine_backups`; sessões e séries realizadas nunca são apagadas.
-
-## Fontes e proveniência
-
-O Centro de aprendizado distingue `direct_primary_source`, `official_secondary_source`, `scientific_evidence` e `implementation_inference`. Decisões do app não são apresentadas como declarações de David Laid. Fontes públicas e datas de acesso ficam em `content_sources`.
+Rollback nunca apaga `workout_sessions`, `set_logs` ou máximas do usuário. Em ambiente com dados reais, reverta o app e pause/archive o bloco conforme os comentários das migrations.
 
 ## Validação
 
 ```bash
-npm run typecheck
+npm ci
 npm run lint
-npm test -- --run
+npm run typecheck
+npm test
 npm run build
+npm run test:e2e
 ```
 
-Os testes cobrem progressão dupla, top/back-off, e1RM, PR válido/inválido, dor, falha, prontidão, sequência rotativa, volume, substituições, RLS estática, timer persistido e segurança/rollback das migrations.
+Os testes travam a rotina exata, o total de 41 entradas, catálogo sem fallback genérico, motor de carga, resultado RM, integridade offline, RLS estática, avanço semanal e preservação de histórico.

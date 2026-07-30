@@ -54,13 +54,22 @@ export function LoginForm() {
 
   async function handleGoogleLogin() {
     setLoading(true)
-    const supabase = createClient()
-    const { error } = await supabase.auth.signInWithOAuth({
-      provider: 'google',
-      options: { redirectTo: `${window.location.origin}/auth/callback` },
-    })
-    if (error) {
-      toast.error(error.message)
+    try {
+      const { error } = await createClient().auth.signInWithOAuth({
+        provider: 'google',
+        options: {
+          redirectTo: `${window.location.origin}/auth/callback`,
+          scopes: 'openid https://www.googleapis.com/auth/userinfo.email https://www.googleapis.com/auth/userinfo.profile',
+          queryParams: { prompt: 'select_account' },
+        },
+      })
+      if (error) throw error
+    } catch (error) {
+      if (process.env.NODE_ENV === 'development') console.error('Google OAuth start failed', error)
+      toast.error('Não foi possível iniciar o login com Google. Verifique se esta conta está autorizada no aplicativo.')
+    } finally {
+      // Na navegação OAuth bem-sucedida a página será descarregada; se não for,
+      // o botão volta a ficar disponível em vez de permanecer preso no loading.
       setLoading(false)
     }
   }

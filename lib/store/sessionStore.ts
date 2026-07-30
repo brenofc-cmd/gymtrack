@@ -1,6 +1,7 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { ExecutionQuality, PainLevel, RomQuality } from '@/types/database'
+import type { AttemptResult } from '@/lib/training/dup-progression'
 
 export interface LocalSetLog {
   /** ID idempotente compartilhado entre rascunho local e Supabase. */
@@ -10,7 +11,9 @@ export interface LocalSetLog {
   reps: number
   rir: number | null
   is_warmup: boolean
-  set_role?: 'warmup' | 'top' | 'backoff' | 'standard'
+  set_role?: 'warmup' | 'top' | 'backoff' | 'standard' | 'rm_effort' | 'deload'
+  attempt_result?: AttemptResult | null
+  is_deload?: boolean
   completed_at: string
 }
 

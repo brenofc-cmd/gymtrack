@@ -60,6 +60,7 @@ export async function getLastSetLogForExercise(
     .select('weight_kg, reps, rir, completed_at, session_id, performed_exercise_id, is_warmup')
     .in('workout_exercise_id', wexIds)
     .eq('is_warmup', false)
+    .eq('is_deload', false)
     .order('completed_at', { ascending: false })
     .limit(50)
 
@@ -97,6 +98,7 @@ export async function getLastSessionSets(
   is_warmup: boolean
   pain_level: string | null
   execution_quality: string | null
+  attempt_result: string | null
   completed_at: string | null
 }>> {
   const { data: wexes } = await supabase
@@ -110,9 +112,10 @@ export async function getLastSessionSets(
 
   const { data: logs } = await supabase
     .from('set_logs')
-    .select('set_number, weight_kg, reps, rir, is_warmup, pain_level, execution_quality, session_id, completed_at, performed_exercise_id')
+    .select('set_number, weight_kg, reps, rir, is_warmup, pain_level, execution_quality, attempt_result, session_id, completed_at, performed_exercise_id')
     .in('workout_exercise_id', wexIds)
     .is('performed_exercise_id', null)
+    .eq('is_deload', false)
     .order('completed_at', { ascending: false })
     .limit(60)
 
@@ -145,6 +148,7 @@ export async function getLastSessionSets(
       is_warmup: l.is_warmup,
       pain_level: l.pain_level,
       execution_quality: l.execution_quality,
+      attempt_result: l.attempt_result,
       completed_at: l.completed_at,
     }))
     .sort((a, b) => a.set_number - b.set_number)
@@ -171,6 +175,7 @@ export async function getExercisePR(
     .select('weight_kg, reps, completed_at, session_id, is_warmup, pain_level, execution_quality, rom_quality')
     .in('workout_exercise_id', wexIds)
     .eq('is_warmup', false)
+    .eq('is_deload', false)
 
   if (!logs || logs.length === 0) return null
 
@@ -240,6 +245,8 @@ export async function getExerciseProgressHistory(
     .from('set_logs')
     .select('weight_kg, reps, completed_at, session_id')
     .in('workout_exercise_id', wexIds)
+    .eq('is_warmup', false)
+    .eq('is_deload', false)
     .order('completed_at', { ascending: false })
     .limit(limit * 10)
 
@@ -319,7 +326,7 @@ export async function getExerciseTrendSessions(
   const { data: logs } = await supabase
     .from('set_logs')
     .select(
-      'session_id, weight_kg, reps, rir, is_warmup, pain_level, execution_quality, performed_exercise_id, workout_exercise_id'
+      'session_id, weight_kg, reps, rir, is_warmup, is_deload, pain_level, execution_quality, performed_exercise_id, workout_exercise_id'
     )
     .in('session_id', sessionRows.map((session) => session.id))
 
@@ -329,12 +336,13 @@ export async function getExerciseTrendSessions(
     reps: number
     rir: number | null
     is_warmup: boolean
+    is_deload: boolean
     pain_level: string | null
     execution_quality: string | null
     performed_exercise_id: string | null
     workout_exercise_id: string
   }>).filter((log) => {
-    if (log.is_warmup) return false
+    if (log.is_warmup || log.is_deload) return false
     // Substituição: vale o exercício realmente executado.
     if (log.performed_exercise_id) return log.performed_exercise_id === exerciseId
     return plannedIds.includes(log.workout_exercise_id)

@@ -145,7 +145,7 @@ export default async function AprendizadoPage() {
               <p className="mt-1 text-[9px] text-muted-foreground">Acesso: {source.accessed_on}</p>
             </article>
           ))}
-          {!sources?.length && <p className="text-xs text-muted-foreground">As fontes aparecerão após a migration v4.</p>}
+          {!sources?.length && <p className="text-xs text-muted-foreground">As fontes aparecerão após a aplicação das migrations.</p>}
         </div>
       </section>
     </div>

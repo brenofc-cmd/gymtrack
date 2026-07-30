@@ -1,28 +1,49 @@
 /*
- * Service worker mínimo do GymTrack — shell offline.
+ * Service worker do GymTrack — shell offline com escopo de privacidade.
  *
- * Escopo deliberadamente pequeno:
- * - precache do shell (/, /treinos, /abdomen, /offline);
- * - stale-while-revalidate para estáticos (/_next/static, /exercises, fontes);
- * - network-first para navegações HTML, com fallback ao cache e depois /offline;
- * - NUNCA intercepta métodos de escrita nem chamadas ao Supabase — a
- *   sincronização de dados é responsabilidade exclusiva da fila idempotente
- *   (lib/offline/syncQueue.ts e lib/daily-core/syncQueue.ts).
+ * REGRA CENTRAL (corrigida na auditoria 10/10): páginas autenticadas contêm
+ * dados privados do usuário (séries, peso, alimentação). A versão anterior
+ * fazia `cache.put` de QUALQUER navegação, então:
+ *   - após logout, uma página com dados privados podia ser servida do cache;
+ *   - em aparelho compartilhado, o usuário B podia ver a tela do usuário A.
+ * Agora só rotas do SHELL PÚBLICO são gravadas em cache. Rotas autenticadas
+ * usam network-only com fallback para /offline — nunca são persistidas.
+ *
+ * O SW também não intercepta chamadas ao Supabase: mutações offline continuam
+ * exclusivamente na fila idempotente (lib/offline/syncQueue.ts).
  *
  * Versionamento espelhado em lib/offline/swCache.ts (teste garante paridade).
- * Sem skipWaiting agressivo: a nova versão assume quando as abas antigas fecham.
  */
 
 const CACHE_PREFIX = 'gymtrack-shell-'
-const CACHE_VERSION = 'v1'
+const CACHE_VERSION = 'v2'
 const CACHE_NAME = `${CACHE_PREFIX}${CACHE_VERSION}`
-const PRECACHE_URLS = ['/', '/treinos', '/abdomen', '/offline']
+
+/**
+ * Rotas seguras para cache: não exigem sessão e não contêm dados de usuário.
+ * `/` fica de fora de propósito — é o dashboard autenticado.
+ */
+const PUBLIC_SHELL = ['/offline', '/login']
+
+function isPublicShell(pathname) {
+  return PUBLIC_SHELL.includes(pathname)
+}
+
+function isStaticAsset(url) {
+  return (
+    url.pathname.startsWith('/_next/static/') ||
+    url.pathname.startsWith('/exercises/') ||
+    url.pathname.startsWith('/icons/') ||
+    url.pathname === '/manifest.webmanifest' ||
+    url.pathname.endsWith('.woff2')
+  )
+}
 
 self.addEventListener('install', (event) => {
   event.waitUntil(
     caches
       .open(CACHE_NAME)
-      .then((cache) => cache.addAll(PRECACHE_URLS))
+      .then((cache) => cache.addAll(PUBLIC_SHELL))
       .catch(() => {})
   )
 })
@@ -42,39 +63,62 @@ self.addEventListener('activate', (event) => {
   )
 })
 
-function isStaticAsset(url) {
-  return (
-    url.pathname.startsWith('/_next/static/') ||
-    url.pathname.startsWith('/exercises/') ||
-    url.pathname.startsWith('/icons/') ||
-    url.pathname.endsWith('.woff2')
-  )
-}
+/**
+ * Logout e troca de usuário: o app envia esta mensagem para descartar
+ * qualquer resposta guardada antes de outra conta assumir o aparelho.
+ */
+self.addEventListener('message', (event) => {
+  if (event.data && event.data.type === 'CLEAR_PRIVATE_CACHE') {
+    event.waitUntil(
+      caches
+        .keys()
+        .then((names) =>
+          Promise.all(
+            names.filter((name) => name.startsWith(CACHE_PREFIX)).map((name) => caches.delete(name))
+          )
+        )
+        .then(() => caches.open(CACHE_NAME).then((cache) => cache.addAll(PUBLIC_SHELL)))
+        .catch(() => {})
+    )
+  }
+  // Atualização controlada: só troca de versão quando a página pedir.
+  if (event.data && event.data.type === 'SKIP_WAITING') {
+    self.skipWaiting()
+  }
+})
 
 self.addEventListener('fetch', (event) => {
   const { request } = event
   if (request.method !== 'GET') return
 
   const url = new URL(request.url)
+  // Nunca intercepta outros hosts (inclusive Supabase).
   if (url.origin !== self.location.origin) return
 
   if (request.mode === 'navigate') {
-    event.respondWith(
-      fetch(request)
-        .then((response) => {
-          const copy = response.clone()
-          caches
-            .open(CACHE_NAME)
-            .then((cache) => cache.put(request, copy))
-            .catch(() => {})
-          return response
-        })
-        .catch(() =>
-          caches
-            .match(request)
-            .then((cached) => cached || caches.match('/offline'))
-        )
-    )
+    // Rota pública do shell: network-first COM cache.
+    if (isPublicShell(url.pathname)) {
+      event.respondWith(
+        fetch(request)
+          .then((response) => {
+            // Só guarda respostas OK e não-redirecionadas: um 302 para /login
+            // salvo como se fosse página válida quebraria a navegação.
+            if (response.ok && response.type !== 'opaqueredirect' && !response.redirected) {
+              const copy = response.clone()
+              caches.open(CACHE_NAME).then((cache) => cache.put(request, copy)).catch(() => {})
+            }
+            return response
+          })
+          .catch(() =>
+            caches.match(request).then((cached) => cached || caches.match('/offline'))
+          )
+      )
+      return
+    }
+
+    // Rota autenticada: network-only. Sem rede, cai na página offline —
+    // NUNCA serve conteúdo privado guardado.
+    event.respondWith(fetch(request).catch(() => caches.match('/offline')))
     return
   }
 

@@ -3,7 +3,8 @@ import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { getExerciseImage } from '@/lib/exercise-media'
-import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/powerbuilding-v4'
+import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
+import { prescriptionLabel } from '@/lib/routine/david-laid-public-dup-v5'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 interface ExerciseListItemProps {
@@ -52,9 +53,7 @@ export function ExerciseListItem({
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Repeat className="w-3 h-3" />
-            {workoutExercise.target_sets}×{workoutExercise.target_reps_min}
-            {workoutExercise.target_reps_min !== workoutExercise.target_reps_max &&
-              `-${workoutExercise.target_reps_max}`}
+            Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
           </span>
           {workoutExercise.rir_min != null && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">

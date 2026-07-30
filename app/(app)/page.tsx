@@ -19,12 +19,13 @@ import {
 } from '@/lib/queries/sessions'
 import { getStreakStats } from '@/lib/utils/streak'
 import { formatVolume } from '@/lib/utils/volume'
-import { DIA_LABEL } from '@/lib/routine/powerbuilding-v4'
+import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import { getDeloadContext } from '@/lib/queries/deload'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
 import { DeloadCard } from '@/components/dashboard/DeloadCard'
+import { ensureActiveDavidLaidRoutineV5, getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
 
 function formatDate(): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -52,6 +53,15 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
+  const { data: onboarding } = await supabase
+    .from('user_preferences')
+    .select('onboarding_done')
+    .eq('id', user.id)
+    .maybeSingle()
+  if (onboarding?.onboarding_done) {
+    await ensureActiveDavidLaidRoutineV5(supabase)
+  }
+
   // Falha de banco NÃO vira fallback silencioso para o treino A: o sentinel
   // 'error' rende um estado de erro recuperável no lugar do card.
   const suggestedLetter = await getSuggestedWorkout(supabase, user.id).catch(
@@ -71,6 +81,8 @@ export default async function DashboardPage() {
     nutritionGoal,
     hydrationRows,
     deload,
+    activeBlock,
+    referenceMaxes,
   ] = await Promise.all([
     suggestedLetter && suggestedLetter !== 'error'
       ? getWorkoutWithExercises(supabase, user.id, suggestedLetter).catch(() => 'error' as const)
@@ -124,6 +136,8 @@ export default async function DashboardPage() {
       active: null,
       suggestion: null,
     })),
+    getActiveDupBlock(supabase, user.id).catch(() => null),
+    getReferenceMaxes(supabase, user.id).catch(() => []),
   ])
 
   const workoutLoadFailed = workoutResult === 'error'
@@ -182,6 +196,12 @@ export default async function DashboardPage() {
   const waterGoal = nutritionGoal.data?.water_ml ?? 3000
   const readinessStatus = latestReadiness.data?.recommendation ?? 'ready'
   const readinessGood = readinessStatus === 'ready'
+  const primaryRm = workout?.workout_exercises.find(
+    (item) => item.prescription_type === 'rep_max_effort'
+  )
+  const primaryReference = primaryRm
+    ? referenceMaxes.find((item) => item.exercise_id === primaryRm.exercise_id)
+    : null
 
   return (
     <div className="mx-auto flex w-full max-w-[520px] flex-col gap-3.5 px-4 py-5 lg:py-7">
@@ -202,6 +222,37 @@ export default async function DashboardPage() {
           workoutName={activeSession.workout?.name ?? 'Treino'}
           startedAt={activeSession.started_at}
         />
+      )}
+
+      {activeBlock && (
+        <section className="surface-card p-4" aria-label="Progresso do bloco DUP">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <p className="metric-label text-primary">Bloco DUP · ciclo {activeBlock.cycle_number}</p>
+              <p className="mt-1 text-sm font-bold">Semana {activeBlock.week_number} de {activeBlock.total_weeks}</p>
+            </div>
+            <span className="font-mono text-sm font-bold text-primary">
+              {Math.round((activeBlock.week_number / activeBlock.total_weeks) * 100)}%
+            </span>
+          </div>
+          <div className="mt-3 h-2 overflow-hidden rounded-full bg-secondary">
+            <div className="h-full rounded-full bg-primary" style={{ width: `${(activeBlock.week_number / activeBlock.total_weeks) * 100}%` }} />
+          </div>
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            {referenceMaxes.length}/4 máximas principais cadastradas · Progressão individual calculada pelo GymTrack.
+          </p>
+          {primaryRm && (
+            <div className="mt-3 rounded-xl bg-secondary/45 px-3 py-2.5">
+              <p className="metric-label">Próxima meta de força</p>
+              <p className="mt-1 text-xs font-bold">
+                {primaryRm.exercise.name_pt} · {primaryRm.rep_max_target}RM
+              </p>
+              <p className="mt-0.5 text-[10px] text-muted-foreground">
+                Training max: {primaryReference?.training_max == null ? 'sem referência — escolha manualmente' : `${primaryReference.training_max} kg`}
+              </p>
+            </div>
+          )}
+        </section>
       )}
 
       <DeloadCard

@@ -1,4 +1,4 @@
-import { TRAINING_FOCUS_LABEL, type TrainingFocus } from '@/lib/routine/powerbuilding-v4'
+import { TRAINING_FOCUS_LABEL, type TrainingFocus } from '@/lib/routine/david-laid-public-dup-v5'
 import { cn } from '@/lib/utils'
 
 /**
@@ -18,6 +18,9 @@ export const DAY_CLASSIFICATION_LABEL: Record<DayClassification, string> = {
 
 const CLASSIFICATION_STYLE: Record<DayClassification, string> = {
   strength_technique: 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#5ba8ff]',
+  strength_hypertrophy: 'border-[#c58bff]/30 bg-[#c58bff]/10 text-[#c58bff]',
+  strength: 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#5ba8ff]',
+  max_strength_hypertrophy: 'border-[#ffb547]/30 bg-[#ffb547]/10 text-[#ffcf7a]',
   hypertrophy: 'border-primary/30 bg-primary/10 text-primary',
   mixed: 'border-[#c58bff]/30 bg-[#c58bff]/10 text-[#c58bff]',
   recovery: 'border-[#62dc91]/30 bg-[#62dc91]/10 text-[#62dc91]',
@@ -32,6 +35,7 @@ export function classifyDay(
   focus: string | null | undefined,
   exercises: Array<{ exercise_type?: string | null }> = []
 ): DayClassification {
+  if (focus === 'strength_hypertrophy' || focus === 'max_strength_hypertrophy' || focus === 'strength' || focus === 'rest') return focus
   if (focus === 'recovery') return 'recovery'
   const compounds = exercises.filter((item) => item.exercise_type === 'composto').length
   const isolators = exercises.filter(

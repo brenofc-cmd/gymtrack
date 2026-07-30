@@ -42,6 +42,8 @@ export async function getWeeklyVolume(
       .from('set_logs')
       .select('session_id, weight_kg, reps')
       .in('session_id', sessionIds)
+      .eq('is_warmup', false)
+      .eq('is_deload', false)
 
     for (const log of (logs ?? []) as Array<{
       session_id: string
@@ -89,6 +91,7 @@ export async function getExecutedWeeklyVolumeByMuscle(
     .from('set_logs')
     .select('is_warmup, pain_level, performed_exercise_id, workout_exercise_id')
     .in('session_id', sessionIds)
+    .eq('is_deload', false)
 
   const rows = (logs ?? []) as Array<{
     is_warmup: boolean

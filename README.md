@@ -1,6 +1,6 @@
 # GymTrack
 
-App pessoal de acompanhamento de treino (Next.js 16 App Router + Supabase) com a rotina **Powerbuilding v4** — 6 dias (A–C força técnica, D–F hipertrofia, domingo descanso), progressão dupla com RIR, top set/back-off controlado por fase de treinamento, prontidão diária, motor de deload, Abdômen Diário independente, cronômetro persistido por timestamp, fila offline idempotente e histórico nunca apagado (cancelamento de sessão é lógico).
+App pessoal de acompanhamento de treino (Next.js 16 App Router + Supabase) com a divisão **DUP pública associada a David Laid v5**: seis dias A–F, prescrição pública bloqueada, progressão individual transparente do GymTrack, referências de máxima, bloco de nove semanas, readiness, deload, Abdômen Diário independente, cronômetro persistido e fila offline idempotente. Cancelamentos são lógicos e o histórico nunca é apagado.
 
 Produção: <https://brendongym.vercel.app>
 
@@ -8,7 +8,8 @@ Produção: <https://brendongym.vercel.app>
 
 | Documento | Conteúdo |
 |---|---|
-| [docs/ROTINA.md](docs/ROTINA.md) | Rotina v4, progressão, prontidão, deload, migrations e rollback |
+| [docs/ROTINA.md](docs/ROTINA.md) | DUP público v5, máximas, bloco, segurança, migrations e rollback |
+| [docs/IMPLEMENTACAO_DUP_V5.md](docs/IMPLEMENTACAO_DUP_V5.md) | Entrega, fluxo funcional, validação e limitações reais |
 | [docs/ABDOMEN_DIARIO.md](docs/ABDOMEN_DIARIO.md) | Abdômen Diário, offline/service worker, Wake Lock |
 | [docs/PESQUISA_REFERENCIAS_PRODUTO_E_TREINO.md](docs/PESQUISA_REFERENCIAS_PRODUTO_E_TREINO.md) | Matriz de 8 apps, dossiê David Laid, evidência científica |
 | [docs/RELATORIO_AUDITORIA.md](docs/RELATORIO_AUDITORIA.md) | Execução da auditoria P0/P1 (histórico) |
@@ -44,13 +45,13 @@ Sem as variáveis, o app sobe e todas as rotas protegidas redirecionam para `/lo
 
 ## Banco de dados
 
-Migrations em `supabase/migrations/` (ordem cronológica; todas idempotentes, com bloco de rollback comentado no cabeçalho — rollback **apenas para ambientes novos, nunca em produção**):
+Migrations em `supabase/migrations/` (ordem cronológica, com rollback seguro documentado):
 
 ```bash
 supabase db push
 ```
 
-Ou aplique cada arquivo em ordem no SQL Editor do Dashboard. Nenhuma migration escreve em `workout_sessions`/`set_logs`/`daily_core_*` históricos (teste estático garante). Seed opcional do catálogo: `npm run seed` (usa a service role; requer `.env.local`).
+Ou aplique cada arquivo em ordem no SQL Editor do Dashboard. A v5 arquiva a ficha anterior e preserva `workout_sessions`, `set_logs` e dados do Abdômen Diário. Seed opcional do catálogo: `npm run seed` (usa a service role; requer `.env.local`).
 
 ## Rodando
 
@@ -91,5 +92,6 @@ Gera `gymtrack-<data>.zip` a partir do índice do git (sem `node_modules`, `.nex
 
 - Sem validação de RLS contra Supabase real no ambiente de desenvolvimento (sem Docker/CLI); validar em staging conforme docs/RELATORIO_CORRECOES_FINAIS.md.
 - E2E cobre o shell sem sessão; fluxos autenticados são cobertos por testes de unidade/componente.
-- Vídeos de execução são placeholder intencional (imagens licenciadas do Free Exercise DB já incluídas).
+- A referência textual adicional anexada ao pedido chegou vazia; a prescrição foi travada pelo prompt mestre fornecido.
+- As imagens locais do catálogo são demonstrativas; validar licenças e substituir assets antes de distribuição comercial.
 - `/alimentacao` e `/suplementos` têm escopo parcial (ver seção de escopo complementar no relatório de correções).
