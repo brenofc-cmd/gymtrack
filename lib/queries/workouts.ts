@@ -6,7 +6,6 @@ import type {
   WorkoutWithExercises,
   WorkoutExerciseWithExercise,
 } from '@/types/database'
-import { todayLetter } from '@/lib/utils/weekday'
 import { ROUTINE_VERSION } from '@/lib/routine/david-laid-public-dup-v5'
 import { nextRotatingWorkout } from '@/lib/training/schedule'
 
@@ -87,10 +86,9 @@ export async function getWorkoutById(
 }
 
 /**
- * Treino sugerido do dia:
- * Domingo continua como descanso. Nos demais dias, a agenda mostra o dia
- * planejado quando não há histórico e passa a continuar a sequência após o
- * último treino concluído, evitando pular uma sessão perdida.
+ * Próximo treino da sequência A–F. A coluna day_of_week é somente uma
+ * previsão de calendário: faltar em um dia (inclusive domingo) não remove
+ * nem desloca sessões. Um pulo explícito também avança a rotação.
  */
 export async function getSuggestedWorkout(
   supabase: SupabaseDB,
@@ -111,35 +109,46 @@ export async function getSuggestedWorkout(
 
   if (workouts.length === 0) return 'A'
 
-  const scheduledToday = todayLetter()
-  if (scheduledToday === null) return null
-
   const rotation = workouts
     .map((w) => w.letter as WorkoutLetter | null)
     .filter((l): l is WorkoutLetter => l != null)
 
-  if (rotation.length === 0) return scheduledToday
+  if (rotation.length === 0) return 'A'
 
-  const { data: lastSession } = await supabase
+  const [{ data: lastSession }, { data: lastSkip }] = await Promise.all([
+    supabase
     .from('workout_sessions')
-    .select('workout_id')
+    .select('workout_id, finished_at')
     .eq('user_id', userId)
     .not('finished_at', 'is', null)
     .order('finished_at', { ascending: false })
     .limit(1)
-    .single()
+    .maybeSingle(),
+    supabase
+      .from('training_sequence_events')
+      .select('workout_id, occurred_at')
+      .eq('user_id', userId)
+      .eq('event_type', 'skipped')
+      .order('occurred_at', { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+  ])
 
-  if (!lastSession) return rotation.includes(scheduledToday) ? scheduledToday : rotation[0]
+  const lastAction = lastSkip && (!lastSession || new Date(lastSkip.occurred_at).getTime() > new Date(lastSession.finished_at ?? 0).getTime())
+    ? lastSkip
+    : lastSession
+
+  if (!lastAction) return rotation[0]
 
   const { data: workout } = await supabase
     .from('workouts')
     .select('letter')
-    .eq('id', (lastSession as { workout_id: string }).workout_id)
+    .eq('id', lastAction.workout_id)
     .single()
 
-  if (!workout) return rotation.includes(scheduledToday) ? scheduledToday : rotation[0]
+  if (!workout) return rotation[0]
 
   const lastLetter = (workout as { letter: string }).letter as WorkoutLetter
   if (!rotation.includes(lastLetter)) return rotation[0]
-  return nextRotatingWorkout(scheduledToday, lastLetter)
+  return nextRotatingWorkout(null, lastLetter)
 }

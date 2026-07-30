@@ -13,13 +13,16 @@ export function rotatingCycle(startAfter: WorkoutLetter | null, sessions: number
   return Array.from({ length: sessions }, (_, index) => ROTATION[(start + index) % ROTATION.length])
 }
 
-/** Mantém domingo como descanso e continua a sequência quando um dia é perdido. */
+/**
+ * A agenda é uma rotação, não uma regra de calendário: após concluir ou
+ * pular um treino, o próximo é sempre a letra seguinte. O dia da semana só
+ * serve como previsão visual e nunca descarta uma sessão pendente.
+ */
 export function nextRotatingWorkout(
-  scheduledToday: WorkoutLetter | null,
+  _scheduledToday: WorkoutLetter | null,
   lastCompleted: WorkoutLetter | null
 ): WorkoutLetter | null {
-  if (scheduledToday === null) return null
-  if (lastCompleted === null) return scheduledToday
+  if (lastCompleted === null) return ROTATION[0]
   const index = ROTATION.indexOf(lastCompleted)
   return ROTATION[(index + 1) % ROTATION.length]
 }

@@ -19,12 +19,12 @@ import {
 } from '@/lib/queries/sessions'
 import { getStreakStats } from '@/lib/utils/streak'
 import { formatVolume } from '@/lib/utils/volume'
-import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import { getDeloadContext } from '@/lib/queries/deload'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
 import { DeloadCard } from '@/components/dashboard/DeloadCard'
+import { SkipWorkoutButton } from '@/components/dashboard/SkipWorkoutButton'
 import { ensureActiveDavidLaidRoutineV5, getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
 
 function formatDate(): string {
@@ -264,7 +264,7 @@ export default async function DashboardPage() {
 
       <DailyCoreHomeCard userId={user.id} />
 
-      {workout ? (
+      {!activeSession && workout ? (
         <section className="relative overflow-hidden rounded-[20px] border border-border bg-card p-5">
           <span
             aria-hidden="true"
@@ -275,10 +275,10 @@ export default async function DashboardPage() {
           <div className="relative">
             <div className="mb-3.5 flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-primary" />
-              <span className="metric-label text-primary">Treino de hoje</span>
+              <span className="metric-label text-primary">Próximo treino da sequência</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Treino {workout.letter} · {workout.day_of_week ? DIA_LABEL[workout.day_of_week] : 'Hoje'}
+              Treino {workout.letter} · sequência flexível A–F
             </p>
             <div className="mt-1">
               <WorkoutFocusBadge
@@ -319,6 +319,10 @@ export default async function DashboardPage() {
               Ver treino
               <ArrowRight className="size-4" strokeWidth={2.4} />
             </Link>
+            <SkipWorkoutButton userId={user.id} workoutId={workout.id} workoutLetter={workout.letter ?? ''} />
+            <p className="mt-2 text-center text-[10px] text-muted-foreground">
+              Se não treinar hoje, mantenha este treino pendente. Pule somente se decidir removê-lo da rotação.
+            </p>
           </div>
         </section>
       ) : workoutLoadFailed ? (

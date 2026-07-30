@@ -84,6 +84,8 @@ describe('Prontidão, falha e agenda flexível', () => {
 
   it('continua a sequência perdida e oferece ciclo condensado sem amontoar treinos', () => {
     expect(nextRotatingWorkout('D', 'B')).toBe('C')
+    expect(nextRotatingWorkout(null, 'B')).toBe('C')
+    expect(nextRotatingWorkout('F', null)).toBe('A')
     expect(rotatingCycle('E', 5)).toEqual(['F', 'A', 'B', 'C', 'D'])
   })
 })

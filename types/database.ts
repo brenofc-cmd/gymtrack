@@ -228,6 +228,16 @@ export type BlockExerciseChoiceRow = {
   updated_at: string
 }
 
+export type TrainingSequenceEventRow = {
+  id: string
+  user_id: string
+  workout_id: string
+  event_type: 'skipped'
+  occurred_at: string
+  reason: string | null
+  created_at: string
+}
+
 type DbTable<Row, Insert, Update = Partial<Insert>> = {
   Row: Row
   Insert: Insert
@@ -870,6 +880,10 @@ export type Database = {
       block_exercise_choices: DbTable<
         BlockExerciseChoiceRow,
         Omit<BlockExerciseChoiceRow, 'updated_at'> & Partial<Pick<BlockExerciseChoiceRow, 'updated_at'>>
+      >
+      training_sequence_events: DbTable<
+        TrainingSequenceEventRow,
+        Pick<TrainingSequenceEventRow, 'user_id' | 'workout_id'> & Partial<Omit<TrainingSequenceEventRow, 'user_id' | 'workout_id' | 'id' | 'created_at' | 'occurred_at'>>
       >
       set_logs: {
         Row: {

@@ -4,7 +4,6 @@ import { CheckCircle2, ChevronRight, Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getWorkouts, getSuggestedWorkout } from '@/lib/queries/workouts'
 import { getLastSessionsPerWorkout } from '@/lib/queries/sessions'
-import { DIA_LABEL } from '@/lib/routine/david-laid-public-dup-v5'
 
 export default async function TreinosPage() {
   const supabase = await createClient()
@@ -24,7 +23,7 @@ export default async function TreinosPage() {
     <div className="mx-auto w-full max-w-[520px] px-4 py-5 lg:py-7">
       <header className="mb-5">
         <h1 className="text-[22px] font-extrabold tracking-tight">Treino</h1>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">Rotina PPL · 6 dias por semana · v3</p>
+        <p className="mt-1 text-[12.5px] text-muted-foreground">DUP PPL · sequência flexível A–F</p>
       </header>
 
       {workouts.length === 0 ? (
@@ -54,7 +53,7 @@ export default async function TreinosPage() {
                   <span className="block text-sm font-bold">
                     {workout.name}
                     <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                      · {workout.day_of_week ? DIA_LABEL[workout.day_of_week].replace('-feira', '') : ''}
+                      · posição {workout.letter} da sequência
                     </span>
                   </span>
                   <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">{workout.objective}</span>
@@ -64,7 +63,7 @@ export default async function TreinosPage() {
                   </span>
                 </span>
                 {isToday ? (
-                  <span className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">Hoje</span>
+                  <span className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">Próximo</span>
                 ) : last?.finished_at ? (
                   <CheckCircle2 className="size-4 shrink-0 text-[#4ad17e]" />
                 ) : (
