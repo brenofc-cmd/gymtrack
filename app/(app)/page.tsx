@@ -20,6 +20,7 @@ import {
 import { getStreakStats } from '@/lib/utils/streak'
 import { formatVolume } from '@/lib/utils/volume'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
+import { RoutineMethodInfo } from '@/components/workout/RoutineMethodInfo'
 import { getDeloadContext } from '@/lib/queries/deload'
 import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
@@ -294,6 +295,16 @@ export default async function DashboardPage() {
             <p className="mt-1 text-[13px] capitalize text-muted-foreground">
               {muscleNames} · {workout.workout_exercises.length} exercícios · estimativa ~{minutes} min
             </p>
+
+            <RoutineMethodInfo
+              routineVersion={workout.routine_version}
+              exercises={workout.workout_exercises.map((we) => ({
+                prescription_type: we.prescription_type,
+                target_reps_min: we.target_reps_min,
+                target_reps_max: we.target_reps_max,
+              }))}
+              className="mt-3"
+            />
 
             <div className="my-4 flex items-stretch gap-4">
               <div>

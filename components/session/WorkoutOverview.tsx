@@ -3,7 +3,9 @@
 import { Check, ChevronRight, Clock, Dumbbell } from 'lucide-react'
 import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
+import { RoutineMethodInfo } from '@/components/workout/RoutineMethodInfo'
 import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
+import { formatRest } from '@/lib/training/prescription'
 import type { LocalSetLog } from '@/lib/store/sessionStore'
 import type { WorkoutExerciseWithExercise, WorkoutLetter } from '@/types/database'
 
@@ -12,10 +14,11 @@ type WorkoutOverviewProps = {
   sets: Record<string, LocalSetLog[]>
   skippedExerciseIds: string[]
   workoutLetter: WorkoutLetter
+  routineVersion?: number | null
   onOpenExercise: (index: number) => void
 }
 
-export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLetter, onOpenExercise }: WorkoutOverviewProps) {
+export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLetter, routineVersion, onOpenExercise }: WorkoutOverviewProps) {
   return (
     <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
       <div className="mb-4">
@@ -28,6 +31,8 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
           do agachamento, supino ou levantamento terra.
         </p>
       </div>
+
+      <RoutineMethodInfo routineVersion={routineVersion} exercises={exercises} className="mb-3" />
 
       <ol className="space-y-2.5">
         {exercises.map((item, index) => {
@@ -59,7 +64,7 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
                   </span>
                   <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><Dumbbell className="size-3" />{completed}/{item.target_sets} séries</span>
-                    <span className="inline-flex items-center gap-1"><Clock className="size-3" />{item.rest_seconds}s descanso</span>
+                    <span className="inline-flex items-center gap-1"><Clock className="size-3" />Descanso: {formatRest(item).label}</span>
                     {item.superset_group != null && (
                       <span className="font-semibold text-primary">Superset {item.superset_group}</span>
                     )}

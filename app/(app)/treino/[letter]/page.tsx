@@ -14,6 +14,7 @@ import {
 } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import { getActiveDupBlock } from '@/lib/queries/dup-program'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
+import { RoutineMethodInfo } from '@/components/workout/RoutineMethodInfo'
 import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
 import { exerciseDetailHref } from '@/lib/navigation/exercise-detail'
 import type { WorkoutLetter } from '@/types/database'
@@ -112,10 +113,21 @@ export default async function TreinoPage(props: {
           {workout.objective && (
             <p className="mt-2 text-sm text-muted-foreground">{workout.objective}</p>
           )}
-          <p className="mt-2 text-xs text-muted-foreground">
-            Powerbuilding DUP Adaptado — 8 semanas. Inspirado em powerbuilding,
-            sem testes máximos e ajustado para recuperação e técnica.
-          </p>
+          {workout.routine_version === 6 && (
+            <p className="mt-2 text-xs text-muted-foreground">
+              Powerbuilding DUP Adaptado — 8 semanas. Inspirado em powerbuilding,
+              sem testes máximos e ajustado para recuperação e técnica.
+            </p>
+          )}
+          <RoutineMethodInfo
+            routineVersion={workout.routine_version}
+            exercises={workout.workout_exercises.map((we) => ({
+              prescription_type: we.prescription_type,
+              target_reps_min: we.target_reps_min,
+              target_reps_max: we.target_reps_max,
+            }))}
+            className="mt-3"
+          />
         </div>
 
         {/* Notas */}

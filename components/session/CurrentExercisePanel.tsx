@@ -27,7 +27,12 @@ import { PreviousPerformanceSummary } from './PreviousPerformanceSummary'
 import { WarmupSetList } from './WarmupSetList'
 import { WorkingSetList } from './WorkingSetList'
 import type { SetDraft, SetSaveState } from './SetRow'
-import { prescriptionLabel } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { formatPrescription, formatRir, formatRest, rmEffortGuidance } from '@/lib/training/prescription'
+import {
+  MAX_EFFORT_SAFETY_WARNING,
+  ONE_RM_CONFIRMATION_TEXT,
+  REST_RECOMMENDATION_NOTE,
+} from '@/lib/routine/david-laid-gymshark-exact-v7'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/browser-feedback'
 import { enableRestPush, scheduleRestPush } from '@/lib/push/client'
@@ -129,10 +134,11 @@ export function CurrentExercisePanel({
   ): Promise<SetSaveState> {
     if (
       setRole === 'rm_effort' &&
+      workoutExercise.rep_max_target === 1 &&
       (draft.attemptResult === 'completed' || draft.attemptResult === 'personal_record') &&
       !rmSafetyConfirmed
     ) {
-      throw new Error('Confirme as condições de segurança antes de validar a tentativa RM.')
+      throw new Error('Confirme que compreende a tentativa de 1RM antes de validá-la.')
     }
     if (
       !isWarmup &&
@@ -269,12 +275,13 @@ export function CurrentExercisePanel({
               {selectedExercise.name_pt}
             </h1>
             <p className="mt-1 text-[11px] text-muted-foreground">
-              Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
-              {' · '}RIR {workoutExercise.rir_min === workoutExercise.rir_max
-                ? workoutExercise.rir_min
-                : `${workoutExercise.rir_min ?? '—'}–${workoutExercise.rir_max ?? '—'}`}
-              {' · '}Descanso {Math.floor(workoutExercise.rest_seconds / 60)}:{String(workoutExercise.rest_seconds % 60).padStart(2, '0')}
+              Prescrição bloqueada: {formatPrescription(workoutExercise, { perSide: selectedExercise.is_unilateral })}
+              {' · '}RIR: {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
+              {' · '}Descanso: {formatRest(workoutExercise).label}
             </p>
+            {formatRest(workoutExercise).isAppSuggested && (
+              <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">{REST_RECOMMENDATION_NOTE}</p>
+            )}
             {workoutExercise.superset_group != null && (
               <p className="mt-1 text-[10px] font-semibold text-primary">
                 Superset {workoutExercise.superset_group}: alterne com o exercício do mesmo grupo.
@@ -368,17 +375,22 @@ export function CurrentExercisePanel({
 
         {workoutExercise.prescription_type === 'rep_max_effort' && (
           <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
-            <p>Esforço RM do GymTrack: aqueça progressivamente, confirme a carga manualmente e classifique o resultado. Não é obrigatório buscar um recorde; você pode pular por dor ou segurança.</p>
-            <p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>
-            <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground">
-              <input
-                type="checkbox"
-                checked={rmSafetyConfirmed}
-                onChange={(event) => setRmSafetyConfirmed(event.target.checked)}
-                className="mt-0.5 size-4"
-              />
-              Confirmei travas, espaço seguro e spotter quando aplicável.
-            </label>
+            <p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>
+            {workoutExercise.rep_max_target != null && (
+              <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>
+            )}
+            <p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica. Não é obrigatório buscar um recorde; você pode pular por dor ou segurança.</p>
+            {workoutExercise.rep_max_target === 1 && (
+              <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground">
+                <input
+                  type="checkbox"
+                  checked={rmSafetyConfirmed}
+                  onChange={(event) => setRmSafetyConfirmed(event.target.checked)}
+                  className="mt-0.5 size-4"
+                />
+                {ONE_RM_CONFIRMATION_TEXT}
+              </label>
+            )}
           </div>
         )}
 
