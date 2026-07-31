@@ -29,6 +29,7 @@ import { WorkingSetList } from './WorkingSetList'
 import type { SetDraft, SetSaveState } from './SetRow'
 import { prescriptionLabel } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
+import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/browser-feedback'
 
 export interface PreviousExerciseSet {
   set_number: number
@@ -166,11 +167,9 @@ export function CurrentExercisePanel({
     if (!isWarmup && !completed) {
       // O pedido ocorre dentro do gesto de concluir série; navegadores móveis
       // normalmente bloqueiam pedidos de permissão feitos fora desse contexto.
-      if ('Notification' in window && Notification.permission === 'default') {
-        void Notification.requestPermission()
-      }
+      requestNotificationPermissionSafely()
       startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
-      if ('vibrate' in navigator) navigator.vibrate(35)
+      safeVibrate(35)
     }
 
     const result = await persistSetLog(createClient(), {

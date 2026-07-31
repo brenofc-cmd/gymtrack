@@ -4,6 +4,7 @@ import { useEffect } from 'react'
 import { toast } from 'sonner'
 import { createClient } from '@/lib/supabase/client'
 import { coreWeekday, localDateISO } from '@/lib/daily-core/logic'
+import { safeNotify, safeVibrate } from '@/lib/utils/browser-feedback'
 
 function playReminderTone() {
   const AudioContextClass = window.AudioContext
@@ -34,11 +35,12 @@ export function CoreReminderScheduler() {
       const currentMinutes = now.getHours() * 60 + now.getMinutes()
       if (currentMinutes < hours * 60 + minutes) return
       if (reminder.sound_enabled) playReminderTone()
-      if (reminder.vibration_enabled) navigator.vibrate?.([120, 60, 120])
-      if ('Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('Abdômen Diário', { body: 'Sua rotina matinal está pronta.', tag: `daily-core-${today}` })
-        notification.onclick = () => { window.focus(); window.location.assign('/abdomen') }
-      }
+      if (reminder.vibration_enabled) safeVibrate([120, 60, 120])
+      safeNotify(
+        'Abdômen Diário',
+        { body: 'Sua rotina matinal está pronta.', tag: `daily-core-${today}` },
+        () => { window.focus(); window.location.assign('/abdomen') }
+      )
       toast('Abdômen Diário', {
         description: 'Sua rotina matinal está pronta.',
         action: {
