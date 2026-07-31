@@ -1272,6 +1272,7 @@ export type Database = {
           prescription_type: string
           rep_max_target: number | null
           rest_seconds: number
+          rest_seconds_source: string
           rir_max: number | null
           rir_min: number | null
           superset_group: number | null
@@ -1303,6 +1304,7 @@ export type Database = {
           prescription_type?: string
           rep_max_target?: number | null
           rest_seconds: number
+          rest_seconds_source?: string
           rir_max?: number | null
           rir_min?: number | null
           superset_group?: number | null
@@ -1334,6 +1336,7 @@ export type Database = {
           prescription_type?: string
           rep_max_target?: number | null
           rest_seconds?: number
+          rest_seconds_source?: string
           rir_max?: number | null
           rir_min?: number | null
           superset_group?: number | null
@@ -1483,11 +1486,19 @@ export type Database = {
         Args: Record<PropertyKey, never>
         Returns: Json
       }
+      ensure_active_david_laid_gymshark_exact_v7: {
+        Args: Record<PropertyKey, never>
+        Returns: Json
+      }
       provision_david_laid_public_dup_v5: {
         Args: { p_user_id: string }
         Returns: Json
       }
       provision_powerbuilding_dup_adapted_v6: {
+        Args: { p_user_id: string }
+        Returns: Json
+      }
+      provision_david_laid_gymshark_exact_v7: {
         Args: { p_user_id: string }
         Returns: Json
       }

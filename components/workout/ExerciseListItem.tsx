@@ -2,10 +2,8 @@ import Link from 'next/link'
 import { Clock, Repeat, Star, Gauge } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
-import {
-  MOVEMENT_PATTERN_LABEL,
-  prescriptionLabel,
-} from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { MOVEMENT_PATTERN_LABEL } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { formatPrescription, formatRir, formatRest } from '@/lib/training/prescription'
 import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
@@ -61,17 +59,12 @@ export function ExerciseListItem({
         <div className="flex items-center gap-3 mt-1.5 flex-wrap">
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Repeat className="w-3 h-3" />
-            Prescrição bloqueada: {prescriptionLabel(workoutExercise)}
+            Prescrição bloqueada: {formatPrescription(workoutExercise, { perSide: exercise.is_unilateral })}
           </span>
-          {workoutExercise.rir_min != null && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Gauge className="w-3 h-3" />
-              RIR{' '}
-              {workoutExercise.rir_min === workoutExercise.rir_max
-                ? workoutExercise.rir_min
-                : `${workoutExercise.rir_min}–${workoutExercise.rir_max}`}
-            </span>
-          )}
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Gauge className="w-3 h-3" />
+            RIR: {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
+          </span>
           {workoutExercise.superset_group != null && (
             <span className="rounded bg-primary/10 px-1.5 py-0.5 text-[10px] font-semibold text-primary">
               Superset {workoutExercise.superset_group}
@@ -79,7 +72,7 @@ export function ExerciseListItem({
           )}
           <span className="flex items-center gap-1 text-xs text-muted-foreground">
             <Clock className="w-3 h-3" />
-            {workoutExercise.rest_seconds}s
+            Descanso: {formatRest(workoutExercise).label}
           </span>
           {exercise.exercise_type === 'abdominal' && exercise.movement_pattern && (
             <span className="text-[10px] font-semibold uppercase tracking-wide px-1.5 py-0.5 rounded bg-primary/10 text-primary border border-primary/20">

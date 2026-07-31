@@ -246,6 +246,7 @@ export function SessionClient({
           sets={sets}
           skippedExerciseIds={skippedExerciseIds}
           workoutLetter={(workout.letter ?? 'A') as WorkoutLetter}
+          routineVersion={workout.routine_version}
           onOpenExercise={(index) => {
             go(index)
             setOverviewOpen(false)

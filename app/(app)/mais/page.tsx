@@ -11,7 +11,7 @@ import {
   UserRound,
   BookOpenText,
 } from 'lucide-react'
-import { AVISO_GERAL } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { SOURCE_DISCLAIMER as AVISO_GERAL } from '@/lib/routine/david-laid-gymshark-exact-v7'
 
 const items = [
   { href: '/abdomen', label: 'Abdômen Diário', description: 'Rotina matinal independente', icon: Activity },
