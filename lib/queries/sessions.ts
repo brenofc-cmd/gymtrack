@@ -9,7 +9,6 @@ import type {
 } from '@/types/database'
 import type { AttemptResult } from '@/lib/training/dup-progression'
 import { estimateOneRepMax } from '@/lib/training/dup-progression'
-import { ROUTINE_VERSION } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 
 type SupabaseDB = SupabaseClient<Database>
 
@@ -419,11 +418,7 @@ export async function startOrResumeSession(
   if (active) {
     // Uma sessão antiga/arquivada não pode bloquear a ficha oficial atual.
     // O cancelamento é lógico: histórico e séries permanecem intactos.
-    if (
-      !active.workout ||
-      active.workout.is_archived ||
-      active.workout.routine_version !== ROUTINE_VERSION
-    ) {
+    if (!active.workout || active.workout.is_archived) {
       await cancelSessionLogically(
         supabase,
         active,

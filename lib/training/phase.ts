@@ -102,7 +102,10 @@ export function adjustTargetsForPhase<T extends PhaseAdjustableTargets>(
   if (floor == null) return target
 
   const currentMin = target.rir_min
-  if (currentMin != null && currentMin >= floor) return target
+  // RIR nulo significa "não informado pela fonte" (ex.: rotinas fiéis a uma
+  // ficha pública) — não inventamos um piso onde a fonte não define nada.
+  if (currentMin == null) return target
+  if (currentMin >= floor) return target
 
   const span =
     target.rir_min != null && target.rir_max != null ? target.rir_max - target.rir_min : 0
