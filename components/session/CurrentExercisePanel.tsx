@@ -35,9 +35,12 @@ import {
   ONE_RM_CONFIRMATION_TEXT,
   REST_RECOMMENDATION_NOTE,
 } from '@/lib/routine/david-laid-gymshark-exact-v7'
+import { GUIDED_TOP_SET_SAFETY_NOTE } from '@/lib/routine/david-laid-guided-load-v7'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/browser-feedback'
 import { enableRestPush, scheduleRestPush } from '@/lib/push/client'
+import { WhyThisWeightSheet } from './WhyThisWeightSheet'
+import { PlateBreakdownSheet } from './PlateBreakdownSheet'
 
 export interface PreviousExerciseSet {
   set_number: number
@@ -62,6 +65,7 @@ interface CurrentExercisePanelProps {
   userId?: string
   programBlockId?: string | null
   isDeload?: boolean
+  equipmentProfile?: { barWeightKg: number; smallestPlateKg: number }
   history: Array<{ date: string; maxWeight: number; totalVolume: number; maxReps: number }>
   showWarmupPlan: boolean
   canMoveEarlier: boolean
@@ -85,6 +89,7 @@ export function CurrentExercisePanel({
   userId,
   programBlockId,
   isDeload = false,
+  equipmentProfile = { barWeightKg: 20, smallestPlateKg: 1.25 },
   history,
   showWarmupPlan,
   canMoveEarlier,
@@ -97,6 +102,8 @@ export function CurrentExercisePanel({
 }: CurrentExercisePanelProps) {
   const [actionsOpen, setActionsOpen] = useState(false)
   const [rmSafetyConfirmed, setRmSafetyConfirmed] = useState(false)
+  const [whyOpen, setWhyOpen] = useState(false)
+  const [plateOpen, setPlateOpen] = useState(false)
   const {
     sets: storeSets,
     feedback,
@@ -303,6 +310,14 @@ export function CurrentExercisePanel({
               {' · '}RIR: {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
               {' · '}Descanso: {formatRest(workoutExercise).label}
             </p>
+            {(workoutExercise.source_prescription || workoutExercise.guided_prescription) && (
+              <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
+                {workoutExercise.source_prescription}
+                {workoutExercise.source_prescription && workoutExercise.guided_prescription && ' · '}
+                {workoutExercise.guided_prescription}
+                {workoutExercise.guided_reps_fixed != null && ` (alvo guiado: ${workoutExercise.guided_reps_fixed})`}
+              </p>
+            )}
             {formatRest(workoutExercise).isAppSuggested && (
               <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">{REST_RECOMMENDATION_NOTE}</p>
             )}
@@ -380,6 +395,26 @@ export function CurrentExercisePanel({
           {recommendedLoad?.requiresManualConfirmation && (
             <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>
           )}
+          {loadConfig.acceptsLoad && (
+            <div className="mt-2 flex flex-wrap gap-2">
+              <button
+                type="button"
+                onClick={() => setWhyOpen(true)}
+                className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground"
+              >
+                Por que este peso?
+              </button>
+              {loadConfig.kind === 'external_total' && (
+                <button
+                  type="button"
+                  onClick={() => setPlateOpen(true)}
+                  className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground"
+                >
+                  Ver montagem da barra
+                </button>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
@@ -396,6 +431,13 @@ export function CurrentExercisePanel({
             hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0}
           />
         </div>
+
+        {workoutExercise.prescription_type === 'guided_top_set' && (
+          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
+            <p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p>
+            <p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p>
+          </div>
+        )}
 
         {workoutExercise.prescription_type === 'rep_max_effort' && (
           <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
@@ -471,6 +513,29 @@ export function CurrentExercisePanel({
           </div>
         )}
       </div>
+
+      <WhyThisWeightSheet
+        open={whyOpen}
+        onOpenChange={setWhyOpen}
+        input={recommendedLoad?.suggestedKg != null ? {
+          recommendedLoadKg: recommendedLoad.suggestedKg,
+          percentageOfE1rm: workoutExercise.percentage_of_e1rm ?? null,
+          targetRir: workoutExercise.rir_min,
+          lastSession: previousWorkSets[0] ? {
+            weightKg: previousWorkSets[0].weight_kg ?? 0,
+            setsCompleted: `${previousWorkSets.length}×${previousWorkSets[0].reps}`,
+            technique: previousWorkSets[0].execution_quality ?? 'não registrada',
+            rir: previousWorkSets[0].rir ?? 0,
+          } : null,
+        } : null}
+      />
+
+      <PlateBreakdownSheet
+        open={plateOpen}
+        onOpenChange={setPlateOpen}
+        totalKg={recommendedLoad?.suggestedKg ?? previousWeight}
+        equipment={equipmentProfile}
+      />
 
       <ExerciseActionsSheet
         open={actionsOpen}

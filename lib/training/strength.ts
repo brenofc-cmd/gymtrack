@@ -5,20 +5,25 @@ export interface StrengthSet {
   weightKg: number | null
   reps: number
   isWarmup: boolean
+  rir?: number | null
   painLevel?: PainLevel | null
   executionQuality?: ExecutionQuality | null
   romQuality?: RomQuality | null
 }
 
-/** Epley: peso × (1 + repetições / 30). Somente 3–10 reps válidas. */
+/**
+ * Epley com RIR: peso × (1 + (repetições + RIR) / 30). Somente 3–8 reps
+ * válidas, com RIR relatado (sem RIR não há como estimar a reserva real).
+ */
 export function estimated1RM(set: StrengthSet): number | null {
   if (
     set.isWarmup || set.weightKg == null || set.weightKg <= 0 ||
-    set.reps < 3 || set.reps > 10 || set.executionQuality !== 'boa' ||
+    set.reps < 3 || set.reps > 8 || set.rir == null ||
+    set.executionQuality !== 'boa' ||
     set.painLevel !== 'nenhuma' || set.romQuality === 'reduzida'
   ) return null
 
-  return Math.round(set.weightKg * (1 + set.reps / 30) * 10) / 10
+  return Math.round(set.weightKg * (1 + (set.reps + set.rir) / 30) * 10) / 10
 }
 
 export function isValidPRSet(set: StrengthSet): boolean {

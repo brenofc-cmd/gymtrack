@@ -40,6 +40,9 @@ export function OnboardingFlow({ userId, initial }: OnboardingFlowProps) {
   const [unit, setUnit] = useState('kg')
   const [barbellIncrement, setBarbellIncrement] = useState('2.5')
   const [dumbbellIncrement, setDumbbellIncrement] = useState('1')
+  const [barWeight, setBarWeight] = useState('20')
+  const [smallestPlate, setSmallestPlate] = useState('1.25')
+  const [assistanceIncrement, setAssistanceIncrement] = useState('2.5')
   const [notificationsEnabled, setNotificationsEnabled] = useState(true)
   const [painHistory, setPainHistory] = useState('')
   const [riskAcknowledged, setRiskAcknowledged] = useState(false)
@@ -79,6 +82,9 @@ export function OnboardingFlow({ userId, initial }: OnboardingFlowProps) {
         weight_unit: unit,
         barbell_increment_kg: Number(barbellIncrement) || 2.5,
         dumbbell_increment_kg: Number(dumbbellIncrement) || 1,
+        bar_weight_kg: Number(barWeight) || 20,
+        smallest_plate_kg: Number(smallestPlate) || 1.25,
+        assistance_increment_kg: Number(assistanceIncrement) || 2.5,
         rest_timer_sound: true,
         rest_timer_vibrate: true,
         notifications_enabled: notificationsEnabled,
@@ -182,6 +188,9 @@ export function OnboardingFlow({ userId, initial }: OnboardingFlowProps) {
               <label className="space-y-1.5"><span className="text-xs font-semibold">Unidade</span><select value={unit} onChange={(event) => setUnit(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3"><option value="kg">kg</option><option value="lb">lb</option></select></label>
               <label className="space-y-1.5"><span className="text-xs font-semibold">Incremento barra (kg)</span><input type="number" step="0.5" value={barbellIncrement} onChange={(event) => setBarbellIncrement(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3 font-mono" /></label>
               <label className="space-y-1.5"><span className="text-xs font-semibold">Incremento halter (kg)</span><input type="number" step="0.5" value={dumbbellIncrement} onChange={(event) => setDumbbellIncrement(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3 font-mono" /></label>
+              <label className="space-y-1.5"><span className="text-xs font-semibold">Peso da barra (kg)</span><input type="number" step="0.5" value={barWeight} onChange={(event) => setBarWeight(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3 font-mono" /></label>
+              <label className="space-y-1.5"><span className="text-xs font-semibold">Menor anilha (kg)</span><input type="number" step="0.25" value={smallestPlate} onChange={(event) => setSmallestPlate(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3 font-mono" /></label>
+              <label className="space-y-1.5"><span className="text-xs font-semibold">Incremento assistência (kg)</span><input type="number" step="0.5" value={assistanceIncrement} onChange={(event) => setAssistanceIncrement(event.target.value)} className="h-12 w-full rounded-xl border border-input bg-card px-3 font-mono" /></label>
             </div>
             <label className="mt-4 flex items-center gap-3 rounded-xl border border-border bg-card p-3 text-sm">
               <input type="checkbox" checked={notificationsEnabled} onChange={(event) => setNotificationsEnabled(event.target.checked)} className="size-4" />

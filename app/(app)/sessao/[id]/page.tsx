@@ -221,6 +221,10 @@ export default async function SessaoPage(props: {
         (savedChoices ?? []).map((choice) => [choice.workout_exercise_id, choice.selected_exercise_id])
       )}
       isDeload={deloadContext.active != null || (usesAdaptedDup && programWeek === 8)}
+      equipmentProfile={{
+        barWeightKg: preferences.data?.bar_weight_kg ?? 20,
+        smallestPlateKg: preferences.data?.smallest_plate_kg ?? 1.25,
+      }}
     />
   )
 }

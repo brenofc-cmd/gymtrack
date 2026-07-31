@@ -19,7 +19,10 @@ export function classifyExerciseStimulus(exercise: {
   target_reps_max: number
   exercise_type?: string | null
 }): TrainingStimulus {
-  if (exercise.prescription_type === 'rep_max_effort') return 'max_strength'
+  // guided_top_set (David Laid Guided Load v7): mesmo esforço de RM da fonte,
+  // transformado em série técnica de repetições fixas com RIR-alvo — ainda
+  // é força máxima para fins de classificação do exercício/dia.
+  if (exercise.prescription_type === 'rep_max_effort' || exercise.prescription_type === 'guided_top_set') return 'max_strength'
   if (exercise.target_reps_max <= 6) return 'strength'
   return 'hypertrophy'
 }

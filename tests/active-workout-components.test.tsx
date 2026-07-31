@@ -92,6 +92,11 @@ function workoutExercise(id: string, item: Exercise): WorkoutExerciseWithExercis
     prescription_locked: false,
     is_priority: false,
     aesthetic_function: null,
+    percentage_of_e1rm: null,
+    load_strategy: null,
+    source_prescription: null,
+    guided_prescription: null,
+    guided_reps_fixed: null,
     exercise: item,
     substitutions: [],
   }

@@ -62,3 +62,41 @@ export function buildWarmupPlan(
     { label: '~75–80%', weightKg: roundToPlate(workingWeightKg * 0.775), reps: '2–4 repetições' },
   ]
 }
+
+/**
+ * Aquecimento específico para top sets guiados (David Laid Guided Load v7):
+ * barra/carga mínima ×10, 40%×5, 60%×3, 75%×1–2, top set. Etapas são
+ * removidas quando a carga de trabalho é baixa (evita fadiga desnecessária).
+ * Não conta como série da rotina — ver `WARMUP_DISCLAIMER`.
+ */
+export function buildTopSetWarmupPlan(
+  workingWeightKg: number | null,
+  minBarWeightKg = 20
+): WarmupSet[] {
+  if (workingWeightKg == null || workingWeightKg <= 0) {
+    return [
+      { label: 'Barra', weightKg: minBarWeightKg, reps: '10 repetições' },
+      { label: '~40%', weightKg: null, reps: '5 repetições' },
+      { label: '~60%', weightKg: null, reps: '3 repetições' },
+      { label: '~75%', weightKg: null, reps: '1–2 repetições' },
+    ]
+  }
+
+  const steps: WarmupSet[] = []
+  if (workingWeightKg > minBarWeightKg) {
+    steps.push({ label: 'Barra', weightKg: minBarWeightKg, reps: '10 repetições' })
+  }
+  const fortyPct = roundToPlate(workingWeightKg * 0.4)
+  if (fortyPct > minBarWeightKg) {
+    steps.push({ label: '~40%', weightKg: fortyPct, reps: '5 repetições' })
+  }
+  const sixtyPct = roundToPlate(workingWeightKg * 0.6)
+  if (sixtyPct > (steps.at(-1)?.weightKg ?? 0)) {
+    steps.push({ label: '~60%', weightKg: sixtyPct, reps: '3 repetições' })
+  }
+  const seventyFivePct = roundToPlate(workingWeightKg * 0.75)
+  if (seventyFivePct > (steps.at(-1)?.weightKg ?? 0)) {
+    steps.push({ label: '~75%', weightKg: seventyFivePct, reps: '1–2 repetições' })
+  }
+  return steps
+}

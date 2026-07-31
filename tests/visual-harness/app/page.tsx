@@ -66,6 +66,11 @@ function exercise(id: string, name: string, equipment: string, order: number): W
     prescription_locked: false,
     is_priority: order === 0,
     aesthetic_function: null,
+    percentage_of_e1rm: null,
+    load_strategy: null,
+    source_prescription: null,
+    guided_prescription: null,
+    guided_reps_fixed: null,
     exercise: item,
     substitutions: [],
   }
