@@ -43,6 +43,7 @@ export async function getExerciseProgressSummaries(
       completed_at,
       session_id,
       is_warmup,
+      rir,
       pain_level,
       execution_quality,
       rom_quality,
@@ -64,6 +65,7 @@ export async function getExerciseProgressSummaries(
     completed_at: string | null
     session_id: string
     is_warmup: boolean
+    rir: number | null
     pain_level: Tables<'set_logs'>['pain_level']
     execution_quality: Tables<'set_logs'>['execution_quality']
     rom_quality: Tables<'set_logs'>['rom_quality']
@@ -96,6 +98,7 @@ export async function getExerciseProgressSummaries(
       weightKg: row.weight_kg,
       reps: row.reps,
       isWarmup: row.is_warmup,
+      rir: row.rir,
       painLevel: row.pain_level as PainLevel | null,
       executionQuality: row.execution_quality as ExecutionQuality | null,
       romQuality: row.rom_quality as RomQuality | null,

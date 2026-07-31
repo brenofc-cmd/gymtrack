@@ -205,6 +205,16 @@ export type ExerciseReferenceMaxRow = {
   source: 'manual_test' | 'estimated_from_set' | 'imported'
   tested_at: string | null
   updated_at: string
+  valid_sample_count: number
+  confidence_level: 'baixa' | 'media' | 'alta'
+}
+
+export type ExerciseFamiliarizationStateRow = {
+  user_id: string
+  exercise_id: string
+  entered_at: string
+  valid_exposures_count: number
+  exited_at: string | null
 }
 
 export type ExerciseReferenceMaxHistoryRow = ExerciseReferenceMaxRow & {
@@ -894,6 +904,10 @@ export type Database = {
         TrainingSequenceEventRow,
         Pick<TrainingSequenceEventRow, 'user_id' | 'workout_id'> & Partial<Omit<TrainingSequenceEventRow, 'user_id' | 'workout_id' | 'id' | 'created_at' | 'occurred_at'>>
       >
+      exercise_familiarization_state: DbTable<
+        ExerciseFamiliarizationStateRow,
+        Pick<ExerciseFamiliarizationStateRow, 'user_id' | 'exercise_id'> & Partial<Omit<ExerciseFamiliarizationStateRow, 'user_id' | 'exercise_id'>>
+      >
       set_logs: {
         Row: {
           attempt_result: string | null
@@ -905,9 +919,12 @@ export type Database = {
           is_warmup: boolean
           is_deload: boolean
           external_assistance: boolean | null
+          load_adjustment_direction: string | null
           notes: string | null
           pain_level: string | null
           performed_exercise_id: string | null
+          recommendation_reason: string | null
+          recommended_load_kg: number | null
           reps: number
           rir: number | null
           rom_quality: string | null
@@ -928,9 +945,12 @@ export type Database = {
           is_warmup?: boolean
           is_deload?: boolean
           external_assistance?: boolean | null
+          load_adjustment_direction?: string | null
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
+          recommendation_reason?: string | null
+          recommended_load_kg?: number | null
           reps: number
           rir?: number | null
           rom_quality?: string | null
@@ -951,9 +971,12 @@ export type Database = {
           is_warmup?: boolean
           is_deload?: boolean
           external_assistance?: boolean | null
+          load_adjustment_direction?: string | null
           notes?: string | null
           pain_level?: string | null
           performed_exercise_id?: string | null
+          recommendation_reason?: string | null
+          recommended_load_kg?: number | null
           reps?: number
           rir?: number | null
           rom_quality?: string | null
@@ -1100,6 +1123,8 @@ export type Database = {
       }
       user_preferences: {
         Row: {
+          assistance_increment_kg: number
+          bar_weight_kg: number
           barbell_increment_kg: number
           created_at: string | null
           extra: Json | null
@@ -1108,6 +1133,7 @@ export type Database = {
           dumbbell_increment_kg: number
           heavy_attempt_risk_acknowledged: boolean
           machine_increment_kg: number
+          smallest_plate_kg: number
           notifications_enabled: boolean
           onboarding_done: boolean
           rest_timer_sound: boolean
@@ -1120,6 +1146,8 @@ export type Database = {
           weight_unit: string | null
         }
         Insert: {
+          assistance_increment_kg?: number
+          bar_weight_kg?: number
           barbell_increment_kg?: number
           created_at?: string | null
           extra?: Json | null
@@ -1128,6 +1156,7 @@ export type Database = {
           dumbbell_increment_kg?: number
           heavy_attempt_risk_acknowledged?: boolean
           machine_increment_kg?: number
+          smallest_plate_kg?: number
           notifications_enabled?: boolean
           onboarding_done?: boolean
           rest_timer_sound?: boolean
@@ -1140,6 +1169,8 @@ export type Database = {
           weight_unit?: string | null
         }
         Update: {
+          assistance_increment_kg?: number
+          bar_weight_kg?: number
           barbell_increment_kg?: number
           created_at?: string | null
           extra?: Json | null
@@ -1148,6 +1179,7 @@ export type Database = {
           dumbbell_increment_kg?: number
           heavy_attempt_risk_acknowledged?: boolean
           machine_increment_kg?: number
+          smallest_plate_kg?: number
           notifications_enabled?: boolean
           onboarding_done?: boolean
           rest_timer_sound?: boolean
@@ -1261,12 +1293,15 @@ export type Database = {
           failure_risk_level: string
           default_set_role: string
           fixed_reps: number | null
+          guided_reps_fixed: number | null
           id: string
           is_hidden: boolean
           is_priority: boolean
           load_guidance: string | null
+          load_strategy: string | null
           notes: string | null
           order_index: number
+          percentage_of_e1rm: number | null
           progression_type: string
           prescription_locked: boolean
           prescription_type: string
@@ -1275,6 +1310,8 @@ export type Database = {
           rest_seconds_source: string
           rir_max: number | null
           rir_min: number | null
+          source_prescription: string | null
+          guided_prescription: string | null
           superset_group: number | null
           target_reps_max: number
           target_reps_min: number
@@ -1293,12 +1330,15 @@ export type Database = {
           failure_risk_level?: string
           default_set_role?: string
           fixed_reps?: number | null
+          guided_reps_fixed?: number | null
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
           load_guidance?: string | null
+          load_strategy?: string | null
           notes?: string | null
           order_index: number
+          percentage_of_e1rm?: number | null
           progression_type?: string
           prescription_locked?: boolean
           prescription_type?: string
@@ -1307,6 +1347,8 @@ export type Database = {
           rest_seconds_source?: string
           rir_max?: number | null
           rir_min?: number | null
+          source_prescription?: string | null
+          guided_prescription?: string | null
           superset_group?: number | null
           target_reps_max: number
           target_reps_min: number
@@ -1325,12 +1367,15 @@ export type Database = {
           failure_risk_level?: string
           default_set_role?: string
           fixed_reps?: number | null
+          guided_reps_fixed?: number | null
           id?: string
           is_hidden?: boolean
           is_priority?: boolean
           load_guidance?: string | null
+          load_strategy?: string | null
           notes?: string | null
           order_index?: number
+          percentage_of_e1rm?: number | null
           progression_type?: string
           prescription_locked?: boolean
           prescription_type?: string
@@ -1339,6 +1384,8 @@ export type Database = {
           rest_seconds_source?: string
           rir_max?: number | null
           rir_min?: number | null
+          source_prescription?: string | null
+          guided_prescription?: string | null
           superset_group?: number | null
           target_reps_max?: number
           target_reps_min?: number

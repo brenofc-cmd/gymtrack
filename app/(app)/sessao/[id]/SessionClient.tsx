@@ -46,6 +46,7 @@ interface SessionClientProps {
   straightSetsNotice?: boolean
   blockChoices?: Record<string, string | null>
   isDeload?: boolean
+  equipmentProfile?: { barWeightKg: number; smallestPlateKg: number }
 }
 
 function normalizeSetRole(value: string): LocalSetLog['set_role'] {
@@ -70,6 +71,7 @@ export function SessionClient({
   straightSetsNotice = false,
   blockChoices = {},
   isDeload = false,
+  equipmentProfile = { barWeightKg: 20, smallestPlateKg: 1.25 },
 }: SessionClientProps) {
   useWakeLock(keepScreenAwake)
   const router = useRouter()
@@ -280,6 +282,7 @@ export function SessionClient({
           userId={session.user_id}
           programBlockId={session.program_block_id}
           isDeload={isDeload}
+          equipmentProfile={equipmentProfile}
           history={exerciseHistories[originalIndex] ?? []}
           showWarmupPlan={current.id === firstCompoundId}
           canMoveEarlier={currentIndex > 0}

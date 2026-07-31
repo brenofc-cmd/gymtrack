@@ -35,11 +35,12 @@ describe('DUP público David Laid v5', () => {
 })
 
 describe('Força segura, e1RM e back-off', () => {
-  const valid = { weightKg: 80, reps: 6, isWarmup: false, executionQuality: 'boa' as const, painLevel: 'nenhuma' as const, romQuality: 'completa' as const }
+  const valid = { weightKg: 80, reps: 6, rir: 2, isWarmup: false, executionQuality: 'boa' as const, painLevel: 'nenhuma' as const, romQuality: 'completa' as const }
 
-  it('usa Epley apenas em série válida de 3–10 reps', () => {
-    expect(estimated1RM(valid)).toBe(96)
-    expect(estimated1RM({ ...valid, reps: 11 })).toBeNull()
+  it('usa Epley com RIR apenas em série válida de 3–8 reps com RIR informado', () => {
+    expect(estimated1RM(valid)).toBe(101.3)
+    expect(estimated1RM({ ...valid, reps: 9 })).toBeNull()
+    expect(estimated1RM({ ...valid, rir: null })).toBeNull()
     expect(estimated1RM({ ...valid, isWarmup: true })).toBeNull()
     expect(estimated1RM({ ...valid, executionQuality: 'aceitavel' })).toBeNull()
     expect(estimated1RM({ ...valid, painLevel: 'leve' })).toBeNull()

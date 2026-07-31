@@ -53,3 +53,40 @@ export function formatRest(exercise: RestLike): { label: string; isAppSuggested:
     isAppSuggested,
   }
 }
+
+export interface WhyThisWeightInput {
+  recommendedLoadKg: number
+  estimated1RmKg?: number | null
+  percentageOfE1rm?: number | null
+  targetRir?: number | null
+  lastSession?: {
+    weightKg: number
+    setsCompleted: string
+    technique: string
+    rir: number
+  } | null
+}
+
+/** Explicação exibida no botão "Por que este peso?" — nunca inventa fórmulas do produto pago. */
+export function whyThisWeight(input: WhyThisWeightInput): string {
+  const parts: string[] = []
+  if (input.estimated1RmKg != null && input.percentageOfE1rm != null) {
+    parts.push(
+      `Recomendamos ${input.recommendedLoadKg} kg porque seu e1RM estimado é ${input.estimated1RmKg} kg. ` +
+      `Esta série usa inicialmente ${input.percentageOfE1rm}% dessa estimativa` +
+      (input.targetRir != null ? `, com alvo de RIR ${input.targetRir}.` : '.')
+    )
+  } else {
+    parts.push(
+      `Recomendamos ${input.recommendedLoadKg} kg com base no seu histórico recente` +
+      (input.targetRir != null ? ` e no alvo de RIR ${input.targetRir}.` : '.')
+    )
+  }
+  if (input.lastSession) {
+    const { weightKg, setsCompleted, technique, rir } = input.lastSession
+    parts.push(
+      `Na última sessão, você completou ${setsCompleted} com ${weightKg} kg, técnica ${technique} e RIR ${rir}.`
+    )
+  }
+  return parts.join(' ')
+}

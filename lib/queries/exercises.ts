@@ -273,7 +273,7 @@ export async function getExercisePR(
   // Aquecimento não entra nos recordes
   const { data: logs } = await supabase
     .from('set_logs')
-    .select('weight_kg, reps, completed_at, session_id, is_warmup, pain_level, execution_quality, rom_quality')
+    .select('weight_kg, reps, completed_at, session_id, is_warmup, rir, pain_level, execution_quality, rom_quality')
     .in('workout_exercise_id', wexIds)
     .eq('is_warmup', false)
     .eq('is_deload', false)
@@ -303,6 +303,7 @@ export async function getExercisePR(
       weightKg: log.weight_kg,
       reps: log.reps,
       isWarmup: log.is_warmup,
+      rir: log.rir,
       painLevel: log.pain_level as PainLevel | null,
       executionQuality: log.execution_quality as ExecutionQuality | null,
       romQuality: log.rom_quality as RomQuality | null,
