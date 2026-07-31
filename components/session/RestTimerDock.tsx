@@ -18,6 +18,7 @@ import {
   useSessionStore,
 } from '@/lib/store/sessionStore'
 import { formatDuration } from '@/lib/utils/time'
+import { safeNotify, safeVibrate } from '@/lib/utils/browser-feedback'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 function playBeep() {
@@ -104,7 +105,7 @@ export function RestTimerDock({
     if (!active || paused) return
     if (remaining <= 10 && remaining > 0 && !warnedTenSeconds.current) {
       warnedTenSeconds.current = true
-      if (vibrateEnabled && 'vibrate' in navigator) navigator.vibrate(150)
+      if (vibrateEnabled) safeVibrate(150)
     }
     if (remaining > 10) warnedTenSeconds.current = false
   }, [active, paused, remaining, vibrateEnabled])
@@ -114,20 +115,18 @@ export function RestTimerDock({
     if (remaining === 0 && !finishedNotified.current) {
       finishedNotified.current = true
       setAnnouncement('Descanso concluído. Próxima série pronta.')
-      if (vibrateEnabled && 'vibrate' in navigator) navigator.vibrate([350, 100, 350])
+      // A limpeza é a única ação obrigatória. APIs do aparelho podem falhar
+      // em PWAs e não devem manter a tela em erro.
+      skipRestTimer()
+      if (vibrateEnabled) safeVibrate([350, 100, 350])
       if (soundEnabled) playBeep()
-      if (notificationsEnabled && 'Notification' in window && Notification.permission === 'granted') {
-        const notification = new Notification('Descanso concluído', {
+      if (notificationsEnabled) {
+        safeNotify('Descanso concluído', {
           body: `${exercise?.exercise.name_pt ?? 'Próxima série'}: pronto para continuar.`,
           tag: 'gymtrack-rest-timer',
-        })
-        notification.onclick = () => {
-          window.focus()
-          notification.close()
-        }
+        }, () => window.focus())
       }
       toast('Descanso concluído', { description: 'A próxima série está pronta.' })
-      skipRestTimer()
     }
     if (remaining > 0) finishedNotified.current = false
   }, [active, paused, remaining, skipRestTimer, exercise?.exercise.name_pt, notificationsEnabled, soundEnabled, vibrateEnabled])
