@@ -30,6 +30,7 @@ import type { SetDraft, SetSaveState } from './SetRow'
 import { prescriptionLabel } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/browser-feedback'
+import { enableRestPush, scheduleRestPush } from '@/lib/push/client'
 
 export interface PreviousExerciseSet {
   set_number: number
@@ -96,6 +97,7 @@ export function CurrentExercisePanel({
     upsertSet,
     removeSet,
     startRestTimer,
+    setRestPushJobId,
     setVariation,
     setExerciseSkipped,
   } = useSessionStore()
@@ -170,6 +172,11 @@ export function CurrentExercisePanel({
       requestNotificationPermissionSafely()
       startRestTimer(workoutExercise.rest_seconds, workoutExercise.id)
       safeVibrate(35)
+      void enableRestPush().then((enabled) => {
+        if (!enabled) return
+        const endsAt = Date.now() + workoutExercise.rest_seconds * 1000
+        return scheduleRestPush(endsAt, workoutExercise.id).then(setRestPushJobId)
+      })
     }
 
     const result = await persistSetLog(createClient(), {

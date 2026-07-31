@@ -19,6 +19,7 @@ import {
 } from '@/lib/store/sessionStore'
 import { formatDuration } from '@/lib/utils/time'
 import { safeNotify, safeVibrate } from '@/lib/utils/browser-feedback'
+import { cancelRestPush } from '@/lib/push/client'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
 
 function playBeep() {
@@ -78,6 +79,11 @@ export function RestTimerDock({
   const exercise = exercises.find((item) => item.id === timerExerciseId)
   const completedCount = (sets[timerExerciseId] ?? []).filter((set) => !set.is_warmup).length
   const nextSet = Math.min(completedCount + 1, exercise?.target_sets ?? completedCount + 1)
+  const endRest = () => {
+    const jobId = restTimer.pushJobId
+    skipRestTimer()
+    void cancelRestPush(jobId)
+  }
 
   useEffect(() => {
     if (!active || paused) return
@@ -117,7 +123,7 @@ export function RestTimerDock({
       setAnnouncement('Descanso concluído. Próxima série pronta.')
       // A limpeza é a única ação obrigatória. APIs do aparelho podem falhar
       // em PWAs e não devem manter a tela em erro.
-      skipRestTimer()
+      endRest()
       if (vibrateEnabled) safeVibrate([350, 100, 350])
       if (soundEnabled) playBeep()
       if (notificationsEnabled) {
@@ -224,7 +230,7 @@ export function RestTimerDock({
           <button type="button" onClick={() => addRestSeconds(30)} className={controlClass} aria-label="Adicionar 30 segundos">
             <Plus className="size-3" />30
           </button>
-          <button type="button" onClick={skipRestTimer} className={controlClass} aria-label="Pular descanso">
+          <button type="button" onClick={endRest} className={controlClass} aria-label="Pular descanso">
             <SkipForward className="size-3" /><span className="hidden min-[390px]:inline">Pular</span>
           </button>
         </div>

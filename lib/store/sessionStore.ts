@@ -39,6 +39,7 @@ export interface RestTimer {
   pausedRemaining: number | null
   totalSeconds: number
   workoutExerciseId: string | null
+  pushJobId: string | null
 }
 
 export interface SessionClock {
@@ -81,6 +82,7 @@ interface SessionStore {
   resumeSessionClock: () => void
 
   startRestTimer: (seconds: number, workoutExerciseId: string) => void
+  setRestPushJobId: (jobId: string | null) => void
   addRestSeconds: (seconds: number) => void
   pauseRestTimer: () => void
   resumeRestTimer: () => void
@@ -95,6 +97,7 @@ const INITIAL_TIMER: RestTimer = {
   pausedRemaining: null,
   totalSeconds: 0,
   workoutExerciseId: null,
+  pushJobId: null,
 }
 
 const INITIAL_CLOCK: SessionClock = {
@@ -303,9 +306,12 @@ export const useSessionStore = create<SessionStore>()(
             endsAt: Date.now() + seconds * 1000,
             pausedRemaining: null,
             totalSeconds: seconds,
-            workoutExerciseId,
+          workoutExerciseId,
+          pushJobId: null,
           },
         }),
+
+      setRestPushJobId: (jobId) => set((state) => ({ restTimer: { ...state.restTimer, pushJobId: jobId } })),
 
       addRestSeconds: (seconds) =>
         set((state) => {
