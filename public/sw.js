@@ -137,3 +137,28 @@ self.addEventListener('fetch', (event) => {
     )
   }
 })
+
+// Push é tratado pelo sistema operacional mesmo sem a página aberta.
+self.addEventListener('push', (event) => {
+  let data = {}
+  try { data = event.data ? event.data.json() : {} } catch { data = {} }
+  const title = data.title || 'GymTrack'
+  event.waitUntil(self.registration.showNotification(title, {
+    body: data.body || 'Seu descanso terminou.',
+    icon: '/icons/icon-192.png',
+    badge: '/icons/icon-192.png',
+    tag: data.tag || 'gymtrack-rest-timer',
+    renotify: true,
+    data: { url: data.url || '/' },
+    // Ignorado onde não for compatível; Android usa o padrão do aparelho.
+    vibrate: [350, 100, 350],
+  }))
+})
+
+self.addEventListener('notificationclick', (event) => {
+  event.notification.close()
+  event.waitUntil(clients.matchAll({ type: 'window', includeUncontrolled: true }).then((windows) => {
+    const existing = windows.find((client) => client.url.startsWith(self.location.origin))
+    return existing ? existing.focus() : clients.openWindow(event.notification.data?.url || '/')
+  }))
+})

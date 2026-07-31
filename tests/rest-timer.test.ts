@@ -7,6 +7,7 @@ function timer(overrides: Partial<RestTimer> = {}): RestTimer {
     pausedRemaining: null,
     totalSeconds: 90,
     workoutExerciseId: 'we-1',
+    pushJobId: null,
     ...overrides,
   }
 }
