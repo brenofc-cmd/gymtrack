@@ -6,6 +6,7 @@ import {
   BookOpen,
   ChevronDown,
   ChevronUp,
+  Dumbbell,
   History,
   NotebookPen,
   Repeat2,
@@ -20,6 +21,7 @@ import type { WorkoutExerciseWithExercise } from '@/types/database'
 import { ExerciseDetailSheet } from './ExerciseDetailSheet'
 import { ExerciseFeedbackPanel } from './ExerciseFeedbackPanel'
 import { ExerciseSwapSheet } from './ExerciseSwapSheet'
+import { MuscleMapSheet } from './MuscleMapSheet'
 
 interface ExerciseActionsSheetProps {
   open: boolean
@@ -57,6 +59,7 @@ export function ExerciseActionsSheet({
   const [detailOpen, setDetailOpen] = useState(false)
   const [swapOpen, setSwapOpen] = useState(false)
   const [feedbackOpen, setFeedbackOpen] = useState(false)
+  const [musclesOpen, setMusclesOpen] = useState(false)
   const selectedExercise = workoutExercise.substitutions?.find(
     (substitution) => substitution.exercise.id === selectedVariation
   )?.exercise ?? workoutExercise.exercise
@@ -91,6 +94,16 @@ export function ExerciseActionsSheet({
             className={cn(actionClass, 'border border-input bg-secondary/30')}
           >
             <NotebookPen className="size-4 text-primary" /> Nota e dor
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              onOpenChange(false)
+              setMusclesOpen(true)
+            }}
+            className={cn(actionClass, 'col-span-2 border border-input bg-secondary/30')}
+          >
+            <Dumbbell className="size-4 text-primary" /> Ver músculos
           </button>
         </div>
 
@@ -174,6 +187,7 @@ export function ExerciseActionsSheet({
         selectedVariation={selectedVariation}
         onSelectToday={onSelectVariation}
       />
+      <MuscleMapSheet open={musclesOpen} onOpenChange={setMusclesOpen} exercise={selectedExercise} />
     </>
   )
 }
