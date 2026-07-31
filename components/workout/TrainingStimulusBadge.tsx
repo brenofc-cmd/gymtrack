@@ -17,10 +17,12 @@ export function TrainingStimulusBadge({
   const stimulus = classifyExerciseStimulus(exercise)
   return (
     <span
+      role="note"
+      aria-label={`Tipo de estímulo: ${TRAINING_STIMULUS_LABEL[stimulus]}`}
       className={cn(
         'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide',
+        stimulus === 'max_strength' && 'border-[#ffb547]/30 bg-[#ffb547]/10 text-[#ffcf7a]',
         stimulus === 'strength' && 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#8dc5ff]',
-        stimulus === 'mixed' && 'border-[#c58bff]/30 bg-[#c58bff]/10 text-[#d5adff]',
         stimulus === 'hypertrophy' && 'border-primary/25 bg-primary/10 text-primary'
       )}
     >
