@@ -25,6 +25,23 @@ export function classifyExerciseStimulus(exercise: {
 }
 
 /**
+ * Indicação de carga por tipo de estímulo — para o atleta ter uma ideia do
+ * peso antes de começar as séries. Não substitui a prescrição (séries/reps/
+ * RM seguem exatas); é só uma referência de "quão pesado" carregar a barra.
+ */
+export const LOAD_INTENSITY_LABEL: Record<TrainingStimulus, string> = {
+  max_strength: 'Peso máximo',
+  strength: 'Peso pesado',
+  hypertrophy: 'Peso leve a moderado',
+}
+
+export const LOAD_INTENSITY_HINT: Record<TrainingStimulus, string> = {
+  max_strength: 'Suba progressivamente nas séries de aquecimento até a carga máxima que você conseguir mover hoje com boa técnica.',
+  strength: 'Use uma carga pesada — deixe poucas repetições na reserva, mas sem ir ao esforço máximo.',
+  hypertrophy: 'Use uma carga leve a moderada, com folga suficiente para completar todas as séries com boa execução.',
+}
+
+/**
  * Rótulo "MISTO — ..." de um dia, calculado a partir da composição real dos
  * exercícios. Só retorna algo quando o dia realmente tem um esforço de RM
  * (ex.: David Laid Powerbuilding DUP — Gymshark Exact v7); rotinas sem RM

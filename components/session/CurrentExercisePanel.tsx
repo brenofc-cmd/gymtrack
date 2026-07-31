@@ -28,6 +28,8 @@ import { WarmupSetList } from './WarmupSetList'
 import { WorkingSetList } from './WorkingSetList'
 import type { SetDraft, SetSaveState } from './SetRow'
 import { formatPrescription, formatRir, formatRest, rmEffortGuidance } from '@/lib/training/prescription'
+import { classifyExerciseStimulus, LOAD_INTENSITY_HINT, LOAD_INTENSITY_LABEL } from '@/lib/training/stimulus'
+import { TrainingStimulusBadge } from '@/components/workout/TrainingStimulusBadge'
 import {
   MAX_EFFORT_SAFETY_WARNING,
   ONE_RM_CONFIRMATION_TEXT,
@@ -114,6 +116,12 @@ export function CurrentExercisePanel({
     ? workoutExercise.technique_notes ?? workoutExercise.exercise.instructions ?? []
     : selectedExercise.instructions ?? []
   const loadConfig = getLoadInputConfig(selectedExercise, workoutExercise.notes)
+  const stimulus = classifyExerciseStimulus({
+    prescription_type: workoutExercise.prescription_type,
+    target_reps_min: workoutExercise.target_reps_min,
+    target_reps_max: workoutExercise.target_reps_max,
+    exercise_type: selectedExercise.exercise_type,
+  })
   const allLogged = storeSets[workoutExercise.id] ?? []
   const completedSets = allLogged.filter((set) => !set.is_warmup)
   const warmupSets = allLogged.filter((set) => set.is_warmup)
@@ -274,7 +282,23 @@ export function CurrentExercisePanel({
             <h1 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground">
               {selectedExercise.name_pt}
             </h1>
-            <p className="mt-1 text-[11px] text-muted-foreground">
+            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+              <TrainingStimulusBadge
+                exercise={{
+                  prescription_type: workoutExercise.prescription_type,
+                  target_reps_min: workoutExercise.target_reps_min,
+                  target_reps_max: workoutExercise.target_reps_max,
+                  exercise_type: selectedExercise.exercise_type,
+                }}
+              />
+              <span className="inline-flex items-center rounded-full border border-input bg-secondary px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-foreground">
+                {LOAD_INTENSITY_LABEL[stimulus]}
+              </span>
+            </div>
+            <p className="mt-1.5 text-[10px] leading-relaxed text-muted-foreground">
+              {LOAD_INTENSITY_HINT[stimulus]}
+            </p>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
               Prescrição bloqueada: {formatPrescription(workoutExercise, { perSide: selectedExercise.is_unilateral })}
               {' · '}RIR: {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
               {' · '}Descanso: {formatRest(workoutExercise).label}
