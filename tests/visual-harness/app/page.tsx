@@ -44,6 +44,7 @@ function exercise(id: string, name: string, equipment: string, order: number): W
     target_reps_min: order === 0 ? 8 : 10,
     target_reps_max: order === 0 ? 12 : 15,
     rest_seconds: order === 0 ? 150 : 90,
+    rest_seconds_source: 'source',
     rir_min: 2,
     rir_max: 2,
     superset_group: null,

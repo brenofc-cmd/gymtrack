@@ -70,6 +70,7 @@ function workoutExercise(id: string, item: Exercise): WorkoutExerciseWithExercis
     target_reps_min: 8,
     target_reps_max: 12,
     rest_seconds: 90,
+    rest_seconds_source: 'source',
     rir_min: 2,
     rir_max: 2,
     superset_group: null,
