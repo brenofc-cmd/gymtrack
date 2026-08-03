@@ -57,19 +57,19 @@ export function ActiveWorkoutHeader({
 
   return (
     <>
-      <header className="sticky top-0 z-30 border-b border-sidebar-border bg-sidebar/95 pt-[env(safe-area-inset-top)] backdrop-blur-xl">
-        <div className="mx-auto flex min-h-[84px] max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
+      <header className="sticky top-0 z-30 border-b border-primary/30 bg-primary pt-[env(safe-area-inset-top)] text-primary-foreground shadow-[0_8px_24px_rgba(0,0,0,.18)]">
+        <div className="mx-auto flex min-h-[76px] max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
           <button
             type="button"
             onClick={overview ? onExit : onBackToOverview}
             aria-label={overview ? 'Sair do treino' : 'Voltar para visão geral'}
-            className="grid size-11 shrink-0 place-items-center rounded-xl border border-input text-muted-foreground hover:text-foreground"
+            className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary-foreground/15 text-primary-foreground transition-colors hover:bg-primary-foreground/25"
           >
             {overview ? <X className="size-4" /> : <ArrowLeft className="size-4" />}
           </button>
 
           <div className="min-w-0 flex-1">
-            <p className="flex items-center gap-1.5 truncate text-xs font-bold text-foreground">
+            <p className="flex items-center gap-1.5 truncate text-xs font-bold text-primary-foreground">
               <span className="truncate">
                 {workoutLetter ? `${workoutLetter} · ` : ''}{workoutName}
               </span>
@@ -81,7 +81,7 @@ export function ActiveWorkoutHeader({
               )}
             </p>
             {blockWeekNumber != null && (
-              <p className="text-[9px] font-semibold uppercase tracking-wide text-muted-foreground">
+              <p className="text-[9px] font-semibold uppercase tracking-wide text-primary-foreground/70">
                 Bloco DUP · semana {blockWeekNumber}/9
               </p>
             )}
@@ -89,14 +89,14 @@ export function ActiveWorkoutHeader({
               type="button"
               onClick={() => setClockOpen(true)}
               aria-label={`${paused ? 'Treino pausado' : 'Duração do treino'} ${formatDuration(elapsed)}. Toque para opções.`}
-              className="mt-0.5 inline-flex min-h-7 items-center gap-1.5 rounded-lg font-mono text-lg font-black tabular-nums text-primary"
+              className="mt-0.5 inline-flex min-h-7 items-center gap-1.5 rounded-lg font-mono text-lg font-black tabular-nums text-primary-foreground"
             >
               {paused ? <Pause className="size-3.5" fill="currentColor" /> : <TimerReset className="size-3.5" />}
               {formatDuration(elapsed)}
             </button>
-            <div className="-mt-0.5"><WorkoutSaveStatus compact /></div>
+            <div className="-mt-0.5 opacity-75"><WorkoutSaveStatus compact /></div>
             {timeStatus !== 'normal' && (
-              <p className={`text-[9px] font-bold ${timeStatus === 'limit' ? 'text-destructive' : 'text-[#ffb547]'}`}>
+              <p className={`text-[9px] font-bold ${timeStatus === 'limit' ? 'text-destructive' : 'text-primary-foreground/80'}`}>
                 {timeStatus === 'limit' ? 'Limite de 75 min atingido' : 'Restam menos de 10 min'}
               </p>
             )}
@@ -104,13 +104,13 @@ export function ActiveWorkoutHeader({
 
           <div className="shrink-0 text-center">
             <p className="font-mono text-sm font-black tabular-nums">{completedSets}/{totalSets}</p>
-            <p className="text-[9px] text-muted-foreground">séries</p>
+            <p className="text-[9px] text-primary-foreground/70">séries</p>
           </div>
 
           <button
             type="button"
             onClick={onFinish}
-            className="min-h-11 shrink-0 rounded-xl bg-primary px-2.5 text-xs font-extrabold text-primary-foreground sm:px-4"
+            className="min-h-10 shrink-0 rounded-xl bg-primary-foreground px-2.5 text-xs font-extrabold text-primary sm:px-4"
           >
             Finalizar
           </button>

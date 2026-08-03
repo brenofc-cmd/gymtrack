@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, ChevronRight, Clock, Dumbbell } from 'lucide-react'
+import { Check, Clock, Dumbbell, ListChecks } from 'lucide-react'
 import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { OptionalTreadmillCard } from '@/components/workout/OptionalTreadmillCard'
 import { RoutineMethodInfo } from '@/components/workout/RoutineMethodInfo'
@@ -20,16 +20,18 @@ type WorkoutOverviewProps = {
 
 export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLetter, routineVersion, onOpenExercise }: WorkoutOverviewProps) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-3 pb-28 pt-4 sm:px-4">
-      <div className="mb-4">
-        <p className="metric-label text-primary">Visão geral</p>
-        <h1 className="mt-1 text-xl font-extrabold">Exercícios do treino</h1>
-        <p className="mt-1 text-xs text-muted-foreground">Toque em um exercício para executar suas séries. O switch é marcado ao concluir todas elas.</p>
-        <p className="mt-2 rounded-xl bg-secondary/50 px-3 py-2 text-[11px] leading-relaxed text-muted-foreground">
-          Se o tempo estiver acabando: exercício principal → compostos secundários →
-          acessórios → isoladores → cardio. Nunca encurte automaticamente o descanso
-          do agachamento, supino ou levantamento terra.
-        </p>
+    <main className="mx-auto w-full max-w-3xl px-3 pb-32 pt-4 sm:px-4">
+      <div className="mb-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-card px-4 py-4 shadow-[0_12px_32px_rgba(0,0,0,.16)]">
+        <div className="flex items-start gap-3">
+          <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
+            <ListChecks className="size-5" />
+          </span>
+          <div className="min-w-0">
+            <p className="metric-label text-primary">Visão geral</p>
+            <h1 className="mt-1 text-xl font-extrabold">Exercícios do treino</h1>
+            <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Toque em um exercício para registrar as séries. O progresso fica salvo automaticamente.</p>
+          </div>
+        </div>
       </div>
 
       <RoutineMethodInfo routineVersion={routineVersion} exercises={exercises} className="mb-3" />
@@ -44,9 +46,9 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
               <button
                 type="button"
                 onClick={() => onOpenExercise(index)}
-                className="flex min-h-24 w-full items-center gap-3 rounded-2xl border border-border bg-card p-3 text-left transition-colors hover:border-input active:scale-[0.99]"
+                className="flex min-h-[84px] w-full items-center gap-3 rounded-2xl border border-border bg-card p-2.5 text-left shadow-[0_3px_12px_rgba(0,0,0,.1)] transition-all hover:border-primary/35 active:scale-[0.99]"
               >
-                <div className="relative size-[74px] shrink-0 overflow-hidden rounded-xl bg-secondary">
+                <div className="relative size-[62px] shrink-0 overflow-hidden rounded-xl bg-secondary">
                   <ExerciseAnimation
                     name={item.exercise.name_pt}
                     primaryMuscle={item.exercise.muscle_group}
@@ -64,7 +66,7 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
                   </span>
                   <span className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
                     <span className="inline-flex items-center gap-1"><Dumbbell className="size-3" />{completed}/{item.target_sets} séries</span>
-                    <span className="inline-flex items-center gap-1"><Clock className="size-3" />Descanso: {formatRest(item).label}</span>
+                    <span className="inline-flex items-center gap-1"><Clock className="size-3" />{formatRest(item).label}</span>
                     {item.superset_group != null && (
                       <span className="font-semibold text-primary">Superset {item.superset_group}</span>
                     )}
@@ -81,7 +83,6 @@ export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLe
                     {done && <Check className="size-3.5" strokeWidth={3} />}
                   </span>
                 </span>
-                <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
               </button>
             </li>
           )
