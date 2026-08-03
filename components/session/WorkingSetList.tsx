@@ -93,7 +93,7 @@ export function WorkingSetList({
       </div>
 
       {loadConfig.helperText && (
-        <p className="mt-1 px-2 text-[10px] font-medium text-[#ffcf7a]">
+        <p className="mt-1 px-2 text-[10px] font-medium text-[var(--warn-text)]">
           {loadConfig.helperText}
         </p>
       )}

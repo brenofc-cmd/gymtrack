@@ -48,7 +48,7 @@ export function RoutineMethodInfo({ routineVersion, exercises, className }: Rout
         <span className="inline-flex items-center rounded-full border border-primary/25 bg-primary/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-primary">
           {METHOD_BADGE}
         </span>
-        <span className="inline-flex items-center rounded-full border border-[#5ba8ff]/30 bg-[#5ba8ff]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#8dc5ff]">
+        <span className="inline-flex items-center rounded-full border border-[var(--info-tint)]/30 bg-[var(--info-tint)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--info-text)]">
           {SOURCE_BADGE}
         </span>
         {isGuidedLoad && (
@@ -57,7 +57,7 @@ export function RoutineMethodInfo({ routineVersion, exercises, className }: Rout
           </span>
         )}
         {summary && (
-          <span className="inline-flex items-center rounded-full border border-[#ffb547]/30 bg-[#ffb547]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[#ffcf7a]">
+          <span className="inline-flex items-center rounded-full border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-[var(--warn-text)]">
             {summary}
           </span>
         )}

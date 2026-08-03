@@ -337,7 +337,7 @@ export function SetRow({
         {!isWarmup && !isDone && targetLabel && (
           <span className="text-muted-foreground">Meta RIR {targetLabel}</span>
         )}
-        {saveState === 'queued' && <span className="text-[#ffcf7a]">Salva offline</span>}
+        {saveState === 'queued' && <span className="text-[var(--warn-text)]">Salva offline</span>}
         {editing && canEdit && (
           <button
             type="button"

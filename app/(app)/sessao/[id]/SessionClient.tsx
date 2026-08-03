@@ -18,6 +18,7 @@ import { useWakeLock } from '@/lib/hooks/useWakeLock'
 import { classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { ActiveWorkoutHeader } from '@/components/session/ActiveWorkoutHeader'
+import { SheetPortalContainer } from '@/components/ui/bottom-sheet'
 import {
   CurrentExercisePanel,
   type PreviousExerciseSet,
@@ -102,6 +103,10 @@ export function SessionClient({
   const [exitOpen, setExitOpen] = useState(false)
   const [finishOpen, setFinishOpen] = useState(false)
   const [overviewOpen, setOverviewOpen] = useState(false)
+  // Os sheets (BottomSheet) usam portal para <body> por padrão, fora do
+  // escopo .gt-light abaixo — redireciona o portal pra dentro desta árvore
+  // para que herdem o tema claro em vez de caírem no tema escuro global.
+  const [themeRoot, setThemeRoot] = useState<HTMLDivElement | null>(null)
 
   useEffect(() => {
     const serverSets: Record<string, LocalSetLog[]> = {}
@@ -212,7 +217,8 @@ export function SessionClient({
   }
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-background">
+    <div ref={setThemeRoot} className="gt-light min-h-dvh overflow-x-hidden bg-background">
+    <SheetPortalContainer container={themeRoot}>
       <ActiveWorkoutHeader
         startedAt={session.started_at}
         workoutName={workout.name}
@@ -256,7 +262,7 @@ export function SessionClient({
         />
       ) : <main className="mx-auto w-full max-w-[430px] px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
         {readinessMessage && (
-          <div className="mb-2 flex gap-2 rounded-xl bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
+          <div className="mb-2 flex gap-2 rounded-xl bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--warn-text)]">
             <Activity className="mt-0.5 size-4 shrink-0" />
             {readinessMessage}
           </div>
@@ -323,6 +329,7 @@ export function SessionClient({
         workoutExercises={workout.workout_exercises}
         bestWeights={prWeights}
       />
+    </SheetPortalContainer>
     </div>
   )
 }

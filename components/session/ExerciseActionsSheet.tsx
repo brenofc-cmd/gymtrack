@@ -118,7 +118,7 @@ export function ExerciseActionsSheet({
         )}
 
         {progression && (
-          <div className="mt-3 rounded-xl bg-primary/[0.06] px-3 py-2.5 text-xs leading-relaxed text-[#c7d0db]">
+          <div className="mt-3 rounded-xl bg-primary/[0.06] px-3 py-2.5 text-xs leading-relaxed text-[var(--body-soft)]">
             <span className="font-bold text-primary">
               {progression.loadAdjustment === 'decrease_assistance' ? 'Reduzir assistência' : 'Progressão'}:
             </span>{' '}
@@ -158,7 +158,7 @@ export function ExerciseActionsSheet({
             </button>
           </div>
           <button type="button" onClick={() => onSkip(true)} className={actionClass}>
-            <Ban className="size-4 text-[#ffcf7a]" /> Marcar como indisponível hoje
+            <Ban className="size-4 text-[var(--warn-text)]" /> Marcar como indisponível hoje
           </button>
           <button type="button" onClick={() => onSkip()} className={actionClass}>
             <SkipForward className="size-4 text-muted-foreground" /> Pular exercício

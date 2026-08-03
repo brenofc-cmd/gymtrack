@@ -72,7 +72,7 @@ export function ExerciseSwapSheet({ open, onOpenChange, workoutExercise, selecte
 
       <div className="mt-5 space-y-2 border-t border-sidebar-border pt-4">
         <button type="button" onClick={onlyToday} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl bg-primary text-sm font-bold text-primary-foreground"><Repeat2 className="size-4" />Só neste treino</button>
-        <button type="button" onClick={permanent} disabled={saving} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-input text-sm font-semibold text-[#c7d0db] disabled:opacity-50">{saving && <Loader2 className="size-4 animate-spin" />}Tornar permanente na ficha</button>
+        <button type="button" onClick={permanent} disabled={saving} className="flex h-12 w-full items-center justify-center gap-2 rounded-xl border border-input text-sm font-semibold text-[var(--body-soft)] disabled:opacity-50">{saving && <Loader2 className="size-4 animate-spin" />}Tornar permanente na ficha</button>
         <p className="px-2 text-center text-[10.5px] leading-relaxed text-muted-foreground">A troca de hoje mantém a ficha original. A permanente passa a usar a alternativa nas próximas sessões.</p>
       </div>
     </BottomSheet>

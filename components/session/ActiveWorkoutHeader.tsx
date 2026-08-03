@@ -128,10 +128,10 @@ export function ActiveWorkoutHeader({
           <p className="mt-1 text-xs text-muted-foreground">{paused ? 'Sessão pausada' : 'Sessão em andamento'}</p>
         </div>
         {timeEstimate && (
-          <div className={`mt-3 rounded-2xl border p-4 ${timeEstimate.exceedsLimit ? 'border-[#ffb547]/30 bg-[#ffb547]/10' : 'border-border bg-secondary/35'}`}>
+          <div className={`mt-3 rounded-2xl border p-4 ${timeEstimate.exceedsLimit ? 'border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10' : 'border-border bg-secondary/35'}`}>
             <p className="text-xs font-bold">Estimativa segmentada: {timeEstimate.totalMinutes} min</p>
             <p className="mt-1 text-[11px] text-muted-foreground">Aquecimento {timeEstimate.warmupMinutes} · treino {timeEstimate.mainMinutes} · core {timeEstimate.coreMinutes} min</p>
-            {timeEstimate.exceedsLimit && <p className="mt-2 text-[11px] font-semibold text-[#ffb547]">A projeção passa de 75 min. Priorize o DUP; ao chegar a 65 min, o core pode ser marcado como não feito.</p>}
+            {timeEstimate.exceedsLimit && <p className="mt-2 text-[11px] font-semibold text-[var(--warn-text)]">A projeção passa de 75 min. Priorize o DUP; ao chegar a 65 min, o core pode ser marcado como não feito.</p>}
           </div>
         )}
         <button

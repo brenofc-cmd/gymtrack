@@ -121,7 +121,7 @@ export default function VisualHarnessPage() {
   const total = EXERCISES.reduce((sum, item) => sum + item.target_sets, 0)
 
   return (
-    <div className="min-h-dvh overflow-x-hidden bg-background">
+    <div className="gt-light min-h-dvh overflow-x-hidden bg-background">
       <ActiveWorkoutHeader
         startedAt={store.startedAt ?? new Date().toISOString()}
         workoutName="Pull B"

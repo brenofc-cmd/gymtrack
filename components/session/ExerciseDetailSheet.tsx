@@ -65,7 +65,7 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
           </div>
           <ol className="space-y-2.5">
             {(guidance.length > 0 ? guidance : exercise.instructions ?? []).map((step, index) => (
-              <li key={`${step}-${index}`} className="flex gap-3 text-sm leading-relaxed text-[#c7d0db]">
+              <li key={`${step}-${index}`} className="flex gap-3 text-sm leading-relaxed text-[var(--body-soft)]">
                 <span className="grid size-6 shrink-0 place-items-center rounded-full border border-primary/25 bg-primary/10 text-[11px] font-bold text-primary">{index + 1}</span>
                 {step}
               </li>
@@ -77,9 +77,9 @@ export function ExerciseDetailSheet({ open, onOpenChange, exercise, guidance, hi
       {tab === 'errors' && (
         <div className="mt-4 space-y-2">
           {commonErrors.map((error, index) => (
-            <div key={`${error}-${index}`} className="flex gap-3 rounded-xl border border-[#ffb547]/20 bg-[#ffb547]/5 p-3">
-              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[#ffb547]" />
-              <p className="text-sm leading-relaxed text-[#c7d0db]">{error}</p>
+            <div key={`${error}-${index}`} className="flex gap-3 rounded-xl border border-[var(--warn-tint)]/20 bg-[var(--warn-tint)]/5 p-3">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 text-[var(--warn-tint)]" />
+              <p className="text-sm leading-relaxed text-[var(--body-soft)]">{error}</p>
             </div>
           ))}
         </div>

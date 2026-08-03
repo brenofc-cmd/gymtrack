@@ -155,7 +155,7 @@ export function FinishWorkoutSheet({
       description="Revise a sessão antes de finalizar."
     >
       {pendingSets > 0 && (
-        <div className="mb-3 flex gap-2 rounded-xl bg-[#ffb547]/10 px-3 py-2.5 text-xs leading-relaxed text-[#ffcf7a]">
+        <div className="mb-3 flex gap-2 rounded-xl bg-[var(--warn-tint)]/10 px-3 py-2.5 text-xs leading-relaxed text-[var(--warn-text)]">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
           Existem {pendingSets} {pendingSets === 1 ? 'série não concluída' : 'séries não concluídas'}.
         </div>

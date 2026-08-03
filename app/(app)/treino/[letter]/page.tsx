@@ -76,7 +76,7 @@ export default async function TreinoPage(props: {
   const workoutSource = from === 'dashboard' ? 'dashboard' : 'treinos'
 
   return (
-    <div className="max-w-lg mx-auto pb-28">
+    <div className="gt-light min-h-dvh max-w-lg mx-auto pb-28 bg-background">
       {/* Header */}
       <div className="sticky top-0 z-10 rounded-b-[28px] bg-background/95 backdrop-blur-sm shadow-[0_8px_24px_rgba(0,0,0,.14)]">
         <div className="flex items-center gap-3 px-4 py-4">

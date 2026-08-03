@@ -382,7 +382,7 @@ export function CurrentExercisePanel({
                   done
                     ? 'bg-primary text-primary-foreground'
                     : isCurrentResting
-                      ? 'bg-[#ffb547] text-[#0b0d10]'
+                      ? 'bg-[var(--warn-tint)] text-[#0b0d10]'
                       : isCurrent
                         ? 'border-2 border-primary text-primary'
                         : 'bg-secondary text-muted-foreground'
@@ -428,7 +428,7 @@ export function CurrentExercisePanel({
               progression?.action === 'bloquear_por_dor'
                 ? 'bg-destructive/10 text-destructive'
                 : progression?.action === 'revisar'
-                  ? 'bg-[#ffb547]/10 text-[#ffcf7a]'
+                  ? 'bg-[var(--warn-tint)]/10 text-[var(--warn-text)]'
                   : 'bg-primary/10 text-primary'
             )}>
               {progressionLabel}
@@ -459,14 +459,14 @@ export function CurrentExercisePanel({
               loadConfig={loadConfig}
             />
             {isDeload && (
-              <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] text-[#ffcf7a]">
+              <div className="rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] text-[var(--warn-text)]">
                 Semana de deload: aproximadamente 40% menos séries, RIR 3–4 e nenhuma recomendação de aumento de carga.
               </div>
             )}
             <div className={cn('rounded-xl border px-3 py-2 text-[11px] leading-relaxed', recommendedLoad?.action === 'stop' ? 'border-destructive/30 bg-destructive/10 text-destructive' : 'border-primary/20 bg-primary/[0.06] text-muted-foreground')}>
               <p className="font-bold text-foreground">Progressão individual calculada pelo GymTrack</p>
               <p className="mt-0.5">{recommendedLoad?.suggestedKg != null ? `Carga sugerida: ${recommendedLoad.suggestedKg} kg. ${recommendedLoad.reason}` : recommendedLoad?.reason ?? 'Sem histórico ou máxima de referência: escolha a carga manualmente.'}</p>
-              {recommendedLoad?.requiresManualConfirmation && <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>}
+              {recommendedLoad?.requiresManualConfirmation && <p className="mt-1 font-semibold text-[var(--warn-text)]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>}
               {loadConfig.acceptsLoad && <div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={() => setWhyOpen(true)} className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground">Por que este peso?</button>{loadConfig.kind === 'external_total' && <button type="button" onClick={() => setPlateOpen(true)} className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground">Ver montagem da barra</button>}</div>}
             </div>
             <div className="rounded-xl border border-border bg-background/20 px-3 py-2">
@@ -474,8 +474,8 @@ export function CurrentExercisePanel({
               <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">Obrigatória antes da última série para confirmar execução, amplitude, ajuda e dor.</p>
               <ExerciseFeedbackPanel sessionId={sessionId} workoutExerciseId={workoutExercise.id} hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0} />
             </div>
-            {workoutExercise.prescription_type === 'guided_top_set' && <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]"><p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p><p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p></div>}
-            {workoutExercise.prescription_type === 'rep_max_effort' && <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]"><p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>{workoutExercise.rep_max_target != null && <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>}<p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>{workoutExercise.rep_max_target === 1 && <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground"><input type="checkbox" checked={rmSafetyConfirmed} onChange={(event) => setRmSafetyConfirmed(event.target.checked)} className="mt-0.5 size-4" />{ONE_RM_CONFIRMATION_TEXT}</label>}</div>}
+            {workoutExercise.prescription_type === 'guided_top_set' && <div className="rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--warn-text)]"><p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p><p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p></div>}
+            {workoutExercise.prescription_type === 'rep_max_effort' && <div className="rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--warn-text)]"><p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>{workoutExercise.rep_max_target != null && <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>}<p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>{workoutExercise.rep_max_target === 1 && <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground"><input type="checkbox" checked={rmSafetyConfirmed} onChange={(event) => setRmSafetyConfirmed(event.target.checked)} className="mt-0.5 size-4" />{ONE_RM_CONFIRMATION_TEXT}</label>}</div>}
           </div>
         </details>
 

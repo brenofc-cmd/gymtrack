@@ -21,8 +21,8 @@ export function TrainingStimulusBadge({
       aria-label={`Tipo de estímulo: ${TRAINING_STIMULUS_LABEL[stimulus]}`}
       className={cn(
         'inline-flex rounded-full border px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide',
-        stimulus === 'max_strength' && 'border-[#ffb547]/30 bg-[#ffb547]/10 text-[#ffcf7a]',
-        stimulus === 'strength' && 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#8dc5ff]',
+        stimulus === 'max_strength' && 'border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 text-[var(--warn-text)]',
+        stimulus === 'strength' && 'border-[var(--info-tint)]/30 bg-[var(--info-tint)]/10 text-[var(--info-text)]',
         stimulus === 'hypertrophy' && 'border-primary/25 bg-primary/10 text-primary'
       )}
     >

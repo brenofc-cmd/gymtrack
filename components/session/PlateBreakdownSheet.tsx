@@ -33,7 +33,7 @@ export function PlateBreakdownSheet({ open, onOpenChange, totalKg, equipment }: 
           </div>
           <p className="text-[11px] text-muted-foreground">Repita a mesma combinação do outro lado da barra.</p>
           {breakdown.achievedKg !== totalKg && (
-            <p className="text-[11px] font-semibold text-[#ffcf7a]">
+            <p className="text-[11px] font-semibold text-[var(--warn-text)]">
               Carga arredondada para o executável mais próximo com as anilhas cadastradas ({totalKg} kg pedido → {breakdown.achievedKg} kg montado).
             </p>
           )}

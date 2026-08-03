@@ -54,7 +54,7 @@ export function ProgressChart({ data }: ProgressChartProps) {
   return (
     <div className="space-y-3">
       {/* Tab selector */}
-      <div className="flex gap-1 bg-zinc-800/60 rounded-lg p-1 w-fit">
+      <div className="flex gap-1 bg-secondary rounded-lg p-1 w-fit">
         {METRICS.map((m) => (
           <button
             key={m.key}

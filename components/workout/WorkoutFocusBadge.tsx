@@ -17,13 +17,13 @@ export const DAY_CLASSIFICATION_LABEL: Record<DayClassification, string> = {
 }
 
 const CLASSIFICATION_STYLE: Record<DayClassification, string> = {
-  strength_technique: 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#5ba8ff]',
-  strength_hypertrophy: 'border-[#c58bff]/30 bg-[#c58bff]/10 text-[#c58bff]',
-  strength: 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#5ba8ff]',
-  max_strength_hypertrophy: 'border-[#ffb547]/30 bg-[#ffb547]/10 text-[#ffcf7a]',
+  strength_technique: 'border-[var(--info-tint)]/30 bg-[var(--info-tint)]/10 text-[var(--info-text)]',
+  strength_hypertrophy: 'border-[var(--purple-text)]/30 bg-[var(--purple-text)]/10 text-[var(--purple-text)]',
+  strength: 'border-[var(--info-tint)]/30 bg-[var(--info-tint)]/10 text-[var(--info-text)]',
+  max_strength_hypertrophy: 'border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 text-[var(--warn-text)]',
   hypertrophy: 'border-primary/30 bg-primary/10 text-primary',
-  mixed: 'border-[#c58bff]/30 bg-[#c58bff]/10 text-[#c58bff]',
-  recovery: 'border-[#62dc91]/30 bg-[#62dc91]/10 text-[#62dc91]',
+  mixed: 'border-[var(--purple-text)]/30 bg-[var(--purple-text)]/10 text-[var(--purple-text)]',
+  recovery: 'border-[var(--mint-text)]/30 bg-[var(--mint-text)]/10 text-[var(--mint-text)]',
   rest: 'border-border bg-secondary text-muted-foreground',
 }
 

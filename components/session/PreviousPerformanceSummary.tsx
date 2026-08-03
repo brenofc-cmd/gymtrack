@@ -46,7 +46,7 @@ export function PreviousPerformanceSummary({
     <div className="rounded-xl bg-secondary/45 px-3 py-2.5">
       <div className="flex items-start gap-2">
         <History className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
-        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-[#c7d0db]">
+        <p className="min-w-0 flex-1 text-[11px] leading-relaxed text-[var(--body-soft)]">
           <span className="font-bold text-foreground">Última vez:</span>{' '}
           {loadConfig.kind === 'assistance' ? 'assistência ' : ''}{loadText} · {reps} reps
           {averageRir != null ? ` · RIR médio ${averageRir}` : ''}

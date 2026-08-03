@@ -1,8 +1,30 @@
 'use client'
 
-import type { ReactNode } from 'react'
+import { createContext, useContext, type ReactNode } from 'react'
 import { Dialog as DialogPrimitive } from '@base-ui/react/dialog'
 import { X } from 'lucide-react'
+
+/**
+ * Por padrão, o Portal do diálogo renderiza direto em <body>, fora de
+ * qualquer escopo de CSS vars (ex.: .gt-light). Telas que precisam de um
+ * tema escopado passam seu próprio nó via SheetPortalContainer para que os
+ * sheets herdem as variáveis certas em vez de sempre cair no tema escuro.
+ */
+const SheetPortalContainerContext = createContext<HTMLElement | null>(null)
+
+export function SheetPortalContainer({
+  container,
+  children,
+}: {
+  container: HTMLElement | null
+  children: ReactNode
+}) {
+  return (
+    <SheetPortalContainerContext.Provider value={container}>
+      {children}
+    </SheetPortalContainerContext.Provider>
+  )
+}
 
 interface BottomSheetProps {
   open: boolean
@@ -13,9 +35,10 @@ interface BottomSheetProps {
 }
 
 export function BottomSheet({ open, onOpenChange, title, description, children }: BottomSheetProps) {
+  const container = useContext(SheetPortalContainerContext)
   return (
     <DialogPrimitive.Root open={open} onOpenChange={onOpenChange}>
-      <DialogPrimitive.Portal>
+      <DialogPrimitive.Portal container={container ?? undefined}>
         <DialogPrimitive.Backdrop className="fixed inset-0 z-50 bg-black/65 backdrop-blur-[2px] data-open:animate-in data-open:fade-in data-closed:animate-out data-closed:fade-out" />
         <DialogPrimitive.Popup className="fixed inset-x-0 bottom-0 z-[51] mx-auto max-h-[88dvh] w-full max-w-[560px] overflow-hidden rounded-t-[24px] border border-b-0 border-input bg-card text-foreground shadow-2xl outline-none data-open:animate-in data-open:slide-in-from-bottom-8 data-closed:animate-out data-closed:slide-out-to-bottom-8">
           <div className="mx-auto mt-2.5 h-1 w-10 rounded-full bg-input" />

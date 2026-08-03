@@ -14,7 +14,7 @@ export function OptionalTreadmillCard({
   if (!finisher) return null
 
   return (
-    <section className="overflow-hidden rounded-2xl border border-[#62dc91]/25 bg-[#62dc91]/5">
+    <section className="overflow-hidden rounded-2xl border border-[var(--mint-text)]/25 bg-[var(--mint-text)]/5">
       <div className="flex items-stretch">
         <div className={compact ? 'w-24 shrink-0' : 'w-28 shrink-0'}>
           <ExerciseAnimation
@@ -27,10 +27,10 @@ export function OptionalTreadmillCard({
         </div>
         <div className="min-w-0 flex-1 p-3">
           <div className="flex items-center gap-2">
-            <Footprints className="size-4 text-[#62dc91]" />
+            <Footprints className="size-4 text-[var(--mint-text)]" />
             <h2 className="text-sm font-extrabold">Esteira opcional</h2>
           </div>
-          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[#62dc91]">
+          <p className="mt-1 text-[10px] font-bold uppercase tracking-wide text-[var(--mint-text)]">
             Complemento GymTrack · após a musculação
           </p>
           <div className="mt-2 flex flex-wrap gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
@@ -40,7 +40,7 @@ export function OptionalTreadmillCard({
           {!compact && <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{finisher.guidance}</p>}
         </div>
       </div>
-      <p className="border-t border-[#62dc91]/15 px-3 py-2 text-[10px] text-muted-foreground">
+      <p className="border-t border-[var(--mint-text)]/15 px-3 py-2 text-[10px] text-muted-foreground">
         Opcional e sempre por último. Pule se o tempo estiver acabando ou se prejudicar a recuperação.
       </p>
     </section>

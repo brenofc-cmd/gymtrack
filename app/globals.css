@@ -81,6 +81,63 @@
   --sidebar-accent-foreground: #f2f5f8;
   --sidebar-border: #1b222b;
   --sidebar-ring: #a3e635;
+
+  /* Cores semânticas de status (badges/avisos), independentes dos tokens
+     shadcn acima — tonalidades ajustadas para contraste em fundo escuro. */
+  --warn-tint: #ffb547;
+  --warn-text: #ffcf7a;
+  --info-tint: #5ba8ff;
+  --info-text: #8dc5ff;
+  --purple-text: #c58bff;
+  --mint-text: #62dc91;
+  --body-soft: #c7d0db;
+  --success-text: #72d99a;
+  --syncing-text: #7eb9ff;
+}
+
+/* Tema claro do redesign (mockup GymTrack), escopado às telas de lista de
+   treino e execução de sessão — o resto do app continua no tema escuro
+   acima. Mesma paleta de tokens, valores diferentes. */
+.gt-light {
+  --background: #eef0ed;
+  --foreground: #1c2b20;
+  --card: #ffffff;
+  --card-foreground: #1c2b20;
+  --popover: #ffffff;
+  --popover-foreground: #1c2b20;
+  --primary: #1fa851;
+  --primary-foreground: #ffffff;
+  --secondary: #f2f4f2;
+  --secondary-foreground: #1c2b20;
+  --muted: #f2f4f2;
+  --muted-foreground: #8a938d;
+  --accent: #eafbee;
+  --accent-foreground: #16a34a;
+  --destructive: #dc2626;
+  --border: #e2e5e1;
+  --input: #e2e5e1;
+  --ring: #1fa851;
+  --sidebar: #ffffff;
+  --sidebar-foreground: #1c2b20;
+  --sidebar-primary: #1fa851;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #f2f4f2;
+  --sidebar-accent-foreground: #1c2b20;
+  --sidebar-border: #e2e5e1;
+  --sidebar-ring: #1fa851;
+
+  --warn-tint: #f59e0b;
+  --warn-text: #92400e;
+  --info-tint: #2563eb;
+  --info-text: #1d4ed8;
+  --purple-text: #7c3aed;
+  --mint-text: #059669;
+  --body-soft: #475569;
+  --success-text: #16a34a;
+  --syncing-text: #2563eb;
+
+  color-scheme: light;
+  background: var(--background);
 }
 
 @layer base {

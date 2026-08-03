@@ -69,9 +69,9 @@ export function WorkoutSaveStatus({ compact = false }: { compact?: boolean }) {
       className={cn(
         'inline-flex min-h-7 items-center gap-1.5 rounded-full text-[10px] font-semibold',
         compact ? 'px-0' : 'border border-border bg-secondary/50 px-2.5',
-        detail.state === 'synced' && 'text-[#72d99a]',
-        detail.state === 'syncing' && 'text-[#7eb9ff]',
-        detail.state === 'offline' && 'text-[#ffcf7a]',
+        detail.state === 'synced' && 'text-[var(--success-text)]',
+        detail.state === 'syncing' && 'text-[var(--syncing-text)]',
+        detail.state === 'offline' && 'text-[var(--warn-text)]',
         detail.state === 'error' && 'text-destructive'
       )}
     >
