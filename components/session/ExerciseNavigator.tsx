@@ -55,14 +55,14 @@ export function ExerciseNavigator({
               onClick={() => go(currentIndex - 1)}
               disabled={currentIndex === 0}
               aria-label="Exercício anterior"
-              className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary disabled:opacity-25"
             >
               <ChevronLeft className="size-5" />
             </button>
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-secondary/70 px-3 text-xs font-bold"
+              className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-full bg-secondary/70 px-3 text-xs font-bold"
             >
               Exercício {currentIndex + 1} de {exercises.length}
               <ChevronDown className="size-4 text-primary" />
@@ -72,7 +72,7 @@ export function ExerciseNavigator({
               onClick={() => go(currentIndex + 1)}
               disabled={currentIndex === exercises.length - 1}
               aria-label="Próximo exercício"
-              className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
+              className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground hover:bg-secondary disabled:opacity-25"
             >
               <ChevronRight className="size-5" />
             </button>
