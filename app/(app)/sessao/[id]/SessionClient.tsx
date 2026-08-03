@@ -304,6 +304,10 @@ export function SessionClient({
         notificationsEnabled={notificationsEnabled}
         soundEnabled={restTimerSound}
         vibrateEnabled={restTimerVibrate}
+        onPrevExercise={() => go(currentIndex - 1)}
+        onNextExercise={() => go(currentIndex + 1)}
+        canGoPrev={currentIndex > 0}
+        canGoNext={currentIndex < orderedExercises.length - 1}
       />
       <SessionExitSheet
         open={exitOpen}

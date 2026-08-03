@@ -3,6 +3,8 @@
 import { useEffect, useRef, useState } from 'react'
 import {
   ChevronDown,
+  ChevronLeft,
+  ChevronRight,
   ChevronUp,
   Minus,
   Pause,
@@ -21,6 +23,29 @@ import { formatDuration } from '@/lib/utils/time'
 import { safeNotify, safeVibrate } from '@/lib/utils/browser-feedback'
 import { cancelRestPush } from '@/lib/push/client'
 import type { WorkoutExerciseWithExercise } from '@/types/database'
+
+function NavArrow({
+  direction,
+  onClick,
+  disabled,
+}: {
+  direction: 'prev' | 'next'
+  onClick: () => void
+  disabled: boolean
+}) {
+  const Icon = direction === 'prev' ? ChevronLeft : ChevronRight
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={direction === 'prev' ? 'Exercício anterior' : 'Próximo exercício'}
+      className="grid size-11 shrink-0 place-items-center rounded-full border border-sidebar-border bg-card/97 text-foreground shadow-[0_10px_24px_rgba(0,0,0,.3)] backdrop-blur-xl transition-transform active:scale-90 disabled:opacity-30"
+    >
+      <Icon className="size-5" />
+    </button>
+  )
+}
 
 function playBeep() {
   try {
@@ -49,6 +74,11 @@ interface RestTimerDockProps {
   notificationsEnabled?: boolean
   soundEnabled?: boolean
   vibrateEnabled?: boolean
+  /** Navegação entre exercícios: mesmo pill flutuante do timer, como no mockup. */
+  onPrevExercise: () => void
+  onNextExercise: () => void
+  canGoPrev: boolean
+  canGoNext: boolean
 }
 
 export function RestTimerDock({
@@ -57,6 +87,10 @@ export function RestTimerDock({
   notificationsEnabled = true,
   soundEnabled = true,
   vibrateEnabled = true,
+  onPrevExercise,
+  onNextExercise,
+  canGoPrev,
+  canGoNext,
 }: RestTimerDockProps) {
   const {
     restTimer,
@@ -152,28 +186,32 @@ export function RestTimerDock({
         style={{ bottom: keyboardOffset }}
       >
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
-        <div className="mx-auto flex min-h-16 max-w-[420px] items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-3 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
-          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
-            {allDone ? <SkipForward className="size-4" /> : <TimerReset className="size-4" />}
-          </span>
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-xs font-bold">{current?.exercise.name_pt ?? 'Exercício atual'}</p>
-            <p className="text-[10px] text-muted-foreground">
-              {allDone ? 'Exercício concluído' : `Série ${currentNext} de ${current?.target_sets ?? '—'} pronta`}
-            </p>
+        <div className="mx-auto flex max-w-[460px] items-center gap-2">
+          <NavArrow direction="prev" onClick={onPrevExercise} disabled={!canGoPrev} />
+          <div className="flex min-h-16 min-w-0 flex-1 items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-3 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
+            <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
+              {allDone ? <SkipForward className="size-4" /> : <TimerReset className="size-4" />}
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-xs font-bold">{current?.exercise.name_pt ?? 'Exercício atual'}</p>
+              <p className="text-[10px] text-muted-foreground">
+                {allDone ? 'Exercício concluído' : `Série ${currentNext} de ${current?.target_sets ?? '—'} pronta`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                document.querySelector('[data-current-set="true"]')?.scrollIntoView({
+                  behavior: 'smooth',
+                  block: 'center',
+                })
+              }}
+              className="min-h-11 shrink-0 rounded-full bg-primary px-4 text-xs font-extrabold text-primary-foreground"
+            >
+              {allDone ? 'Revisar' : 'Ir para série'}
+            </button>
           </div>
-          <button
-            type="button"
-            onClick={() => {
-              document.querySelector('[data-current-set="true"]')?.scrollIntoView({
-                behavior: 'smooth',
-                block: 'center',
-              })
-            }}
-            className="min-h-11 shrink-0 rounded-full bg-primary px-4 text-xs font-extrabold text-primary-foreground"
-          >
-            {allDone ? 'Revisar' : 'Ir para série'}
-          </button>
+          <NavArrow direction="next" onClick={onNextExercise} disabled={!canGoNext} />
         </div>
         <p className="sr-only" aria-live="assertive">{announcement}</p>
       </div>
@@ -187,13 +225,17 @@ export function RestTimerDock({
         style={{ bottom: keyboardOffset }}
       >
         <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
-        <div className="mx-auto flex min-h-14 max-w-[420px] items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-4 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
-          <span className="text-[10px] font-bold uppercase text-muted-foreground">Descanso</span>
-          <span className="font-mono text-2xl font-black tabular-nums text-primary">{formatDuration(remaining)}</span>
-          <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">Próxima: série {nextSet}</span>
-          <button type="button" onClick={() => setMinimized(false)} aria-label="Expandir cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full border border-input">
-            <ChevronUp className="size-4" />
-          </button>
+        <div className="mx-auto flex max-w-[460px] items-center gap-2">
+          <NavArrow direction="prev" onClick={onPrevExercise} disabled={!canGoPrev} />
+          <div className="flex min-h-14 min-w-0 flex-1 items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-4 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
+            <span className="text-[10px] font-bold uppercase text-muted-foreground">Descanso</span>
+            <span className="font-mono text-2xl font-black tabular-nums text-primary">{formatDuration(remaining)}</span>
+            <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">Próxima: série {nextSet}</span>
+            <button type="button" onClick={() => setMinimized(false)} aria-label="Expandir cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full border border-input">
+              <ChevronUp className="size-4" />
+            </button>
+          </div>
+          <NavArrow direction="next" onClick={onNextExercise} disabled={!canGoNext} />
         </div>
       </div>
     )
@@ -206,45 +248,49 @@ export function RestTimerDock({
       style={{ bottom: keyboardOffset }}
     >
       <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
-      <div className="mx-auto max-w-[420px] rounded-[28px] border border-sidebar-border bg-card/97 px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
-        <div className="flex items-center gap-3">
-          <div className="min-w-0 flex-1">
-            <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Descanso · {exercise?.exercise.name_pt}</p>
-            <p className="text-[10px] text-muted-foreground">Próxima: série {nextSet} de {exercise?.target_sets ?? '—'}</p>
-          </div>
-          <div
-            className="relative grid size-20 shrink-0 place-items-center rounded-full"
-            style={{
-              background: `conic-gradient(var(--primary) ${progress}%, var(--secondary) 0)`,
-            }}
-            aria-hidden="true"
-          >
-            <div className="grid size-16 place-items-center rounded-full bg-card">
-              <p className="font-mono text-2xl font-black tabular-nums text-primary" aria-live="off">{formatDuration(remaining)}</p>
+      <div className="mx-auto flex max-w-[460px] items-center gap-2">
+        <NavArrow direction="prev" onClick={onPrevExercise} disabled={!canGoPrev} />
+        <div className="min-w-0 flex-1 rounded-[28px] border border-sidebar-border bg-card/97 px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
+          <div className="flex items-center gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Descanso · {exercise?.exercise.name_pt}</p>
+              <p className="text-[10px] text-muted-foreground">Próxima: série {nextSet} de {exercise?.target_sets ?? '—'}</p>
             </div>
+            <div
+              className="relative grid size-20 shrink-0 place-items-center rounded-full"
+              style={{
+                background: `conic-gradient(var(--primary) ${progress}%, var(--secondary) 0)`,
+              }}
+              aria-hidden="true"
+            >
+              <div className="grid size-16 place-items-center rounded-full bg-card">
+                <p className="font-mono text-2xl font-black tabular-nums text-primary" aria-live="off">{formatDuration(remaining)}</p>
+              </div>
+            </div>
+            <button type="button" onClick={() => setMinimized(true)} aria-label="Minimizar cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground">
+              <ChevronDown className="size-4" />
+            </button>
           </div>
-          <button type="button" onClick={() => setMinimized(true)} aria-label="Minimizar cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground">
-            <ChevronDown className="size-4" />
-          </button>
+          <div className="mt-2 flex gap-1.5">
+            <button type="button" onClick={() => addRestSeconds(-15)} className={controlClass} aria-label="Reduzir 15 segundos">
+              <Minus className="size-3" />15
+            </button>
+            <button type="button" onClick={paused ? resumeRestTimer : pauseRestTimer} className={controlClass} aria-label={paused ? 'Retomar cronômetro' : 'Pausar cronômetro'}>
+              {paused ? <Play className="size-3" fill="currentColor" /> : <Pause className="size-3" fill="currentColor" />}
+              <span className="hidden min-[390px]:inline">{paused ? 'Retomar' : 'Pausar'}</span>
+            </button>
+            <button type="button" onClick={() => addRestSeconds(15)} className={controlClass} aria-label="Adicionar 15 segundos">
+              <Plus className="size-3" />15
+            </button>
+            <button type="button" onClick={() => addRestSeconds(30)} className={controlClass} aria-label="Adicionar 30 segundos">
+              <Plus className="size-3" />30
+            </button>
+            <button type="button" onClick={endRest} className={controlClass} aria-label="Pular descanso">
+              <SkipForward className="size-3" /><span className="hidden min-[390px]:inline">Pular</span>
+            </button>
+          </div>
         </div>
-        <div className="mt-2 flex gap-1.5">
-          <button type="button" onClick={() => addRestSeconds(-15)} className={controlClass} aria-label="Reduzir 15 segundos">
-            <Minus className="size-3" />15
-          </button>
-          <button type="button" onClick={paused ? resumeRestTimer : pauseRestTimer} className={controlClass} aria-label={paused ? 'Retomar cronômetro' : 'Pausar cronômetro'}>
-            {paused ? <Play className="size-3" fill="currentColor" /> : <Pause className="size-3" fill="currentColor" />}
-            <span className="hidden min-[390px]:inline">{paused ? 'Retomar' : 'Pausar'}</span>
-          </button>
-          <button type="button" onClick={() => addRestSeconds(15)} className={controlClass} aria-label="Adicionar 15 segundos">
-            <Plus className="size-3" />15
-          </button>
-          <button type="button" onClick={() => addRestSeconds(30)} className={controlClass} aria-label="Adicionar 30 segundos">
-            <Plus className="size-3" />30
-          </button>
-          <button type="button" onClick={endRest} className={controlClass} aria-label="Pular descanso">
-            <SkipForward className="size-3" /><span className="hidden min-[390px]:inline">Pular</span>
-          </button>
-        </div>
+        <NavArrow direction="next" onClick={onNextExercise} disabled={!canGoNext} />
       </div>
       <p className="sr-only" aria-live="assertive">{announcement}</p>
     </div>

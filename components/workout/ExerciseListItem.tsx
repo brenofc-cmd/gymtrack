@@ -36,7 +36,7 @@ export function ExerciseListItem({
     >
       <div className="flex items-center gap-3">
         {/* Exercise thumbnail */}
-        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-zinc-800 shrink-0">
+        <div className="relative w-14 h-14 rounded-xl overflow-hidden bg-secondary shrink-0">
           <ExerciseAnimation
             name={exercise.name_pt}
             primaryMuscle={exercise.muscle_group}

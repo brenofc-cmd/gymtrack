@@ -373,6 +373,7 @@ export function CurrentExercisePanel({
           {Array.from({ length: workoutExercise.target_sets }, (_, i) => {
             const done = i < completedSets.length
             const isCurrent = i === completedSets.length
+            const isCurrentResting = isCurrent && isRestingThisExercise
             return (
               <span
                 key={i}
@@ -380,11 +381,13 @@ export function CurrentExercisePanel({
                   'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-colors',
                   done
                     ? 'bg-primary text-primary-foreground'
-                    : isCurrent
-                      ? 'border-2 border-primary text-primary'
-                      : 'bg-secondary text-muted-foreground'
+                    : isCurrentResting
+                      ? 'bg-[#ffb547] text-[#0b0d10]'
+                      : isCurrent
+                        ? 'border-2 border-primary text-primary'
+                        : 'bg-secondary text-muted-foreground'
                 )}
-                aria-label={`Série ${i + 1}: ${done ? 'concluída' : isCurrent ? 'atual' : 'pendente'}`}
+                aria-label={`Série ${i + 1}: ${done ? 'concluída' : isCurrentResting ? 'em descanso' : isCurrent ? 'atual' : 'pendente'}`}
               >
                 {done ? <CheckCircle2 className="size-4" /> : i + 1}
               </span>

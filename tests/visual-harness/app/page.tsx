@@ -164,7 +164,14 @@ export default function VisualHarnessPage() {
           hasNextExercise={currentIndex < EXERCISES.length - 1}
         />
       </main>
-      <RestTimerDock exercises={EXERCISES} currentExerciseId={current.id} />
+      <RestTimerDock
+        exercises={EXERCISES}
+        currentExerciseId={current.id}
+        onPrevExercise={() => setCurrentIndex((index) => Math.max(0, index - 1))}
+        onNextExercise={() => setCurrentIndex((index) => Math.min(EXERCISES.length - 1, index + 1))}
+        canGoPrev={currentIndex > 0}
+        canGoNext={currentIndex < EXERCISES.length - 1}
+      />
     </div>
   )
 }

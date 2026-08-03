@@ -202,7 +202,14 @@ describe('Componentes do modo de treino ativo', () => {
           onNextExercise={vi.fn()}
           hasNextExercise={false}
         />
-        <RestTimerDock exercises={[item]} currentExerciseId="we-1" />
+        <RestTimerDock
+          exercises={[item]}
+          currentExerciseId="we-1"
+          onPrevExercise={vi.fn()}
+          onNextExercise={vi.fn()}
+          canGoPrev={false}
+          canGoNext={false}
+        />
       </>
     )
 
@@ -295,7 +302,9 @@ describe('Componentes do modo de treino ativo', () => {
     expect(onGo).toHaveBeenCalledWith(1)
   })
 
-  it('permite avançar e voltar entre exercícios sem perder o foco atual', async () => {
+  it('permite avançar e voltar entre exercícios pelo pill de navegação inferior', async () => {
+    // As setas anterior/próximo migraram do ExerciseNavigator (topo) para o
+    // RestTimerDock (rodapé), unificadas no mesmo pill flutuante do mockup.
     const user = userEvent.setup()
     const exercises = [
       workoutExercise('we-1', exercise('ex-1', 'Puxada alta')),
@@ -305,24 +314,23 @@ describe('Componentes do modo de treino ativo', () => {
     function NavigatorHarness() {
       const [index, setIndex] = useState(0)
       return (
-        <ExerciseNavigator
+        <RestTimerDock
           exercises={exercises}
-          currentIndex={index}
-          completedSets={0}
-          totalSets={6}
-          sets={{}}
-          feedback={{}}
-          skippedExerciseIds={[]}
-          onGo={setIndex}
+          currentExerciseId={exercises[index].id}
+          onPrevExercise={() => setIndex((i) => Math.max(0, i - 1))}
+          onNextExercise={() => setIndex((i) => Math.min(exercises.length - 1, i + 1))}
+          canGoPrev={index > 0}
+          canGoNext={index < exercises.length - 1}
         />
       )
     }
 
     render(<NavigatorHarness />)
+    expect(screen.getByText('Puxada alta')).toBeTruthy()
     await user.click(screen.getByLabelText('Próximo exercício'))
-    expect(screen.getByRole('button', { name: /Exercício 2 de 2/ })).toBeTruthy()
+    expect(screen.getByText('Remada máquina')).toBeTruthy()
     await user.click(screen.getByLabelText('Exercício anterior'))
-    expect(screen.getByRole('button', { name: /Exercício 1 de 2/ })).toBeTruthy()
+    expect(screen.getByText('Puxada alta')).toBeTruthy()
   })
 
   it('encerra o descanso por timestamp e deixa a próxima série pronta', async () => {
@@ -340,7 +348,16 @@ describe('Componentes do modo de treino ativo', () => {
     })
     useSessionStore.getState().startRestTimer(1, 'we-1')
 
-    render(<RestTimerDock exercises={[item]} currentExerciseId="we-1" />)
+    render(
+      <RestTimerDock
+        exercises={[item]}
+        currentExerciseId="we-1"
+        onPrevExercise={vi.fn()}
+        onNextExercise={vi.fn()}
+        canGoPrev={false}
+        canGoNext={false}
+      />
+    )
     await act(async () => vi.advanceTimersByTime(1_500))
 
     expect(timerIsActive(useSessionStore.getState().restTimer)).toBe(false)
