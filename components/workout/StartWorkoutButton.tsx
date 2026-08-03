@@ -98,6 +98,10 @@ export function StartWorkoutButton({
 
   return (
     <div className="fixed bottom-16 left-0 right-0 p-4">
+      <div
+        className="absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/90 to-transparent"
+        aria-hidden
+      />
       <div className="max-w-lg mx-auto space-y-2">
         {conflictOpen && activeSession && (
           <div
@@ -144,23 +148,27 @@ export function StartWorkoutButton({
           </div>
         )}
         {!conflictOpen && (
-          <Button
-            onClick={handleClick}
-            disabled={loading}
-            className="w-full h-14 text-lg font-bold gap-2"
-            size="lg"
-          >
-            {loading ? (
-              <Loader2 className="w-5 h-5 animate-spin" />
-            ) : (
-              <Play className="w-5 h-5" fill="currentColor" />
-            )}
-            {sameWorkoutActive
-              ? `Continuar Treino ${workoutLetter}`
-              : activeSession
-                ? 'Treino em andamento…'
-                : `Começar Treino ${workoutLetter}`}
-          </Button>
+          <div className="flex justify-center">
+            <button
+              type="button"
+              onClick={handleClick}
+              disabled={loading}
+              className="flex flex-col items-center justify-center gap-1 w-24 h-24 rounded-full bg-primary text-primary-foreground border-4 border-background shadow-[0_10px_30px_-6px_rgba(163,230,53,0.45)] disabled:opacity-70 active:scale-95 transition-transform"
+            >
+              {loading ? (
+                <Loader2 className="w-6 h-6 animate-spin" />
+              ) : (
+                <Play className="w-6 h-6" fill="currentColor" />
+              )}
+              <span className="text-[11px] font-bold leading-tight px-2 text-center">
+                {sameWorkoutActive
+                  ? `Continuar ${workoutLetter}`
+                  : activeSession
+                    ? 'Em andamento…'
+                    : `Começar ${workoutLetter}`}
+              </span>
+            </button>
+          </div>
         )}
       </div>
     </div>

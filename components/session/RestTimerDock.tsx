@@ -211,7 +211,17 @@ export function RestTimerDock({
             <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Descanso · {exercise?.exercise.name_pt}</p>
             <p className="text-[10px] text-muted-foreground">Próxima: série {nextSet} de {exercise?.target_sets ?? '—'}</p>
           </div>
-          <p className="font-mono text-3xl font-black tabular-nums text-primary" aria-live="off">{formatDuration(remaining)}</p>
+          <div
+            className="relative grid size-20 shrink-0 place-items-center rounded-full"
+            style={{
+              background: `conic-gradient(var(--primary) ${progress}%, var(--secondary) 0)`,
+            }}
+            aria-hidden="true"
+          >
+            <div className="grid size-16 place-items-center rounded-full bg-card">
+              <p className="font-mono text-2xl font-black tabular-nums text-primary" aria-live="off">{formatDuration(remaining)}</p>
+            </div>
+          </div>
           <button type="button" onClick={() => setMinimized(true)} aria-label="Minimizar cronômetro" className="grid size-11 place-items-center rounded-xl text-muted-foreground">
             <ChevronDown className="size-4" />
           </button>

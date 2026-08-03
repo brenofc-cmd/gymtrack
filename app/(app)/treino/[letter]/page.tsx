@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/server'
 import { getWorkoutWithExercises } from '@/lib/queries/workouts'
 import { getLastSetLogForExercise } from '@/lib/queries/exercises'
 import { getActiveSession } from '@/lib/queries/sessions'
-import { ExerciseListItem } from '@/components/workout/ExerciseListItem'
+import { ExerciseListView } from '@/components/workout/ExerciseListView'
 import { StartWorkoutButton } from '@/components/workout/StartWorkoutButton'
 import { WorkoutNotes } from '@/components/workout/WorkoutNotes'
 import {
@@ -134,28 +134,18 @@ export default async function TreinoPage(props: {
         {workout.notes && <WorkoutNotes notes={workout.notes} />}
 
         {/* Lista de exercícios */}
-        <div className="space-y-2">
-          {workout.workout_exercises.map((we, i) => {
-            const lastLog = lastLogs[i]
-            return (
-              <ExerciseListItem
-                key={we.id}
-                workoutExercise={we}
-                lastWeight={lastLog?.weight_kg ?? null}
-                lastReps={lastLog?.reps ?? null}
-                detailHref={exerciseDetailHref(we.exercise.id, {
-                  workoutLetter: workout.letter as WorkoutLetter,
-                  workoutSource,
-                })}
-              />
-            )
-          })}
-        </div>
-
-        <p className="text-xs text-center text-muted-foreground pb-2">
-          {workout.workout_exercises.length} exercícios ·{' '}
-          {workout.workout_exercises.reduce((s, we) => s + we.target_sets, 0)} séries válidas
-        </p>
+        <ExerciseListView
+          items={workout.workout_exercises.map((we, i) => ({
+            workoutExercise: we,
+            lastWeight: lastLogs[i]?.weight_kg ?? null,
+            lastReps: lastLogs[i]?.reps ?? null,
+            detailHref: exerciseDetailHref(we.exercise.id, {
+              workoutLetter: workout.letter as WorkoutLetter,
+              workoutSource,
+            }),
+          }))}
+          totalSets={workout.workout_exercises.reduce((s, we) => s + we.target_sets, 0)}
+        />
 
         <OptionalTreadmillCard workoutLetter={workout.letter as WorkoutLetter} />
 
