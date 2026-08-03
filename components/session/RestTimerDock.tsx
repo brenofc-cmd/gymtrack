@@ -151,7 +151,7 @@ export function RestTimerDock({
         className="fixed inset-x-0 z-40 border-t border-sidebar-border bg-card/97 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_36px_rgba(0,0,0,.35)] backdrop-blur-xl"
         style={{ bottom: keyboardOffset }}
       >
-        <div className="mx-auto flex min-h-16 max-w-3xl items-center gap-3 px-3 sm:px-4">
+        <div className="mx-auto flex min-h-16 max-w-[430px] items-center gap-3 px-3 sm:px-4">
           <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
             {allDone ? <SkipForward className="size-4" /> : <TimerReset className="size-4" />}
           </span>
@@ -186,7 +186,7 @@ export function RestTimerDock({
         style={{ bottom: keyboardOffset }}
       >
         <div className="h-1 bg-secondary"><div className="h-full bg-primary" style={{ width: `${progress}%` }} /></div>
-        <div className="mx-auto flex min-h-14 max-w-3xl items-center gap-3 px-3 sm:px-4">
+        <div className="mx-auto flex min-h-14 max-w-[430px] items-center gap-3 px-3 sm:px-4">
           <span className="text-[10px] font-bold uppercase text-muted-foreground">Descanso</span>
           <span className="font-mono text-2xl font-black tabular-nums text-primary">{formatDuration(remaining)}</span>
           <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">Próxima: série {nextSet}</span>
@@ -205,7 +205,7 @@ export function RestTimerDock({
       style={{ bottom: keyboardOffset }}
     >
       <div className="h-1 bg-secondary"><div className="h-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${progress}%` }} /></div>
-      <div className="mx-auto max-w-3xl px-3 py-2 sm:px-4">
+      <div className="mx-auto max-w-[430px] px-3 py-2 sm:px-4">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Descanso · {exercise?.exercise.name_pt}</p>

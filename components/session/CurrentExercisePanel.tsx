@@ -3,8 +3,10 @@
 import { useState } from 'react'
 import {
   CheckCircle2,
+  BookOpen,
   CircleAlert,
   Dumbbell,
+  Expand,
   MoreHorizontal,
   NotebookPen,
   ShieldAlert,
@@ -41,6 +43,8 @@ import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/br
 import { enableRestPush, scheduleRestPush } from '@/lib/push/client'
 import { WhyThisWeightSheet } from './WhyThisWeightSheet'
 import { PlateBreakdownSheet } from './PlateBreakdownSheet'
+import { ExerciseDetailSheet } from './ExerciseDetailSheet'
+import { MuscleMapSheet } from './MuscleMapSheet'
 
 export interface PreviousExerciseSet {
   set_number: number
@@ -101,6 +105,8 @@ export function CurrentExercisePanel({
   hasNextExercise,
 }: CurrentExercisePanelProps) {
   const [actionsOpen, setActionsOpen] = useState(false)
+  const [detailOpen, setDetailOpen] = useState(false)
+  const [musclesOpen, setMusclesOpen] = useState(false)
   const [rmSafetyConfirmed, setRmSafetyConfirmed] = useState(false)
   const [whyOpen, setWhyOpen] = useState(false)
   const [plateOpen, setPlateOpen] = useState(false)
@@ -353,6 +359,29 @@ export function CurrentExercisePanel({
             <p className="text-[9px] font-semibold text-muted-foreground">Descanso</p>
           </div>
         </div>
+        <div className="grid grid-cols-3 gap-2">
+          <button
+            type="button"
+            onClick={() => setDetailOpen(true)}
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-input bg-secondary/30 text-[10px] font-bold text-foreground transition-colors hover:border-primary/45 hover:bg-primary/10"
+          >
+            <BookOpen className="size-4 text-primary" /> Execução
+          </button>
+          <button
+            type="button"
+            onClick={() => setMusclesOpen(true)}
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-input bg-secondary/30 text-[10px] font-bold text-foreground transition-colors hover:border-primary/45 hover:bg-primary/10"
+          >
+            <Dumbbell className="size-4 text-primary" /> Músculos
+          </button>
+          <button
+            type="button"
+            onClick={() => setActionsOpen(true)}
+            className="flex min-h-16 flex-col items-center justify-center gap-1 rounded-xl border border-input bg-secondary/30 text-[10px] font-bold text-foreground transition-colors hover:border-primary/45 hover:bg-primary/10"
+          >
+            <Expand className="size-4 text-primary" /> Opções
+          </button>
+        </div>
         <div className="flex min-h-7 flex-wrap items-center gap-1.5 px-0.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-[9px] font-semibold text-muted-foreground">
             <Dumbbell className="size-3" /> {loadConfig.loadLabel}
@@ -381,97 +410,38 @@ export function CurrentExercisePanel({
           )}
         </div>
 
-        <PreviousPerformanceSummary
-          sets={relevantPreviousSets}
-          bestWeight={selectedVariation == null ? bestWeight : null}
-          loadConfig={loadConfig}
-        />
-
-        {isDeload && (
-          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] text-[#ffcf7a]">
-            Semana de deload: aproximadamente 40% menos séries, RIR 3–4 e nenhuma recomendação de aumento de carga.
-          </div>
-        )}
-
-        <div className={cn(
-          'rounded-xl border px-3 py-2 text-[11px] leading-relaxed',
-          recommendedLoad?.action === 'stop'
-            ? 'border-destructive/30 bg-destructive/10 text-destructive'
-            : 'border-primary/20 bg-primary/[0.06] text-muted-foreground'
-        )}>
-          <p className="font-bold text-foreground">Progressão individual calculada pelo GymTrack</p>
-          <p className="mt-0.5">
-            {recommendedLoad?.suggestedKg != null
-              ? `Carga sugerida: ${recommendedLoad.suggestedKg} kg. ${recommendedLoad.reason}`
-              : recommendedLoad?.reason ?? 'Sem histórico ou máxima de referência: escolha a carga manualmente.'}
-          </p>
-          {recommendedLoad?.requiresManualConfirmation && (
-            <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>
-          )}
-          {loadConfig.acceptsLoad && (
-            <div className="mt-2 flex flex-wrap gap-2">
-              <button
-                type="button"
-                onClick={() => setWhyOpen(true)}
-                className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground"
-              >
-                Por que este peso?
-              </button>
-              {loadConfig.kind === 'external_total' && (
-                <button
-                  type="button"
-                  onClick={() => setPlateOpen(true)}
-                  className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground"
-                >
-                  Ver montagem da barra
-                </button>
-              )}
+        <details className="group rounded-2xl border border-border bg-secondary/20 px-3 py-2">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-xs font-bold text-foreground">
+            Detalhes, carga e avaliação
+            <span className="text-[10px] font-semibold text-primary group-open:hidden">ABRIR</span>
+            <span className="hidden text-[10px] font-semibold text-primary group-open:inline">FECHAR</span>
+          </summary>
+          <div className="mt-3 space-y-2">
+            <PreviousPerformanceSummary
+              sets={relevantPreviousSets}
+              bestWeight={selectedVariation == null ? bestWeight : null}
+              loadConfig={loadConfig}
+            />
+            {isDeload && (
+              <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] text-[#ffcf7a]">
+                Semana de deload: aproximadamente 40% menos séries, RIR 3–4 e nenhuma recomendação de aumento de carga.
+              </div>
+            )}
+            <div className={cn('rounded-xl border px-3 py-2 text-[11px] leading-relaxed', recommendedLoad?.action === 'stop' ? 'border-destructive/30 bg-destructive/10 text-destructive' : 'border-primary/20 bg-primary/[0.06] text-muted-foreground')}>
+              <p className="font-bold text-foreground">Progressão individual calculada pelo GymTrack</p>
+              <p className="mt-0.5">{recommendedLoad?.suggestedKg != null ? `Carga sugerida: ${recommendedLoad.suggestedKg} kg. ${recommendedLoad.reason}` : recommendedLoad?.reason ?? 'Sem histórico ou máxima de referência: escolha a carga manualmente.'}</p>
+              {recommendedLoad?.requiresManualConfirmation && <p className="mt-1 font-semibold text-[#ffcf7a]">Confirmação manual obrigatória; a carga não aumenta sozinha.</p>}
+              {loadConfig.acceptsLoad && <div className="mt-2 flex flex-wrap gap-2"><button type="button" onClick={() => setWhyOpen(true)} className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground">Por que este peso?</button>{loadConfig.kind === 'external_total' && <button type="button" onClick={() => setPlateOpen(true)} className="rounded-lg border border-input bg-background/40 px-2.5 py-1 text-[10px] font-bold text-foreground">Ver montagem da barra</button>}</div>}
             </div>
-          )}
-        </div>
-
-        <div className="rounded-xl border border-border bg-secondary/20 px-3 py-2">
-          <p className="text-[10px] font-bold uppercase tracking-wide text-primary">
-            Validação da exposição
-          </p>
-          <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
-            Obrigatória antes da última série. Duas exposições válidas com a
-            mesma carga e variação liberam a sugestão do menor aumento.
-          </p>
-          <ExerciseFeedbackPanel
-            sessionId={sessionId}
-            workoutExerciseId={workoutExercise.id}
-            hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0}
-          />
-        </div>
-
-        {workoutExercise.prescription_type === 'guided_top_set' && (
-          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
-            <p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p>
-            <p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p>
+            <div className="rounded-xl border border-border bg-background/20 px-3 py-2">
+              <p className="text-[10px] font-bold uppercase tracking-wide text-primary">Avaliação da série</p>
+              <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">Obrigatória antes da última série para confirmar execução, amplitude, ajuda e dor.</p>
+              <ExerciseFeedbackPanel sessionId={sessionId} workoutExerciseId={workoutExercise.id} hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0} />
+            </div>
+            {workoutExercise.prescription_type === 'guided_top_set' && <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]"><p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p><p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p></div>}
+            {workoutExercise.prescription_type === 'rep_max_effort' && <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]"><p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>{workoutExercise.rep_max_target != null && <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>}<p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>{workoutExercise.rep_max_target === 1 && <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground"><input type="checkbox" checked={rmSafetyConfirmed} onChange={(event) => setRmSafetyConfirmed(event.target.checked)} className="mt-0.5 size-4" />{ONE_RM_CONFIRMATION_TEXT}</label>}</div>}
           </div>
-        )}
-
-        {workoutExercise.prescription_type === 'rep_max_effort' && (
-          <div className="rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
-            <p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>
-            {workoutExercise.rep_max_target != null && (
-              <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>
-            )}
-            <p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica. Não é obrigatório buscar um recorde; você pode pular por dor ou segurança.</p>
-            {workoutExercise.rep_max_target === 1 && (
-              <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground">
-                <input
-                  type="checkbox"
-                  checked={rmSafetyConfirmed}
-                  onChange={(event) => setRmSafetyConfirmed(event.target.checked)}
-                  className="mt-0.5 size-4"
-                />
-                {ONE_RM_CONFIRMATION_TEXT}
-              </label>
-            )}
-          </div>
-        )}
+        </details>
 
         <WarmupSetList
           workingWeightKg={recommendedLoad?.suggestedKg ?? previousWeight}
@@ -580,6 +550,18 @@ export function CurrentExercisePanel({
           setActionsOpen(false)
           onSkip()
         }}
+      />
+      <ExerciseDetailSheet
+        open={detailOpen}
+        onOpenChange={setDetailOpen}
+        exercise={selectedExercise}
+        guidance={guidance}
+        history={selectedVariation == null ? history : []}
+      />
+      <MuscleMapSheet
+        open={musclesOpen}
+        onOpenChange={setMusclesOpen}
+        exercise={selectedExercise}
       />
     </article>
   )

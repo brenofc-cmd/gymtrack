@@ -20,7 +20,7 @@ type WorkoutOverviewProps = {
 
 export function WorkoutOverview({ exercises, sets, skippedExerciseIds, workoutLetter, routineVersion, onOpenExercise }: WorkoutOverviewProps) {
   return (
-    <main className="mx-auto w-full max-w-3xl px-3 pb-32 pt-4 sm:px-4">
+    <main className="mx-auto w-full max-w-[430px] px-3 pb-32 pt-4 sm:px-4">
       <div className="mb-4 rounded-3xl border border-primary/20 bg-gradient-to-br from-primary/15 via-card to-card px-4 py-4 shadow-[0_12px_32px_rgba(0,0,0,.16)]">
         <div className="flex items-start gap-3">
           <span className="grid size-10 shrink-0 place-items-center rounded-2xl bg-primary text-primary-foreground">
