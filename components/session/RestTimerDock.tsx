@@ -148,11 +148,12 @@ export function RestTimerDock({
     const allDone = current != null && currentCompleted >= current.target_sets
     return (
       <div
-        className="fixed inset-x-0 z-40 border-t border-sidebar-border bg-card/97 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_36px_rgba(0,0,0,.35)] backdrop-blur-xl"
+        className="fixed inset-x-0 z-40 px-3 pb-[calc(14px+env(safe-area-inset-bottom))]"
         style={{ bottom: keyboardOffset }}
       >
-        <div className="mx-auto flex min-h-16 max-w-[430px] items-center gap-3 px-3 sm:px-4">
-          <span className="grid size-10 shrink-0 place-items-center rounded-xl bg-primary/10 text-primary">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
+        <div className="mx-auto flex min-h-16 max-w-[420px] items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-3 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
+          <span className="grid size-10 shrink-0 place-items-center rounded-full bg-primary/10 text-primary">
             {allDone ? <SkipForward className="size-4" /> : <TimerReset className="size-4" />}
           </span>
           <div className="min-w-0 flex-1">
@@ -169,7 +170,7 @@ export function RestTimerDock({
                 block: 'center',
               })
             }}
-            className="min-h-12 rounded-xl bg-primary px-4 text-xs font-extrabold text-primary-foreground"
+            className="min-h-11 shrink-0 rounded-full bg-primary px-4 text-xs font-extrabold text-primary-foreground"
           >
             {allDone ? 'Revisar' : 'Ir para série'}
           </button>
@@ -182,15 +183,15 @@ export function RestTimerDock({
   if (minimized) {
     return (
       <div
-        className="fixed inset-x-0 z-40 border-t border-sidebar-border bg-card/97 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_36px_rgba(0,0,0,.35)] backdrop-blur-xl"
+        className="fixed inset-x-0 z-40 px-3 pb-[calc(14px+env(safe-area-inset-bottom))]"
         style={{ bottom: keyboardOffset }}
       >
-        <div className="h-1 bg-secondary"><div className="h-full bg-primary" style={{ width: `${progress}%` }} /></div>
-        <div className="mx-auto flex min-h-14 max-w-[430px] items-center gap-3 px-3 sm:px-4">
+        <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
+        <div className="mx-auto flex min-h-14 max-w-[420px] items-center gap-3 rounded-full border border-sidebar-border bg-card/97 px-4 py-2 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
           <span className="text-[10px] font-bold uppercase text-muted-foreground">Descanso</span>
           <span className="font-mono text-2xl font-black tabular-nums text-primary">{formatDuration(remaining)}</span>
           <span className="min-w-0 flex-1 truncate text-[10px] text-muted-foreground">Próxima: série {nextSet}</span>
-          <button type="button" onClick={() => setMinimized(false)} aria-label="Expandir cronômetro" className="grid size-11 place-items-center rounded-xl border border-input">
+          <button type="button" onClick={() => setMinimized(false)} aria-label="Expandir cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full border border-input">
             <ChevronUp className="size-4" />
           </button>
         </div>
@@ -198,14 +199,14 @@ export function RestTimerDock({
     )
   }
 
-  const controlClass = 'flex min-h-11 min-w-11 flex-1 items-center justify-center gap-1 rounded-xl border border-input text-[10px] font-bold'
+  const controlClass = 'flex min-h-11 min-w-11 flex-1 items-center justify-center gap-1 rounded-full border border-input text-[10px] font-bold'
   return (
     <div
-      className="fixed inset-x-0 z-40 border-t border-sidebar-border bg-card/97 pb-[env(safe-area-inset-bottom)] shadow-[0_-12px_36px_rgba(0,0,0,.35)] backdrop-blur-xl"
+      className="fixed inset-x-0 z-40 px-3 pb-[calc(14px+env(safe-area-inset-bottom))]"
       style={{ bottom: keyboardOffset }}
     >
-      <div className="h-1 bg-secondary"><div className="h-full bg-primary transition-[width] motion-reduce:transition-none" style={{ width: `${progress}%` }} /></div>
-      <div className="mx-auto max-w-[430px] px-3 py-2 sm:px-4">
+      <div className="pointer-events-none absolute inset-0 -z-10 bg-gradient-to-t from-background via-background/92 to-transparent" aria-hidden="true" />
+      <div className="mx-auto max-w-[420px] rounded-[28px] border border-sidebar-border bg-card/97 px-4 py-3 shadow-[0_16px_40px_rgba(0,0,0,.35)] backdrop-blur-xl">
         <div className="flex items-center gap-3">
           <div className="min-w-0 flex-1">
             <p className="truncate text-[10px] font-bold uppercase tracking-wide text-muted-foreground">Descanso · {exercise?.exercise.name_pt}</p>
@@ -222,11 +223,11 @@ export function RestTimerDock({
               <p className="font-mono text-2xl font-black tabular-nums text-primary" aria-live="off">{formatDuration(remaining)}</p>
             </div>
           </div>
-          <button type="button" onClick={() => setMinimized(true)} aria-label="Minimizar cronômetro" className="grid size-11 place-items-center rounded-xl text-muted-foreground">
+          <button type="button" onClick={() => setMinimized(true)} aria-label="Minimizar cronômetro" className="grid size-10 shrink-0 place-items-center rounded-full text-muted-foreground">
             <ChevronDown className="size-4" />
           </button>
         </div>
-        <div className="mt-1.5 flex gap-1.5">
+        <div className="mt-2 flex gap-1.5">
           <button type="button" onClick={() => addRestSeconds(-15)} className={controlClass} aria-label="Reduzir 15 segundos">
             <Minus className="size-3" />15
           </button>

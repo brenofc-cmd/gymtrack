@@ -10,12 +10,13 @@ import {
   MoreHorizontal,
   NotebookPen,
   ShieldAlert,
+  TimerReset,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { ExerciseAnimation } from '@/components/exercise/ExerciseAnimation'
 import { backoffWeight } from '@/lib/training/strength'
 import { getLoadInputConfig } from '@/lib/training/load-input'
-import { useSessionStore, type LocalSetLog } from '@/lib/store/sessionStore'
+import { timerIsActive, useSessionStore, type LocalSetLog } from '@/lib/store/sessionStore'
 import { createClient } from '@/lib/supabase/client'
 import {
   persistSetLog,
@@ -120,7 +121,9 @@ export function CurrentExercisePanel({
     setRestPushJobId,
     setVariation,
     setExerciseSkipped,
+    restTimer,
   } = useSessionStore()
+  const isRestingThisExercise = restTimer.workoutExerciseId === workoutExercise.id && timerIsActive(restTimer)
   const selectedVariation = variation[workoutExercise.id] ?? null
   const selectedExercise = workoutExercise.substitutions?.find(
     (substitution) => substitution.exercise.id === selectedVariation
@@ -286,6 +289,12 @@ export function CurrentExercisePanel({
             movementPattern={selectedExercise.movement_pattern}
             mediaUrl={selectedExercise.gif_url}
           />
+          {isRestingThisExercise && (
+            <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 bg-background/92 text-muted-foreground">
+              <TimerReset className="size-10" />
+              <span className="text-xs font-bold uppercase tracking-[0.2em]">Descanso</span>
+            </div>
+          )}
         </div>
         <div className="mt-3 flex items-start gap-2">
           <div className="min-w-0 flex-1 text-center">
