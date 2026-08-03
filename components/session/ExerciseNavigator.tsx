@@ -47,22 +47,22 @@ export function ExerciseNavigator({
 
   return (
     <>
-      <section className="sticky top-[calc(84px+env(safe-area-inset-top))] z-20 border-b border-sidebar-border bg-background/95 backdrop-blur-xl">
-        <div className="mx-auto max-w-3xl px-3 py-2 sm:px-4">
+      <section className="sticky top-[calc(76px+env(safe-area-inset-top))] z-20 bg-background/95 px-3 py-2 backdrop-blur-xl sm:px-4">
+        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,.14)]">
           <div className="flex items-center gap-2">
             <button
               type="button"
               onClick={() => go(currentIndex - 1)}
               disabled={currentIndex === 0}
               aria-label="Exercício anterior"
-              className="grid size-11 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
+              className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
             >
               <ChevronLeft className="size-5" />
             </button>
             <button
               type="button"
               onClick={() => setOpen(true)}
-              className="flex min-h-11 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-secondary/55 px-3 text-xs font-bold"
+              className="flex min-h-10 min-w-0 flex-1 items-center justify-center gap-2 rounded-xl bg-secondary/70 px-3 text-xs font-bold"
             >
               Exercício {currentIndex + 1} de {exercises.length}
               <ChevronDown className="size-4 text-primary" />
@@ -72,7 +72,7 @@ export function ExerciseNavigator({
               onClick={() => go(currentIndex + 1)}
               disabled={currentIndex === exercises.length - 1}
               aria-label="Próximo exercício"
-              className="grid size-11 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
+              className="grid size-10 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary disabled:opacity-25"
             >
               <ChevronRight className="size-5" />
             </button>

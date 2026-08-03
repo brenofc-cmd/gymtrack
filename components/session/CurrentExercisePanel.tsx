@@ -271,9 +271,9 @@ export function CurrentExercisePanel({
         : progression ? 'Manter carga' : null
 
   return (
-    <article className="overflow-hidden rounded-2xl bg-card shadow-[0_12px_40px_rgba(0,0,0,.2)]">
-      <header className="px-3 pb-2 pt-3 sm:px-4">
-        <div className="relative mx-auto h-40 w-full max-w-md overflow-hidden rounded-2xl bg-secondary sm:h-48">
+    <article className="overflow-hidden rounded-3xl border border-border bg-card shadow-[0_16px_44px_rgba(0,0,0,.24)]">
+      <header className="px-3 pb-3 pt-3 sm:px-4">
+        <div className="relative mx-auto h-44 w-full max-w-md overflow-hidden rounded-2xl bg-secondary sm:h-56">
           <ExerciseAnimation
             name={selectedExercise.name_pt}
             primaryMuscle={selectedExercise.muscle_group}
@@ -281,15 +281,15 @@ export function CurrentExercisePanel({
             mediaUrl={selectedExercise.gif_url}
           />
         </div>
-        <div className="mt-3 flex items-start gap-3">
-          <div className="min-w-0 flex-1">
+        <div className="mt-3 flex items-start gap-2">
+          <div className="min-w-0 flex-1 text-center">
             <p className="text-[10px] font-bold uppercase tracking-[0.1em] text-primary">
               Exercício {exerciseNumber} de {totalExercises}
             </p>
             <h1 className="mt-0.5 text-lg font-extrabold leading-tight text-foreground">
               {selectedExercise.name_pt}
             </h1>
-            <div className="mt-1.5 flex flex-wrap items-center gap-1.5">
+            <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1.5">
               <TrainingStimulusBadge
                 exercise={{
                   prescription_type: workoutExercise.prescription_type,
@@ -306,9 +306,8 @@ export function CurrentExercisePanel({
               {LOAD_INTENSITY_HINT[stimulus]}
             </p>
             <p className="mt-1.5 text-[11px] text-muted-foreground">
-              Prescrição bloqueada: {formatPrescription(workoutExercise, { perSide: selectedExercise.is_unilateral })}
-              {' · '}RIR: {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
-              {' · '}Descanso: {formatRest(workoutExercise).label}
+              {formatPrescription(workoutExercise, { perSide: selectedExercise.is_unilateral })}
+              {' · '}RIR {formatRir(workoutExercise.rir_min, workoutExercise.rir_max)}
             </p>
             {(workoutExercise.source_prescription || workoutExercise.guided_prescription) && (
               <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">
@@ -332,7 +331,7 @@ export function CurrentExercisePanel({
             type="button"
             onClick={() => setActionsOpen(true)}
             aria-label={`Ações de ${selectedExercise.name_pt}`}
-            className="grid size-12 shrink-0 place-items-center rounded-xl text-muted-foreground hover:bg-secondary hover:text-foreground"
+            className="grid size-10 shrink-0 place-items-center rounded-xl border border-input text-muted-foreground hover:bg-secondary hover:text-foreground"
           >
             <MoreHorizontal className="size-5" />
           </button>
@@ -340,6 +339,20 @@ export function CurrentExercisePanel({
       </header>
 
       <div className="space-y-2 px-2.5 pb-3 sm:px-4">
+        <div className="grid grid-cols-3 gap-2">
+          <div className="rounded-xl bg-secondary/70 px-2 py-2 text-center">
+            <p className="text-base font-extrabold tabular-nums text-foreground">{workoutExercise.target_sets}</p>
+            <p className="text-[9px] font-semibold text-muted-foreground">Séries</p>
+          </div>
+          <div className="rounded-xl bg-secondary/70 px-2 py-2 text-center">
+            <p className="text-base font-extrabold tabular-nums text-foreground">{formatPrescription(workoutExercise, { perSide: selectedExercise.is_unilateral })}</p>
+            <p className="text-[9px] font-semibold text-muted-foreground">Repetições</p>
+          </div>
+          <div className="rounded-xl bg-secondary/70 px-2 py-2 text-center">
+            <p className="text-base font-extrabold tabular-nums text-foreground">{formatRest(workoutExercise).label}</p>
+            <p className="text-[9px] font-semibold text-muted-foreground">Descanso</p>
+          </div>
+        </div>
         <div className="flex min-h-7 flex-wrap items-center gap-1.5 px-0.5">
           <span className="inline-flex items-center gap-1 rounded-full bg-secondary px-2 py-1 text-[9px] font-semibold text-muted-foreground">
             <Dumbbell className="size-3" /> {loadConfig.loadLabel}
