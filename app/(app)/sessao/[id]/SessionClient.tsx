@@ -101,7 +101,7 @@ export function SessionClient({
   )
   const [exitOpen, setExitOpen] = useState(false)
   const [finishOpen, setFinishOpen] = useState(false)
-  const [overviewOpen, setOverviewOpen] = useState(true)
+  const [overviewOpen, setOverviewOpen] = useState(false)
 
   useEffect(() => {
     const serverSets: Record<string, LocalSetLog[]> = {}

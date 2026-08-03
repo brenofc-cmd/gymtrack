@@ -359,6 +359,30 @@ export function CurrentExercisePanel({
             <p className="text-[9px] font-semibold text-muted-foreground">Descanso</p>
           </div>
         </div>
+
+        <div className="flex flex-wrap items-center justify-center gap-2 py-1">
+          {Array.from({ length: workoutExercise.target_sets }, (_, i) => {
+            const done = i < completedSets.length
+            const isCurrent = i === completedSets.length
+            return (
+              <span
+                key={i}
+                className={cn(
+                  'flex size-8 shrink-0 items-center justify-center rounded-full text-xs font-extrabold transition-colors',
+                  done
+                    ? 'bg-primary text-primary-foreground'
+                    : isCurrent
+                      ? 'border-2 border-primary text-primary'
+                      : 'bg-secondary text-muted-foreground'
+                )}
+                aria-label={`Série ${i + 1}: ${done ? 'concluída' : isCurrent ? 'atual' : 'pendente'}`}
+              >
+                {done ? <CheckCircle2 className="size-4" /> : i + 1}
+              </span>
+            )
+          })}
+        </div>
+
         <div className="grid grid-cols-3 gap-2">
           <button
             type="button"
