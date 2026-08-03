@@ -254,7 +254,7 @@ export function SessionClient({
             setOverviewOpen(false)
           }}
         />
-      ) : <main className="mx-auto w-full max-w-3xl px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
+      ) : <main className="mx-auto w-full max-w-[430px] px-3 pb-48 pt-2 sm:px-4 sm:pt-3">
         {readinessMessage && (
           <div className="mb-2 flex gap-2 rounded-xl bg-[#ffb547]/10 px-3 py-2 text-[11px] leading-relaxed text-[#ffcf7a]">
             <Activity className="mt-0.5 size-4 shrink-0" />

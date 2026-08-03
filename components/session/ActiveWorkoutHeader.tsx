@@ -58,7 +58,7 @@ export function ActiveWorkoutHeader({
   return (
     <>
       <header className="sticky top-0 z-30 border-b border-primary/30 bg-primary pt-[env(safe-area-inset-top)] text-primary-foreground shadow-[0_8px_24px_rgba(0,0,0,.18)]">
-        <div className="mx-auto flex min-h-[76px] max-w-3xl items-center gap-2 px-3 py-2 sm:px-4">
+        <div className="mx-auto flex min-h-[76px] max-w-[430px] items-center gap-2 px-3 py-2 sm:px-4">
           <button
             type="button"
             onClick={overview ? onExit : onBackToOverview}

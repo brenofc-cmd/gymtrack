@@ -48,7 +48,7 @@ export function ExerciseNavigator({
   return (
     <>
       <section className="sticky top-[calc(76px+env(safe-area-inset-top))] z-20 bg-background/95 px-3 py-2 backdrop-blur-xl sm:px-4">
-        <div className="mx-auto max-w-3xl rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,.14)]">
+        <div className="mx-auto max-w-[430px] rounded-2xl border border-border bg-card/95 px-2 py-1.5 shadow-[0_6px_20px_rgba(0,0,0,.14)]">
           <div className="flex items-center gap-2">
             <button
               type="button"
