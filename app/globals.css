@@ -47,57 +47,10 @@
   --radius-4xl: calc(var(--radius) * 2.6);
 }
 
+/* Tema do redesign GymTrack (Claude Design — "GymTrack Redesign.dc.html").
+   Paleta clara aplicada ao app inteiro. `.gt-light` continua existindo como
+   alias das telas que já pediam esse escopo explicitamente. */
 :root,
-.dark {
-  --background: #0b0d10;
-  --foreground: #f2f5f8;
-  --card: #12161b;
-  --card-foreground: #f2f5f8;
-  --popover: #12161b;
-  --popover-foreground: #f2f5f8;
-  --primary: #a3e635;
-  --primary-foreground: #0b0d10;
-  --secondary: #1b222b;
-  --secondary-foreground: #f2f5f8;
-  --muted: #1b222b;
-  --muted-foreground: #98a3b3;
-  --accent: #202834;
-  --accent-foreground: #f2f5f8;
-  --destructive: #ff5a67;
-  --border: #202834;
-  --input: #232b36;
-  --ring: #a3e635;
-  --chart-1: #a3e635;
-  --chart-2: #4ad17e;
-  --chart-3: #5ba8ff;
-  --chart-4: #ffb547;
-  --chart-5: #98a3b3;
-  --radius: 0.875rem;
-  --sidebar: #0d1014;
-  --sidebar-foreground: #f2f5f8;
-  --sidebar-primary: #a3e635;
-  --sidebar-primary-foreground: #0b0d10;
-  --sidebar-accent: #181d24;
-  --sidebar-accent-foreground: #f2f5f8;
-  --sidebar-border: #1b222b;
-  --sidebar-ring: #a3e635;
-
-  /* Cores semânticas de status (badges/avisos), independentes dos tokens
-     shadcn acima — tonalidades ajustadas para contraste em fundo escuro. */
-  --warn-tint: #ffb547;
-  --warn-text: #ffcf7a;
-  --info-tint: #5ba8ff;
-  --info-text: #8dc5ff;
-  --purple-text: #c58bff;
-  --mint-text: #62dc91;
-  --body-soft: #c7d0db;
-  --success-text: #72d99a;
-  --syncing-text: #7eb9ff;
-}
-
-/* Tema claro do redesign (mockup GymTrack), escopado às telas de lista de
-   treino e execução de sessão — o resto do app continua no tema escuro
-   acima. Mesma paleta de tokens, valores diferentes. */
 .gt-light {
   --background: #eef0ed;
   --foreground: #1c2b20;
@@ -117,27 +70,41 @@
   --border: #e2e5e1;
   --input: #e2e5e1;
   --ring: #1fa851;
+  --chart-1: #1fa851;
+  --chart-2: #16a34a;
+  --chart-3: #2563eb;
+  --chart-4: #f59e0b;
+  --chart-5: #8a938d;
+  --radius: 0.875rem;
   --sidebar: #ffffff;
   --sidebar-foreground: #1c2b20;
   --sidebar-primary: #1fa851;
   --sidebar-primary-foreground: #ffffff;
   --sidebar-accent: #f2f4f2;
   --sidebar-accent-foreground: #1c2b20;
-  --sidebar-border: #e2e5e1;
+  --sidebar-border: #eef1ee;
   --sidebar-ring: #1fa851;
 
+  /* Cores semânticas de status (badges/avisos), independentes dos tokens
+     shadcn acima — tonalidades com contraste sobre fundo claro. */
   --warn-tint: #f59e0b;
   --warn-text: #92400e;
+  --warn-surface: #fef3c7;
   --info-tint: #2563eb;
   --info-text: #1d4ed8;
   --purple-text: #7c3aed;
   --mint-text: #059669;
-  --body-soft: #475569;
+  --body-soft: #3a453d;
   --success-text: #16a34a;
   --syncing-text: #2563eb;
 
+  /* Tons de apoio do mockup, sem equivalente nos tokens shadcn. */
+  --faint: #b0b6af;
+  --chevron: #c3c9c3;
+  --track: #dfe3df;
+  --card-shadow: 0 2px 10px rgba(30, 40, 30, 0.06);
+
   color-scheme: light;
-  background: var(--background);
 }
 
 @layer base {
@@ -166,12 +133,19 @@
 }
 
 @layer utilities {
+  /* Card do mockup: branco, cantos generosos, sombra suave e sem borda —
+     a separação vem da sombra sobre o fundo #eef0ed, não de um traço. */
   .surface-card {
-    @apply rounded-2xl border border-border bg-card;
+    @apply rounded-[18px] bg-card;
+    box-shadow: var(--card-shadow);
+  }
+
+  .gt-shadow {
+    box-shadow: var(--card-shadow);
   }
 
   .metric-label {
-    @apply text-[10px] font-semibold uppercase tracking-[0.1em] text-muted-foreground;
+    @apply text-[10.5px] font-bold uppercase tracking-[0.04em] text-muted-foreground;
   }
 
   .safe-area-bottom {

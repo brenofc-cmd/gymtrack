@@ -279,7 +279,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
         <button type="button" onClick={() => { store.pauseSession(); router.push('/abdomen') }} aria-label="Pausar e voltar" className="grid size-11 place-items-center rounded-xl border border-input bg-secondary"><ArrowLeft className="size-5" /></button>
         <div className="min-w-0 flex-1"><p className="metric-label text-primary">{day.location === 'academia' ? 'Academia' : 'Em casa'} · exercício {store.currentExerciseIndex + 1} de {exercises.length}</p><h1 className="truncate text-lg font-extrabold">{presentation.name}</h1></div>
         <button type="button" onClick={store.session?.pausedAt ? store.resumeSession : store.pauseSession} aria-label={store.session?.pausedAt ? 'Retomar sessão' : 'Pausar sessão'} className="grid size-10 place-items-center rounded-xl border border-input bg-secondary">{store.session?.pausedAt ? <CirclePlay className="size-4" /> : <CirclePause className="size-4" />}</button>
-        <div className={`flex items-center gap-1 text-[10px] ${syncState === 'offline' || pending ? 'text-[#ffb547]' : 'text-muted-foreground'}`}>{syncState === 'offline' ? <WifiOff className="size-3.5" /> : null}{pending ? `${pending} pendente${pending === 1 ? '' : 's'}` : 'Sincronizado'}</div>
+        <div className={`flex items-center gap-1 text-[10px] ${syncState === 'offline' || pending ? 'text-[var(--warn-tint)]' : 'text-muted-foreground'}`}>{syncState === 'offline' ? <WifiOff className="size-3.5" /> : null}{pending ? `${pending} pendente${pending === 1 ? '' : 's'}` : 'Sincronizado'}</div>
       </header>
 
       <div className="mt-4 h-1.5 overflow-hidden rounded-full bg-secondary"><div className="h-full rounded-full bg-primary transition-all" style={{ width: `${progress}%` }} /></div>
@@ -301,7 +301,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
             </details>
             <details className="rounded-xl bg-secondary/60 p-3 text-xs text-muted-foreground">
               <summary className="cursor-pointer font-semibold text-foreground">Erros comuns</summary>
-              <ul className="mt-2 space-y-2">{presentation.commonMistakes.map((mistake) => <li key={mistake} className="flex gap-2"><span className="text-[#ffb547]">•</span><span>{mistake}</span></li>)}</ul>
+              <ul className="mt-2 space-y-2">{presentation.commonMistakes.map((mistake) => <li key={mistake} className="flex gap-2"><span className="text-[var(--warn-tint)]">•</span><span>{mistake}</span></li>)}</ul>
             </details>
           </div>
         </div>
@@ -356,7 +356,7 @@ export function CoreSessionClient({ userId, day, exercises, adaptationWeek, exis
       </section>
 
       <div className="sticky bottom-0 mt-5 space-y-2 bg-background/95 pb-[env(safe-area-inset-bottom)] pt-3 backdrop-blur-xl">
-        {store.session?.pausedAt && <p className="rounded-xl bg-[#ffb547]/10 p-2 text-center text-xs font-semibold text-[#ffb547]">Sessão pausada — retome para registrar séries.</p>}
+        {store.session?.pausedAt && <p className="rounded-xl bg-[var(--warn-tint)]/10 p-2 text-center text-xs font-semibold text-[var(--warn-tint)]">Sessão pausada — retome para registrar séries.</p>}
         <button type="button" onClick={completeSet} disabled={saving || Boolean(store.session?.pausedAt) || (!editingSet && nextSetNumber > exercise.effectiveSets)} className="flex h-14 w-full items-center justify-center gap-2 rounded-2xl bg-primary text-sm font-bold text-primary-foreground disabled:opacity-50">{saving ? <Loader2 className="size-4 animate-spin" /> : <Check className="size-4" />} {editingSet ? 'Salvar correção' : 'Concluir série'}</button>
         <div className="grid grid-cols-3 gap-2">
           <button type="button" onClick={previousSet} disabled={completedSets === 0} className="flex h-11 items-center justify-center gap-1 rounded-xl border border-input bg-secondary text-xs font-semibold disabled:opacity-40"><ChevronLeft className="size-4" /> Série anterior</button>

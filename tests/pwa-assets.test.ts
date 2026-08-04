@@ -70,9 +70,10 @@ describe('metadados do manifest', () => {
 
   it('cores de tema e fundo batem com os tokens do app', () => {
     const css = readFileSync(path.resolve(__dirname, '../app/globals.css'), 'utf-8')
-    expect(value.theme_color).toBe('#09090b')
-    expect(value.background_color).toBe('#09090b')
-    expect(css).toContain('#a3e635') // primária usada nos ícones
+    expect(value.theme_color).toBe('#eef0ed')
+    expect(value.background_color).toBe('#eef0ed')
+    expect(css).toContain('#eef0ed') // --background do tema
+    expect(css).toContain('#1fa851') // primária usada nos ícones
   })
 
   it('declara `any` e `maskable` em ícones SEPARADOS', () => {

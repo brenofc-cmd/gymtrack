@@ -15,8 +15,11 @@ import { deflateSync } from 'node:zlib'
 import { writeFileSync, mkdirSync } from 'node:fs'
 import path from 'node:path'
 
-const BG = [0x09, 0x09, 0x0b] // --background
-const FG = [0xa3, 0xe6, 0x35] // --primary (verde-lima da marca)
+// Redesign GymTrack: tile na verde da marca com o glifo em branco. Um ícone
+// claro sobre fundo claro sumiria na home screen, então aqui o --primary é o
+// fundo e o contraste vem do branco.
+const BG = [0x1f, 0xa8, 0x51] // --primary
+const FG = [0xff, 0xff, 0xff] // --primary-foreground
 
 const CRC_TABLE = (() => {
   const table = new Int32Array(256)

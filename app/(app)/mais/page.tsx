@@ -29,15 +29,15 @@ export default function MaisPage() {
   return (
     <div className="mx-auto w-full max-w-[520px] px-4 py-5 lg:py-7">
       <h1 className="text-[22px] font-extrabold tracking-tight">Mais</h1>
-      <section className="surface-card mt-5 overflow-hidden px-4">
+      <section className="mt-4 overflow-hidden rounded-[18px] bg-card gt-shadow">
         {items.map(({ href, label, description, icon: Icon }) => (
-          <Link key={href} href={href} className="flex items-center gap-3 border-b border-sidebar-border py-3.5 last:border-0">
+          <Link key={href} href={href} className="flex items-center gap-2.5 border-b border-secondary px-3.5 py-3.5 last:border-0">
             <Icon className="size-[18px] shrink-0 text-muted-foreground" strokeWidth={1.8} />
             <span className="min-w-0 flex-1">
-              <span className="block text-sm font-semibold">{label}</span>
-              <span className="mt-0.5 block text-[11px] text-muted-foreground">{description}</span>
+              <span className="block text-[13.5px] font-bold">{label}</span>
+              <span className="mt-px block text-[11px] text-muted-foreground">{description}</span>
             </span>
-            <ChevronRight className="size-4 text-muted-foreground" />
+            <ChevronRight className="size-4 shrink-0 text-[var(--chevron)]" />
           </Link>
         ))}
       </section>

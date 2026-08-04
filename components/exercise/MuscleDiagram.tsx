@@ -12,9 +12,12 @@ interface MuscleDiagramProps {
   className?: string
 }
 
-const SILHOUETTE = '#4b515c'
-const PRIMARY_FILL = '#e5484d'
-const SECONDARY_FILL = '#f2909380'
+// Paleta do mockup: silhueta em cinza-claro, alvo primário na verde da marca e
+// secundário em âmbar translúcido. Hex literal em vez de var() — `fill` é um
+// atributo de apresentação e nem todo browser resolve var() nessa posição.
+const SILHOUETTE = '#e3e6e3'
+const PRIMARY_FILL = '#1fa851'
+const SECONDARY_FILL = '#f59e0b8c'
 
 function regionFill(region: MuscleRegion, primary: MuscleRegion[], secondary: MuscleRegion[]) {
   if (primary.includes(region)) return PRIMARY_FILL

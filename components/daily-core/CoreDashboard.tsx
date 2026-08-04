@@ -32,8 +32,8 @@ interface CoreDashboardProps {
 
 const TYPE_META = {
   hipertrofia: { label: 'Hipertrofia', icon: Dumbbell, className: 'border-primary/30 bg-primary/10 text-primary' },
-  estabilidade: { label: 'Estabilidade', icon: ShieldCheck, className: 'border-[#5ba8ff]/30 bg-[#5ba8ff]/10 text-[#78b9ff]' },
-  recuperacao: { label: 'Recuperação', icon: HeartPulse, className: 'border-[#4ad17e]/30 bg-[#4ad17e]/10 text-[#62dc91]' },
+  estabilidade: { label: 'Estabilidade', icon: ShieldCheck, className: 'border-[var(--info-tint)]/30 bg-[var(--info-tint)]/10 text-[var(--info-text)]' },
+  recuperacao: { label: 'Recuperação', icon: HeartPulse, className: 'border-[var(--mint-text)]/30 bg-[var(--mint-text)]/10 text-[var(--mint-text)]' },
   descanso: { label: 'Descanso', icon: Moon, className: 'border-border bg-secondary text-muted-foreground' },
 } as const
 
@@ -190,8 +190,8 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
       </section>
 
       {adaptationWeek > 0 && adaptationWeek <= 2 && (
-        <section className="rounded-2xl border border-[#5ba8ff]/25 bg-[#5ba8ff]/8 p-4">
-          <div className="flex items-center gap-2 text-[#78b9ff]"><CircleGauge className="size-4" /><h3 className="text-sm font-bold">Adaptação · semana {adaptationWeek} de 2</h3></div>
+        <section className="rounded-2xl border border-[var(--info-tint)]/25 bg-[var(--info-tint)]/8 p-4">
+          <div className="flex items-center gap-2 text-[var(--info-text)]"><CircleGauge className="size-4" /><h3 className="text-sm font-bold">Adaptação · semana {adaptationWeek} de 2</h3></div>
           <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">Mantenha as séries prescritas, use cerca de 3 RIR nos exercícios que controlam esforço e priorize aprender o movimento.</p>
         </section>
       )}
@@ -211,7 +211,7 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
 
       <section className="grid grid-cols-2 gap-2" aria-label="Resumo de consistência">
         <Metric label="Sequência atual" value={`${streak.current} sessões`} icon={<Sparkles className="size-4 text-primary" />} />
-        <Metric label="Conclusão mensal" value={`${completionRate}%`} icon={<Check className="size-4 text-[#62dc91]" />} />
+        <Metric label="Conclusão mensal" value={`${completionRate}%`} icon={<Check className="size-4 text-[var(--mint-text)]" />} />
       </section>
 
       <details className="surface-card overflow-hidden">
@@ -221,10 +221,10 @@ export function CoreDashboard({ userId, today, allDays, plan, exerciseCatalog, s
         </summary>
         <div className="space-y-3 border-t border-border p-3">
           <section className="grid grid-cols-2 gap-2">
-            <Metric label="Melhor sequência" value={`${streak.best} sessões`} icon={<CalendarDays className="size-4 text-[#5ba8ff]" />} />
+            <Metric label="Melhor sequência" value={`${streak.best} sessões`} icon={<CalendarDays className="size-4 text-[var(--info-tint)]" />} />
             <Metric label="Academia na semana" value={`${gymSessions}/2`} icon={<Dumbbell className="size-4 text-primary" />} />
-            <Metric label="Em casa na semana" value={`${homeSessions}/2`} icon={<ShieldCheck className="size-4 text-[#78b9ff]" />} />
-            <Metric label="Volume com carga" value={volume > 0 ? `${Math.round(volume)} kg` : '—'} icon={<Activity className="size-4 text-[#ffb547]" />} />
+            <Metric label="Em casa na semana" value={`${homeSessions}/2`} icon={<ShieldCheck className="size-4 text-[var(--info-text)]" />} />
+            <Metric label="Volume com carga" value={volume > 0 ? `${Math.round(volume)} kg` : '—'} icon={<Activity className="size-4 text-[var(--warn-tint)]" />} />
           </section>
 
           <section className="rounded-2xl border border-border bg-background/35 p-4">

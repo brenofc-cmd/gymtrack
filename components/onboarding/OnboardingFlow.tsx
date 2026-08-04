@@ -217,7 +217,7 @@ export function OnboardingFlow({ userId, initial }: OnboardingFlowProps) {
               ))}
             </div>
             <label className="mt-4 block space-y-1.5"><span className="text-xs font-semibold">Histórico de dor relevante (opcional)</span><textarea value={painHistory} onChange={(event) => setPainHistory(event.target.value)} className="min-h-20 w-full rounded-xl border border-input bg-card p-3" /></label>
-            <label className="mt-4 flex items-start gap-3 rounded-xl border border-[#ffb547]/30 bg-[#ffb547]/10 p-3 text-xs leading-relaxed"><input type="checkbox" checked={riskAcknowledged} onChange={(event) => setRiskAcknowledged(event.target.checked)} className="mt-0.5 size-4" /><span>Entendo que esforços pesados exigem técnica, travas e auxílio apropriado. Posso pular qualquer tentativa e interromper por dor.</span></label>
+            <label className="mt-4 flex items-start gap-3 rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 p-3 text-xs leading-relaxed"><input type="checkbox" checked={riskAcknowledged} onChange={(event) => setRiskAcknowledged(event.target.checked)} className="mt-0.5 size-4" /><span>Entendo que esforços pesados exigem técnica, travas e auxílio apropriado. Posso pular qualquer tentativa e interromper por dor.</span></label>
           </section>
         )}
       </div>

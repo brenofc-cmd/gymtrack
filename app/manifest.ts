@@ -17,8 +17,8 @@ export default function manifest(): MetadataRoute.Manifest {
     lang: 'pt-BR',
     dir: 'ltr',
     categories: ['health', 'fitness', 'lifestyle'],
-    background_color: '#09090b',
-    theme_color: '#09090b',
+    background_color: '#eef0ed',
+    theme_color: '#eef0ed',
     icons: [
       // `any` e `maskable` separados: um ícone único marcado com os dois
       // propósitos é recortado pelo Android e perde parte do desenho.

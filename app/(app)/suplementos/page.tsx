@@ -46,8 +46,8 @@ export default async function SuplementosPage() {
         initialLogs={logs.data ?? []}
         today={today}
       />
-      <div className="mt-4 flex gap-2 rounded-[14px] border border-[#ffb547]/25 bg-[#ffb547]/5 p-3.5">
-        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[#ffb547]" />
+      <div className="mt-4 flex gap-2 rounded-[14px] border border-[var(--warn-tint)]/25 bg-[var(--warn-tint)]/5 p-3.5">
+        <ShieldAlert className="mt-0.5 size-4 shrink-0 text-[var(--warn-tint)]" />
         <p className="text-[11px] leading-relaxed text-muted-foreground">
           O registro não é recomendação médica. Doses, necessidade, interações e contraindicações devem ser avaliadas por profissional habilitado.
         </p>

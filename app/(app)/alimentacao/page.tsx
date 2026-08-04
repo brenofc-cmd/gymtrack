@@ -61,7 +61,7 @@ export default async function AlimentacaoPage() {
           <h1 className="text-[22px] font-extrabold tracking-tight">Alimentação</h1>
           <p className="mt-1 text-xs text-muted-foreground">Metas e refeições de hoje</p>
         </div>
-        <Link href="/acompanhamento" className="rounded-full border border-[#5ba8ff]/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[#5ba8ff]">
+        <Link href="/acompanhamento" className="rounded-full border border-[var(--info-tint)]/30 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-[var(--info-tint)]">
           Ajustar metas
         </Link>
       </header>

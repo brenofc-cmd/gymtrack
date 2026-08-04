@@ -47,23 +47,23 @@ export default async function HistoricoPage(props: {
               <Link
                 key={session.id}
                 href={`/historico/${session.id}`}
-                className="flex items-center gap-3 rounded-xl bg-card border border-border p-4 hover:bg-card/80 active:scale-[0.98] transition-all"
+                className="flex items-center gap-3 rounded-2xl bg-card p-3 gt-shadow active:scale-[0.99] transition-transform"
               >
-                <div className="flex items-center justify-center w-10 h-10 rounded-lg bg-primary/10 border border-primary/20 shrink-0">
-                  <span className="text-sm font-bold text-primary">
+                <div className="flex items-center justify-center size-[38px] rounded-[10px] bg-accent shrink-0">
+                  <span className="text-sm font-extrabold text-primary">
                     {workout?.letter ?? '?'}
                   </span>
                 </div>
                 <div className="flex-1 min-w-0">
-                  <p className="font-semibold text-sm">
+                  <p className="text-[13px] font-bold">
                     {workout?.name ?? 'Treino'}
                     {session.cancelled_at != null && (
-                      <span className="ml-2 rounded-full border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-500">
+                      <span className="ml-1.5 rounded-full bg-[var(--warn-surface)] px-[7px] py-0.5 text-[9.5px] font-extrabold text-[#b45309]">
                         Cancelado
                       </span>
                     )}
                   </p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
                     {format(new Date(session.started_at), "d 'de' MMM, HH'h'mm", {
                       locale: ptBR,
                     })}
@@ -71,7 +71,7 @@ export default async function HistoricoPage(props: {
                       ` · ${formatDurationLong(session.duration_seconds)}`}
                   </p>
                 </div>
-                <ChevronRight className="w-4 h-4 text-muted-foreground shrink-0" />
+                <ChevronRight className="w-4 h-4 text-[var(--chevron)] shrink-0" />
               </Link>
             )
           })}
@@ -81,7 +81,7 @@ export default async function HistoricoPage(props: {
             {page > 0 ? (
               <Link
                 href={`/historico?page=${page - 1}`}
-                className="text-sm text-primary font-medium px-4 py-2 rounded-lg border border-primary/20 bg-primary/5"
+                className="text-sm text-primary font-semibold px-4 py-2 rounded-xl bg-accent"
               >
                 ← Mais recentes
               </Link>
@@ -91,7 +91,7 @@ export default async function HistoricoPage(props: {
             {hasMore && (
               <Link
                 href={`/historico?page=${page + 1}`}
-                className="text-sm text-primary font-medium px-4 py-2 rounded-lg border border-primary/20 bg-primary/5"
+                className="text-sm text-primary font-semibold px-4 py-2 rounded-xl bg-accent"
               >
                 Mais antigos →
               </Link>

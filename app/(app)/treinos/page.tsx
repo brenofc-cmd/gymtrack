@@ -1,6 +1,6 @@
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
-import { CheckCircle2, ChevronRight, Dumbbell } from 'lucide-react'
+import { ChevronRight, Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getWorkouts, getSuggestedWorkout } from '@/lib/queries/workouts'
 import { getLastSessionsPerWorkout } from '@/lib/queries/sessions'
@@ -44,30 +44,29 @@ export default async function TreinosPage() {
               <Link
                 key={workout.id}
                 href={`/treino/${workout.letter}?from=treinos`}
-                className={`flex items-center gap-3 rounded-2xl border bg-card p-3.5 transition-colors ${isToday ? 'border-primary/40' : 'border-border hover:border-input'}`}
+                className={`flex items-center gap-3 rounded-[18px] bg-card p-3 gt-shadow transition-shadow ${isToday ? 'ring-1 ring-primary/30' : ''}`}
               >
-                <span className={`grid size-11 shrink-0 place-items-center rounded-xl border text-lg font-extrabold ${isToday ? 'border-primary/30 bg-primary/10 text-primary' : 'border-input bg-secondary text-muted-foreground'}`}>
+                <span className={`grid size-11 shrink-0 place-items-center rounded-xl text-[17px] font-extrabold ${isToday ? 'bg-accent text-primary' : 'bg-secondary text-foreground'}`}>
                   {workout.letter}
                 </span>
                 <span className="min-w-0 flex-1">
-                  <span className="block text-sm font-bold">
-                    {workout.name}
-                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
-                      · posição {workout.letter} da sequência
-                    </span>
-                  </span>
+                  <span className="block truncate text-sm font-bold">{workout.name}</span>
                   <span className="mt-0.5 block truncate text-[11.5px] text-muted-foreground">{workout.objective}</span>
-                  <span className="mt-1 block font-mono text-[10.5px] text-muted-foreground">
+                  <span className="mt-[3px] block text-[10.5px] text-[var(--faint)]">
                     {workout.workout_exercises.length} exercícios
                     {last?.finished_at ? ' · já realizado' : ' · sem registro'}
                   </span>
                 </span>
                 {isToday ? (
-                  <span className="rounded-lg bg-primary px-3 py-2 text-xs font-bold text-primary-foreground">Próximo</span>
+                  <span className="shrink-0 rounded-full bg-primary px-2.5 py-1.5 text-[11px] font-extrabold text-primary-foreground">
+                    Próximo
+                  </span>
                 ) : last?.finished_at ? (
-                  <CheckCircle2 className="size-4 shrink-0 text-[#4ad17e]" />
+                  <span className="shrink-0 rounded-full bg-secondary px-2.5 py-1.5 text-[11px] font-extrabold text-[var(--body-soft)]">
+                    Feito
+                  </span>
                 ) : (
-                  <ChevronRight className="size-4 shrink-0 text-muted-foreground" />
+                  <ChevronRight className="size-4 shrink-0 text-[var(--chevron)]" />
                 )}
               </Link>
             )

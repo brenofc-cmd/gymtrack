@@ -106,10 +106,10 @@ export default async function ProgressoPage() {
       <section className="surface-card p-4">
         <p className="metric-label">Principal evolução</p>
         <div className="mt-2 flex items-center gap-2">
-          <TrendingUp className="size-4 text-[#4ad17e]" />
+          <TrendingUp className="size-4 text-[var(--mint-text)]" />
           <p className="text-sm font-bold">
             Volume desta semana{' '}
-            <span className={delta != null && delta < 0 ? 'text-[#ffb547]' : 'text-[#4ad17e]'}>
+            <span className={delta != null && delta < 0 ? 'text-[var(--warn-tint)]' : 'text-[var(--mint-text)]'}>
               {delta == null ? 'sem comparação' : `${delta >= 0 ? '+' : ''}${delta}%`}
             </span>
           </p>

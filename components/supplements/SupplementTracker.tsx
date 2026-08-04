@@ -133,7 +133,7 @@ export function SupplementTracker({ userId, initialSupplements, initialLogs, tod
           </button>
         </section>
       ) : (
-        <button type="button" onClick={() => setShowForm(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-[13px] border border-input text-sm font-semibold text-[#c7d0db]">
+        <button type="button" onClick={() => setShowForm(true)} className="flex h-12 w-full items-center justify-center gap-2 rounded-[13px] border border-input text-sm font-semibold text-[var(--body-soft)]">
           <Plus className="size-4" /> Adicionar suplemento
         </button>
       )}

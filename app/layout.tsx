@@ -25,7 +25,7 @@ export const metadata: Metadata = {
   manifest: '/manifest.webmanifest',
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'black-translucent',
+    statusBarStyle: 'default',
     title: 'GymTrack',
     startupImage: [],
   },
@@ -35,7 +35,7 @@ export const metadata: Metadata = {
 }
 
 export const viewport: Viewport = {
-  themeColor: '#0B0D10',
+  themeColor: '#eef0ed',
   width: 'device-width',
   initialScale: 1,
 }
@@ -48,14 +48,14 @@ export default function RootLayout({
   return (
     <html
       lang="pt-BR"
-      className={`${geist.variable} ${geistMono.variable} dark h-full antialiased`}
+      className={`${geist.variable} ${geistMono.variable} h-full antialiased`}
     >
       <body className="min-h-full bg-background text-foreground">
         <QueryProvider>
           <ServiceWorkerRegistration />
           {children}
           <Toaster
-            theme="dark"
+            theme="light"
             position="top-center"
             toastOptions={{
               classNames: {

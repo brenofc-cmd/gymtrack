@@ -6,8 +6,8 @@ import type { DailyCoreSessionRow } from '@/types/database'
 
 const META = {
   hipertrofia: { label: 'Forte', icon: Dumbbell, className: 'text-primary' },
-  estabilidade: { label: 'Leve', icon: ShieldCheck, className: 'text-[#78b9ff]' },
-  recuperacao: { label: 'Recuperação', icon: HeartPulse, className: 'text-[#62dc91]' },
+  estabilidade: { label: 'Leve', icon: ShieldCheck, className: 'text-[var(--info-text)]' },
+  recuperacao: { label: 'Recuperação', icon: HeartPulse, className: 'text-[var(--mint-text)]' },
   descanso: { label: 'Descanso', icon: Moon, className: 'text-muted-foreground' },
 } as const
 

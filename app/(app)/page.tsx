@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   Droplets,
+  Flame,
   Moon,
   Scale,
   ShieldCheck,
@@ -211,9 +212,9 @@ export default async function DashboardPage() {
           <p className="text-xs capitalize text-muted-foreground">{formatDate()}</p>
           <h1 className="mt-0.5 text-[22px] font-extrabold tracking-tight">Olá, {firstName}</h1>
         </div>
-        <div className="flex items-center gap-2 rounded-full border border-input px-3 py-1.5">
-          <span className="size-2 rounded-full bg-primary" />
-          <span className="font-mono text-xs font-semibold text-[#c7d0db]">{streak.current} dias</span>
+        <div className="flex items-center gap-1.5 rounded-full border border-[var(--track)] px-3 py-1.5">
+          <Flame className="size-3.5 text-primary" fill="currentColor" strokeWidth={0} />
+          <span className="text-xs font-bold">{streak.current} dias</span>
         </div>
       </header>
 
@@ -266,13 +267,7 @@ export default async function DashboardPage() {
       <DailyCoreHomeCard userId={user.id} />
 
       {!activeSession && workout ? (
-        <section className="relative overflow-hidden rounded-[20px] border border-border bg-card p-5">
-          <span
-            aria-hidden="true"
-            className="pointer-events-none absolute -right-3 -top-10 select-none text-[190px] font-black leading-none tracking-[-0.06em] text-primary/[0.055]"
-          >
-            {workout.letter}
-          </span>
+        <section className="relative overflow-hidden rounded-[22px] bg-card p-[18px_16px] gt-shadow">
           <div className="relative">
             <div className="mb-3.5 flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-primary" />
@@ -306,26 +301,22 @@ export default async function DashboardPage() {
               className="mt-3"
             />
 
-            <div className="my-4 flex items-stretch gap-4">
-              <div>
-                <p className="font-mono text-base font-bold">{sets}</p>
-                <p className="metric-label mt-1">séries</p>
-              </div>
-              <div className="w-px bg-input" />
-              <div>
-                <p className="font-mono text-base font-bold">{weekStats.count}</p>
-                <p className="metric-label mt-1">na semana</p>
-              </div>
-              <div className="w-px bg-input" />
-              <div>
-                <p className="font-mono text-base font-bold">{formatVolume(weekStats.totalVolumeKg)}</p>
-                <p className="metric-label mt-1">volume</p>
-              </div>
+            <div className="my-3.5 flex gap-2.5">
+              {[
+                { value: sets, label: 'séries' },
+                { value: weekStats.count, label: 'na semana' },
+                { value: formatVolume(weekStats.totalVolumeKg), label: 'volume' },
+              ].map((stat) => (
+                <div key={stat.label} className="flex-1 rounded-[14px] bg-secondary p-2.5 text-center">
+                  <p className="text-base font-extrabold">{stat.value}</p>
+                  <p className="mt-px text-[10px] font-semibold text-muted-foreground">{stat.label}</p>
+                </div>
+              ))}
             </div>
 
             <Link
               href={`/treino/${workout.letter}?from=dashboard`}
-              className="flex h-14 w-full items-center justify-center gap-2 rounded-[14px] bg-primary text-base font-bold text-primary-foreground transition-transform active:scale-[0.985]"
+              className="flex h-[52px] w-full items-center justify-center gap-2 rounded-[14px] bg-primary text-[14.5px] font-extrabold text-primary-foreground transition-transform active:scale-[0.985]"
             >
               Ver treino
               <ArrowRight className="size-4" strokeWidth={2.4} />
@@ -360,13 +351,13 @@ export default async function DashboardPage() {
 
       <Link
         href="/acompanhamento"
-        className="flex items-center gap-3 rounded-[14px] border border-border bg-card px-3.5 py-3"
+        className="flex items-center gap-2.5 rounded-2xl bg-card px-3.5 py-3 gt-shadow"
       >
-        <span className={`grid size-9 place-items-center rounded-[10px] border ${readinessGood ? 'border-[#4ad17e]/25 bg-[#4ad17e]/10' : 'border-[#ffb547]/30 bg-[#ffb547]/10'}`}>
-          <span className={`size-2.5 rounded-full ${readinessGood ? 'bg-[#4ad17e]' : 'bg-[#ffb547]'}`} />
+        <span className={`grid size-8 place-items-center rounded-[10px] ${readinessGood ? 'bg-accent' : 'bg-[var(--warn-tint)]/15'}`}>
+          <span className={`size-2.5 rounded-full ${readinessGood ? 'bg-primary' : 'bg-[var(--warn-tint)]'}`} />
         </span>
         <span className="min-w-0 flex-1">
-          <span className="block text-[13px] font-semibold">
+          <span className="block text-[13px] font-bold">
             {readinessGood ? 'Prontidão boa' : readinessStatus === 'stop_for_pain' ? 'Dor pede interrupção' : 'Recuperação pede atenção'}
           </span>
           <span className="mt-0.5 block truncate text-[11px] text-muted-foreground">
@@ -377,47 +368,47 @@ export default async function DashboardPage() {
         <ChevronRight className="size-3.5 text-primary" />
       </Link>
 
-      <section className="grid grid-cols-2 gap-2">
-        <Link href="/alimentacao" className="surface-card p-3.5">
+      <section className="grid grid-cols-2 gap-2.5">
+        <Link href="/alimentacao" className="rounded-2xl bg-card px-3.5 py-3 gt-shadow">
           <div className="flex items-center justify-between">
             <p className="metric-label">Proteína</p>
             <Sparkles className="size-3.5 text-primary" />
           </div>
-          <p className="mt-2 font-mono text-base font-bold">
+          <p className="mt-1.5 text-base font-extrabold">
             {nutritionGoal.data?.protein_g ?? '—'}
-            <span className="text-[11px] font-normal text-muted-foreground"> g/meta</span>
+            <span className="text-[11px] font-semibold text-muted-foreground"> g/meta</span>
           </p>
         </Link>
-        <Link href="/alimentacao" className="surface-card p-3.5">
+        <Link href="/alimentacao" className="rounded-2xl bg-card px-3.5 py-3 gt-shadow">
           <div className="flex items-center justify-between">
             <p className="metric-label">Água</p>
-            <Droplets className="size-3.5 text-[#5ba8ff]" />
+            <Droplets className="size-3.5 text-[var(--info-tint)]" />
           </div>
-          <p className="mt-2 font-mono text-base font-bold">
+          <p className="mt-1.5 text-base font-extrabold">
             {(waterToday / 1000).toFixed(1).replace('.', ',')}
-            <span className="text-[11px] font-normal text-muted-foreground"> / {(waterGoal / 1000).toFixed(1).replace('.', ',')} L</span>
+            <span className="text-[11px] font-semibold text-muted-foreground"> / {(waterGoal / 1000).toFixed(1).replace('.', ',')} L</span>
           </p>
         </Link>
-        <Link href="/progresso" className="surface-card p-3.5">
+        <Link href="/progresso" className="rounded-2xl bg-card px-3.5 py-3 gt-shadow">
           <div className="flex items-center justify-between">
             <p className="metric-label">Peso</p>
-            <Scale className="size-3.5 text-[#4ad17e]" />
+            <Scale className="size-3.5 text-[var(--mint-text)]" />
           </div>
-          <p className="mt-2 font-mono text-base font-bold">
+          <p className="mt-1.5 text-base font-extrabold">
             {latestWeight.data?.weight_kg ?? '—'}
-            <span className="text-[11px] font-normal text-muted-foreground"> kg</span>
+            <span className="text-[11px] font-semibold text-muted-foreground"> kg</span>
           </p>
         </Link>
-        <Link href="/acompanhamento" className="surface-card p-3.5">
+        <Link href="/acompanhamento" className="rounded-2xl bg-card px-3.5 py-3 gt-shadow">
           <div className="flex items-center justify-between">
             <p className="metric-label">Sono</p>
-            <Moon className="size-3.5 text-[#98a3b3]" />
+            <Moon className="size-3.5 text-[var(--muted-foreground)]" />
           </div>
-          <p className="mt-2 font-mono text-base font-bold">{sleepLabel}</p>
+          <p className="mt-1.5 text-base font-extrabold">{sleepLabel}</p>
         </Link>
       </section>
 
-      <section className="surface-card p-3.5">
+      <section className="rounded-2xl bg-card px-3.5 py-3 gt-shadow">
         <div className="mb-2.5 flex items-center justify-between">
           <p className="metric-label">Últimos 7 dias</p>
           <p className="text-[11px] text-muted-foreground">
@@ -428,17 +419,17 @@ export default async function DashboardPage() {
           {weeklyDays.map((day, index) => (
             <div key={`${day.label}-${index}`} className="flex flex-1 flex-col items-center gap-1.5">
               <div
-                className={`grid h-8 w-full place-items-center rounded-lg border text-[11px] font-bold ${
+                className={`grid h-[30px] w-full place-items-center rounded-lg text-[11px] font-bold ${
                   day.done
-                    ? 'border-primary/30 bg-primary/10 text-primary'
+                    ? 'bg-primary/[0.13] text-primary'
                     : day.today
-                      ? 'border-input bg-secondary text-foreground'
-                      : 'border-transparent bg-secondary/40 text-muted-foreground'
+                      ? 'bg-secondary text-foreground ring-1 ring-inset ring-[var(--track)]'
+                      : 'bg-secondary text-muted-foreground'
                 }`}
               >
-                {day.done ? <Check className="size-3.5" strokeWidth={2.7} /> : '·'}
+                {day.done ? <Check className="size-3.5" strokeWidth={3} /> : ''}
               </div>
-              <span className="text-[9px] font-semibold text-muted-foreground">{day.label}</span>
+              <span className="text-[9px] font-bold text-muted-foreground">{day.label}</span>
             </div>
           ))}
         </div>

@@ -17,7 +17,7 @@ export function CoreExerciseImage({
   sizes = '(max-width: 520px) 92vw, 480px',
 }: CoreExerciseImageProps) {
   return (
-    <div className={cn('relative overflow-hidden bg-[#17191d]', className)}>
+    <div className={cn('relative overflow-hidden bg-secondary', className)}>
       <Image
         src={src}
         alt={alt}

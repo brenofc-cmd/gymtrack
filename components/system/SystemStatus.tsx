@@ -12,10 +12,10 @@ interface StatusDetail {
 }
 
 const STATUS = {
-  offline: { icon: CloudOff, label: 'Offline · alterações guardadas', className: 'border-[#ffb547]/35 bg-[#201b13] text-[#ffb547]' },
-  syncing: { icon: RefreshCw, label: 'Sincronizando…', className: 'border-[#5ba8ff]/35 bg-[#111b26] text-[#5ba8ff]' },
-  synced: { icon: Check, label: 'Tudo sincronizado', className: 'border-[#4ad17e]/30 bg-[#102019] text-[#4ad17e]' },
-  error: { icon: AlertCircle, label: 'Erro ao salvar · toque para tentar', className: 'border-destructive/35 bg-[#241316] text-destructive' },
+  offline: { icon: CloudOff, label: 'Offline · alterações guardadas', className: 'border-[var(--warn-tint)]/35 bg-[var(--warn-surface)] text-[var(--warn-text)]' },
+  syncing: { icon: RefreshCw, label: 'Sincronizando…', className: 'border-[var(--info-tint)]/35 bg-[var(--info-tint)]/10 text-[var(--info-text)]' },
+  synced: { icon: Check, label: 'Tudo sincronizado', className: 'border-[var(--mint-text)]/30 bg-accent text-[var(--mint-text)]' },
+  error: { icon: AlertCircle, label: 'Erro ao salvar · toque para tentar', className: 'border-destructive/35 bg-destructive/10 text-destructive' },
 } satisfies Record<SyncState, { icon: typeof Check; label: string; className: string }>
 
 export function SystemStatus() {

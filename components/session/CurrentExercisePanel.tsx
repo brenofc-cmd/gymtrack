@@ -382,7 +382,7 @@ export function CurrentExercisePanel({
                   done
                     ? 'bg-primary text-primary-foreground'
                     : isCurrentResting
-                      ? 'bg-[var(--warn-tint)] text-[#0b0d10]'
+                      ? 'bg-[var(--warn-tint)] text-white'
                       : isCurrent
                         ? 'border-2 border-primary text-primary'
                         : 'bg-secondary text-muted-foreground'
