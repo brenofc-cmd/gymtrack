@@ -10,6 +10,7 @@ import {
   Scale,
   ShieldCheck,
   Sparkles,
+  Wind,
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getWorkoutWithExercises, getSuggestedWorkout } from '@/lib/queries/workouts'
@@ -27,7 +28,9 @@ import { ResumeSessionBanner } from '@/components/dashboard/ResumeSessionBanner'
 import { DailyCoreHomeCard } from '@/components/dashboard/DailyCoreHomeCard'
 import { DeloadCard } from '@/components/dashboard/DeloadCard'
 import { SkipWorkoutButton } from '@/components/dashboard/SkipWorkoutButton'
-import { ensureActiveAdaptedDupRoutineV6, getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
+import { getActiveDupBlock, getReferenceMaxes } from '@/lib/queries/dup-program'
+import { getCurrentDayState } from '@/lib/training/schedule'
+import { WORKOUT_LETTER_LABEL } from '@/lib/routine/david-laid-gymshark-exact-v7'
 
 function formatDate(): string {
   return new Intl.DateTimeFormat('pt-BR', {
@@ -55,20 +58,24 @@ export default async function DashboardPage() {
 
   if (!user) redirect('/login')
 
-  const { data: onboarding } = await supabase
-    .from('user_preferences')
-    .select('onboarding_done')
-    .eq('id', user.id)
-    .maybeSingle()
-  if (onboarding?.onboarding_done) {
-    await ensureActiveAdaptedDupRoutineV6(supabase)
-  }
-
   // Falha de banco NÃO vira fallback silencioso para o treino A: o sentinel
   // 'error' rende um estado de erro recuperável no lugar do card.
+  //
+  // Importante: esta consulta só LÊ a rotação A–F (via última sessão
+  // concluída / pulo mais recente) — nunca reprovisiona nem troca a rotina
+  // ativa. Uma versão anterior chamava ensureActiveAdaptedDupRoutineV6() aqui
+  // a cada carregamento, o que arquivava silenciosamente a rotina David Laid
+  // ativa e recriava a v6 sempre que a v6 não fosse já a única ficha
+  // ativa — o motivo real de a rotina "voltar" sozinha. O provisionamento
+  // acontece uma única vez, no onboarding.
   const suggestedLetter = await getSuggestedWorkout(supabase, user.id).catch(
     () => 'error' as const
   )
+  const dayState =
+    suggestedLetter !== 'error' && suggestedLetter !== null
+      ? getCurrentDayState(suggestedLetter)
+      : null
+  const letterToLoad = dayState?.kind === 'training' ? dayState.currentSession : null
 
   const [
     workoutResult,
@@ -86,9 +93,9 @@ export default async function DashboardPage() {
     activeBlock,
     referenceMaxes,
   ] = await Promise.all([
-    suggestedLetter && suggestedLetter !== 'error'
-      ? getWorkoutWithExercises(supabase, user.id, suggestedLetter).catch(() => 'error' as const)
-      : Promise.resolve(suggestedLetter),
+    letterToLoad
+      ? getWorkoutWithExercises(supabase, user.id, letterToLoad).catch(() => 'error' as const)
+      : Promise.resolve(dayState === null ? ('error' as const) : null),
     getWeekStats(supabase, user.id).catch(() => ({ count: 0, totalSeconds: 0, totalVolumeKg: 0 })),
     getStreakStats(supabase, user.id).catch(() => ({ current: 0, longest: 0 })),
     getActiveSession(supabase, user.id).catch(() => null),
@@ -271,10 +278,10 @@ export default async function DashboardPage() {
           <div className="relative">
             <div className="mb-3.5 flex items-center gap-2">
               <span className="size-1.5 rounded-full bg-primary" />
-              <span className="metric-label text-primary">Próximo treino da sequência</span>
+              <span className="metric-label text-primary">Treino de hoje</span>
             </div>
             <p className="text-xs text-muted-foreground">
-              Treino {workout.letter} · sequência flexível A–F
+              {workout.letter} · David Laid — DUP Powerbuilding
             </p>
             <div className="mt-1">
               <WorkoutFocusBadge
@@ -290,6 +297,11 @@ export default async function DashboardPage() {
             <p className="mt-1 text-[13px] capitalize text-muted-foreground">
               {muscleNames} · {workout.workout_exercises.length} exercícios · estimativa ~{minutes} min
             </p>
+            {dayState?.kind === 'training' && (
+              <p className="mt-1 text-[11px] font-semibold text-muted-foreground">
+                Próximo: {dayState.nextSession} — {WORKOUT_LETTER_LABEL[dayState.nextSession]}
+              </p>
+            )}
 
             <RoutineMethodInfo
               routineVersion={workout.routine_version}
@@ -341,13 +353,30 @@ export default async function DashboardPage() {
             Ver todos os treinos
           </Link>
         </section>
-      ) : (
+      ) : dayState?.kind === 'active_recovery' ? (
+        <section className="surface-card p-5 text-center">
+          <Wind className="mx-auto size-7 text-primary" />
+          <h2 className="mt-2 font-bold">Recuperação ativa</h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            Hoje não há sessão DUP. Objetivo: recuperar para continuar progredindo nos treinos.
+          </p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Sugestões leves: caminhada, mobilidade, alongamento leve ou recuperação geral — nada de treino pesado.
+          </p>
+          <p className="mt-3 text-sm font-bold text-primary">
+            Próxima sessão: {dayState.nextSession} — {WORKOUT_LETTER_LABEL[dayState.nextSession]}
+          </p>
+        </section>
+      ) : dayState?.kind === 'rest' ? (
         <section className="surface-card p-5 text-center">
           <ShieldCheck className="mx-auto size-7 text-primary" />
-          <h2 className="mt-2 font-bold">Dia de recuperação</h2>
-          <p className="mt-1 text-sm text-muted-foreground">Domingo é o dia planejado de descanso.</p>
+          <h2 className="mt-2 font-bold">Descanso</h2>
+          <p className="mt-1 text-sm text-muted-foreground">Hoje é dia de descanso.</p>
+          <p className="mt-3 text-sm font-bold text-primary">
+            Próxima sessão: {dayState.nextSession} — {WORKOUT_LETTER_LABEL[dayState.nextSession]}
+          </p>
         </section>
-      )}
+      ) : null}
 
       <Link
         href="/acompanhamento"

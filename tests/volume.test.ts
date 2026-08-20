@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import { calcVolume } from '@/lib/utils/volume'
 import { analyzeRecovery } from '@/lib/progression/recovery'
 import { buildWarmupPlan } from '@/lib/progression/warmup'
-import { currentDayOfWeek, todayLetter } from '@/lib/utils/weekday'
+import { currentDayOfWeek } from '@/lib/utils/weekday'
 
 describe('Volume', () => {
   it('calcula kg × reps', () => {
@@ -64,21 +64,20 @@ describe('Análise de recuperação', () => {
   })
 })
 
-describe('Treino do dia — fuso horário do usuário (America/Sao_Paulo)', () => {
-  it('mapeia segunda→A ... sábado→F e domingo→descanso', () => {
+describe('Dia da semana — fuso horário do usuário (America/Sao_Paulo)', () => {
+  it('mapeia segunda=1 ... sábado=6, domingo=7', () => {
     // 2026-07-06 é segunda-feira
-    expect(todayLetter(new Date('2026-07-06T12:00:00-03:00'))).toBe('A')
-    expect(todayLetter(new Date('2026-07-07T12:00:00-03:00'))).toBe('B')
-    expect(todayLetter(new Date('2026-07-08T12:00:00-03:00'))).toBe('C')
-    expect(todayLetter(new Date('2026-07-09T12:00:00-03:00'))).toBe('D')
-    expect(todayLetter(new Date('2026-07-10T12:00:00-03:00'))).toBe('E')
-    expect(todayLetter(new Date('2026-07-11T12:00:00-03:00'))).toBe('F')
-    expect(todayLetter(new Date('2026-07-12T12:00:00-03:00'))).toBeNull()
+    expect(currentDayOfWeek(new Date('2026-07-06T12:00:00-03:00'))).toBe(1)
+    expect(currentDayOfWeek(new Date('2026-07-07T12:00:00-03:00'))).toBe(2)
+    expect(currentDayOfWeek(new Date('2026-07-08T12:00:00-03:00'))).toBe(3)
+    expect(currentDayOfWeek(new Date('2026-07-09T12:00:00-03:00'))).toBe(4)
+    expect(currentDayOfWeek(new Date('2026-07-10T12:00:00-03:00'))).toBe(5)
+    expect(currentDayOfWeek(new Date('2026-07-11T12:00:00-03:00'))).toBe(6)
+    expect(currentDayOfWeek(new Date('2026-07-12T12:00:00-03:00'))).toBe(7)
   })
 
-  it('respeita o fuso: 23h de domingo em SP ainda é domingo (descanso)', () => {
+  it('respeita o fuso: 23h de domingo em SP ainda é domingo, mesmo já sendo segunda em UTC', () => {
     // 2026-07-13T01:00Z = domingo 22:00 em São Paulo
     expect(currentDayOfWeek(new Date('2026-07-13T01:00:00Z'))).toBe(7)
-    expect(todayLetter(new Date('2026-07-13T01:00:00Z'))).toBeNull()
   })
 })

@@ -42,6 +42,20 @@ export const BIRD_DOG_TIP =
   'O artigo cita o bird-dog como exercício útil de estabilidade, mas ele não faz parte dos seis treinos principais da ficha.'
 
 export type WorkoutLetter = 'A' | 'B' | 'C' | 'D' | 'E' | 'F'
+
+/**
+ * Nome curto e consistente de cada sessão — mesmo rótulo em toda a UI
+ * (dashboard, /treinos, treino do dia, recuperação/descanso), para nunca
+ * duas telas chamarem a mesma sessão de coisas diferentes.
+ */
+export const WORKOUT_LETTER_LABEL: Record<WorkoutLetter, string> = {
+  A: 'Legs 1',
+  B: 'Push 1',
+  C: 'Pull 1',
+  D: 'Legs 2',
+  E: 'Push 2',
+  F: 'Pull 2',
+}
 export type PrescriptionType = 'fixed_reps' | 'rep_range' | 'rep_max_effort'
 
 export interface GymsharkExerciseItem {
@@ -151,3 +165,11 @@ export const DAVID_LAID_GYMSHARK_EXACT_V7: GymsharkDay[] = [
     ],
   },
 ]
+
+/**
+ * Alias da fonte canônica — sessão, posição, exercício, sets, reps/faixa/RM
+ * e alternativa, um único lugar para os 41 itens. `DAVID_LAID_GYMSHARK_EXACT_V7`
+ * continua exportado (é o nome usado no resto do app e nos testes); este é
+ * só outro nome para o mesmo array, não uma segunda lista.
+ */
+export const DAVID_LAID_GYMSHARK_ROUTINE = DAVID_LAID_GYMSHARK_EXACT_V7

@@ -4,6 +4,7 @@ import { ChevronRight, Dumbbell } from 'lucide-react'
 import { createClient } from '@/lib/supabase/server'
 import { getWorkouts, getSuggestedWorkout } from '@/lib/queries/workouts'
 import { getLastSessionsPerWorkout } from '@/lib/queries/sessions'
+import { ROUTINE_VERSION as DAVID_LAID_VERSION } from '@/lib/routine/david-laid-gymshark-exact-v7'
 
 export default async function TreinosPage() {
   const supabase = await createClient()
@@ -18,12 +19,25 @@ export default async function TreinosPage() {
     getLastSessionsPerWorkout(supabase, user.id),
   ])
   const lastByWorkout = new Map(lastSessions.map((session) => [session.workout_id, session]))
+  const isDavidLaid = workouts[0]?.routine_version === DAVID_LAID_VERSION
 
   return (
     <div className="mx-auto w-full max-w-[520px] px-4 py-5 lg:py-7">
       <header className="mb-5">
-        <h1 className="text-[22px] font-extrabold tracking-tight">Treino</h1>
-        <p className="mt-1 text-[12.5px] text-muted-foreground">DUP PPL · sequência flexível A–F</p>
+        {isDavidLaid ? (
+          <>
+            <h1 className="text-[22px] font-extrabold tracking-tight">David Laid — DUP Powerbuilding</h1>
+            <p className="mt-1 text-[12.5px] text-muted-foreground">
+              Sequência: Legs 1 → Push 1 → Pull 1 → Legs 2 → Push 2 → Pull 2
+            </p>
+            <p className="mt-0.5 text-[11px] text-[var(--faint)]">A sequência continua de onde parou.</p>
+          </>
+        ) : (
+          <>
+            <h1 className="text-[22px] font-extrabold tracking-tight">Treino</h1>
+            <p className="mt-1 text-[12.5px] text-muted-foreground">A sequência continua de onde parou.</p>
+          </>
+        )}
       </header>
 
       {workouts.length === 0 ? (

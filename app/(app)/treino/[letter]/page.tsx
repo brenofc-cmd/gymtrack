@@ -12,6 +12,7 @@ import {
   DIA_LABEL,
   effectiveTargetsForProgramWeek,
 } from '@/lib/routine/powerbuilding-dup-adaptado-v6'
+import { ROUTINE_VERSION as DAVID_LAID_VERSION, WORKOUT_LETTER_LABEL } from '@/lib/routine/david-laid-gymshark-exact-v7'
 import { getActiveDupBlock } from '@/lib/queries/dup-program'
 import { WorkoutFocusBadge, classifyDay } from '@/components/workout/WorkoutFocusBadge'
 import { RoutineMethodInfo } from '@/components/workout/RoutineMethodInfo'
@@ -48,7 +49,12 @@ export default async function TreinoPage(props: {
 
   if (!workout) notFound()
 
-  if (activeBlock?.routine_version === workout.routine_version) {
+  // A fase de 8 semanas da v6 (adaptação/progressão/consolidação/deload) só
+  // pode se aplicar a treinos v6 — outra rotina compartilhando o mesmo
+  // routine_version do bloco ativo (ex.: David Laid v7, também em bloco de 9
+  // semanas) não pode ter séries/RIR reescritos por uma lógica pensada para
+  // uma rotina diferente.
+  if (workout.routine_version === 6 && activeBlock?.routine_version === workout.routine_version) {
     workout.workout_exercises = workout.workout_exercises.map((item) => ({
       ...item,
       ...effectiveTargetsForProgramWeek(
@@ -68,7 +74,14 @@ export default async function TreinoPage(props: {
     )
   )
 
-  const dayLabel = workout.day_of_week != null ? DIA_LABEL[workout.day_of_week] : null
+  // day_of_week só tem sentido de "dia fixo da semana" na v6. Na rotina
+  // David Laid a sequência A–F é contínua (ver lib/training/schedule.ts) e
+  // não está presa a um dia específico, então não rotulamos por dia aqui.
+  const dayLabel = workout.routine_version === 6 && workout.day_of_week != null
+    ? DIA_LABEL[workout.day_of_week]
+    : null
+  const isDavidLaid = workout.routine_version === DAVID_LAID_VERSION
+  const subtitleSuffix = dayLabel ?? (isDavidLaid ? WORKOUT_LETTER_LABEL[workout.letter as WorkoutLetter] : null)
   // O detalhe pode ser aberto pelo painel ou pela lista. Nunca usamos o
   // histórico implícito do navegador: o destino explícito preserva o fluxo
   // "lista → conferir treino → voltar para começar".
@@ -86,8 +99,8 @@ export default async function TreinoPage(props: {
           <div className="flex-1 min-w-0">
             <h1 className="font-bold text-lg leading-tight">{workout.name}</h1>
             <p className="text-sm text-muted-foreground truncate">
-              Treino {workout.letter}
-              {dayLabel ? ` · ${dayLabel}` : ''}
+              {workout.letter}
+              {subtitleSuffix ? ` · ${subtitleSuffix}` : ''}
             </p>
           </div>
           {dayLabel && (

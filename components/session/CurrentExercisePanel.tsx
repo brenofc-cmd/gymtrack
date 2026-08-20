@@ -38,7 +38,6 @@ import {
   ONE_RM_CONFIRMATION_TEXT,
   REST_RECOMMENDATION_NOTE,
 } from '@/lib/routine/david-laid-gymshark-exact-v7'
-import { GUIDED_TOP_SET_SAFETY_NOTE } from '@/lib/routine/david-laid-guided-load-v7'
 import type { LoadRecommendation } from '@/lib/training/dup-progression'
 import { requestNotificationPermissionSafely, safeVibrate } from '@/lib/utils/browser-feedback'
 import { enableRestPush, scheduleRestPush } from '@/lib/push/client'
@@ -474,7 +473,6 @@ export function CurrentExercisePanel({
               <p className="mt-1 text-[10px] leading-relaxed text-muted-foreground">Obrigatória antes da última série para confirmar execução, amplitude, ajuda e dor.</p>
               <ExerciseFeedbackPanel sessionId={sessionId} workoutExerciseId={workoutExercise.id} hasSubstitutions={(workoutExercise.substitutions?.length ?? 0) > 0} />
             </div>
-            {workoutExercise.prescription_type === 'guided_top_set' && <div className="rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--warn-text)]"><p className="font-semibold text-foreground">{GUIDED_TOP_SET_SAFETY_NOTE}</p><p className="mt-1">Use travas e equipamento de segurança. Interrompa com dor, técnica em queda ou sintomas incomuns.</p></div>}
             {workoutExercise.prescription_type === 'rep_max_effort' && <div className="rounded-xl border border-[var(--warn-tint)]/30 bg-[var(--warn-tint)]/10 px-3 py-2 text-[11px] leading-relaxed text-[var(--warn-text)]"><p className="font-semibold text-foreground">{MAX_EFFORT_SAFETY_WARNING}</p>{workoutExercise.rep_max_target != null && <p className="mt-1">{rmEffortGuidance(workoutExercise.rep_max_target)}</p>}<p className="mt-1">Use travas. No supino, tenha spotter. Interrompa com dor, falha anterior, sintomas incomuns ou perda grave de técnica.</p>{workoutExercise.rep_max_target === 1 && <label className="mt-2 flex items-start gap-2 rounded-lg bg-background/35 p-2 font-semibold text-foreground"><input type="checkbox" checked={rmSafetyConfirmed} onChange={(event) => setRmSafetyConfirmed(event.target.checked)} className="mt-0.5 size-4" />{ONE_RM_CONFIRMATION_TEXT}</label>}</div>}
           </div>
         </details>
